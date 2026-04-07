@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"] *));
+@custom-variant light (&:where([data-theme="light"] *));
+
 /* ── Local Fonts ─────────────────────────────────────────────── */
 @font-face {
   font-family: "Plus Jakarta Sans";
@@ -120,27 +123,6 @@
 }
 
 /* ── Base ─────────────────────────────────────────────────────── */
-html,
-body,
-#root {
-  height: 100%;
-  overflow: hidden;
-}
-
-body {
-  font-family: var(--font-ui);
-  background: var(--bg);
-  color: var(--text);
-  -webkit-font-smoothing: antialiased;
-  display: flex;
-  flex-direction: column;
-}
-
-#root {
-  display: flex;
-  flex-direction: column;
-}
-
 ::selection {
   background: rgba(45, 212, 191, 0.2);
   color: var(--text);
@@ -163,24 +145,9 @@ body.theme-transitioning h2 {
     box-shadow 0.2s ease !important;
 }
 
-/* ── Theme toggle icon visibility ─────────────────────────────── */
-.icon-sun,
-.icon-moon {
-  display: none;
-}
-[data-theme="dark"] .icon-sun {
-  display: block;
-}
-[data-theme="light"] .icon-moon {
-  display: block;
-}
-
 /* ── Grain texture ────────────────────────────────────────────── */
 .grain {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-[data-theme="light"] .grain {
-  opacity: 0.015;
 }
 
 /* ── Brand mark gradient ──────────────────────────────────────── */
@@ -193,14 +160,11 @@ body.theme-transitioning h2 {
 .brand-mark-shine {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, transparent 50%);
 }
-[data-theme="light"] .brand-mark {
-  color: #fff;
-}
 
 /* ── Status badge states ──────────────────────────────────────── */
 .badge-live {
   border-color: var(--red);
-  background: rgba(248, 113, 113, 0.06);
+  background: var(--red-glow);
   color: var(--red);
   box-shadow: 0 0 24px var(--red-glow);
 }
@@ -217,72 +181,6 @@ body.theme-transitioning h2 {
 .badge-loading .status-dot {
   background: var(--amber);
   animation: pulse 0.8s ease-in-out infinite;
-}
-[data-theme="light"] .badge-live {
-  background: rgba(220, 38, 38, 0.06);
-}
-
-/* ── Dot glow ─────────────────────────────────────────────────── */
-.dot-amber {
-  box-shadow: 0 0 8px var(--amber-glow);
-}
-.dot-teal {
-  box-shadow: 0 0 8px var(--teal-glow);
-}
-
-/* ── Select styling ───────────────────────────────────────────── */
-select {
-  appearance: none;
-  background: var(--bg-surface);
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-select:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-lit);
-}
-select:focus {
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.04);
-}
-select:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-select option {
-  background: var(--bg-surface);
-  color: var(--text);
-}
-[data-theme="light"] select option {
-  background: #fff;
-}
-
-/* ── Button variants ──────────────────────────────────────────── */
-.btn-primary {
-  background: var(--green-soft);
-  color: #fff;
-  box-shadow: 0 1px 4px rgba(52, 211, 153, 0.2);
-}
-.btn-primary:hover:not(:disabled) {
-  background: var(--green);
-  box-shadow: 0 2px 12px rgba(52, 211, 153, 0.3);
-  transform: translateY(-1px);
-}
-.btn-danger.active {
-  background: var(--red-soft);
-  color: #fff;
-  border-color: transparent;
-  box-shadow: 0 1px 4px rgba(248, 113, 113, 0.2);
-}
-.btn-danger.active:hover {
-  background: var(--red);
-  box-shadow: 0 2px 12px rgba(248, 113, 113, 0.3);
-  transform: translateY(-1px);
-}
-
-/* ── Partial text ─────────────────────────────────────────────── */
-[data-theme="light"] .partial-text {
-  opacity: 0.85;
 }
 
 /* ── Animations ───────────────────────────────────────────────── */
@@ -307,7 +205,7 @@ select option {
     transform: translateY(0);
   }
 }
-.animate-entry {
+@utility animate-entry {
   animation: entryIn 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -324,14 +222,4 @@ select option {
 }
 .transcript-scroll::-webkit-scrollbar-thumb:hover {
   background: var(--text-4);
-}
-
-/* ── Modal input ──────────────────────────────────────────────── */
-.modal-input {
-  background: var(--bg-surface);
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-.modal-input:focus {
-  border-color: var(--border-focus);
 }

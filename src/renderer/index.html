@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" class="h-full overflow-hidden">
   <head>
     <script>
       document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
@@ -8,8 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Express 24/7 — Live Transcription</title>
   </head>
-  <body>
-    <div id="root"></div>
+  <body class="h-full overflow-hidden font-ui bg-bg text-tx antialiased flex flex-col">
+    <div id="root" class="h-full flex flex-col overflow-hidden"></div>
     <script type="module" src="./src/index.tsx"></script>
   </body>
 </html>

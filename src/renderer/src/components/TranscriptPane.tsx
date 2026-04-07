@@ -72,7 +72,7 @@ export function SttPane(props: SttPaneProps) {
     <section class="flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-[14px] overflow-hidden">
       <div class="flex justify-between items-center px-5 py-3.5 border-b border-border bg-raised shrink-0">
         <div class="flex items-center gap-2.5">
-          <span class="w-2 h-2 rounded-full bg-amber shrink-0 dot-amber" />
+          <span class="w-2 h-2 rounded-full bg-amber shrink-0 shadow-[0_0_8px_var(--amber-glow)]" />
           <h2 class="text-[13px] font-bold text-tx-2 tracking-wide">STT Output</h2>
         </div>
         <span class="text-[11px] text-tx-3 font-mono">
@@ -125,7 +125,7 @@ export function SttPane(props: SttPaneProps) {
                         {entry.timestamp} {marker}
                       </span>
                       <span
-                        class={`text-tx font-urdu text-lg leading-[2] ${entry.isPartial ? "partial-text text-amber opacity-70" : ""}`}
+                        class={`text-tx font-urdu text-lg leading-[2] ${entry.isPartial ? "text-amber opacity-70 light:opacity-85" : ""}`}
                       >
                         {entry.text}
                       </span>
@@ -154,7 +154,7 @@ export function TranslationPane(props: TransPaneProps) {
     <section class="flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-[14px] overflow-hidden">
       <div class="flex justify-between items-center px-5 py-3.5 border-b border-border bg-raised shrink-0">
         <div class="flex items-center gap-2.5">
-          <span class="w-2 h-2 rounded-full bg-teal shrink-0 dot-teal" />
+          <span class="w-2 h-2 rounded-full bg-teal shrink-0 shadow-[0_0_8px_var(--teal-glow)]" />
           <h2 class="text-[13px] font-bold text-tx-2 tracking-wide">Translation</h2>
         </div>
         <span class="text-[11px] text-tx-3 font-mono">

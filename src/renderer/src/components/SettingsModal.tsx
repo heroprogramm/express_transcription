@@ -51,7 +51,7 @@ export default function SettingsModal(props: Props) {
         <input
           type="password"
           placeholder="Enter your Soniox API key"
-          class="modal-input w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-colors"
+          class="bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-colors"
           value={key()}
           onInput={(e) => setKey(e.currentTarget.value)}
           onKeyDown={handleKeyDown}
@@ -66,7 +66,7 @@ export default function SettingsModal(props: Props) {
             Cancel
           </button>
           <button
-            class="btn-primary h-[38px] px-5 text-[13px] font-semibold border-none rounded-md cursor-pointer font-ui inline-flex items-center transition-all disabled:opacity-25 disabled:cursor-not-allowed"
+            class="bg-green-soft text-white shadow-[0_1px_4px_rgba(52,211,153,0.2)] hover:not-disabled:bg-green hover:not-disabled:shadow-[0_2px_12px_rgba(52,211,153,0.3)] hover:not-disabled:-translate-y-px h-[38px] px-5 text-[13px] font-semibold border-none rounded-md cursor-pointer font-ui inline-flex items-center transition-all disabled:opacity-25 disabled:cursor-not-allowed"
             onClick={handleSave}
             disabled={saving()}
           >

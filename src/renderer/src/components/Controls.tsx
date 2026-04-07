@@ -36,7 +36,7 @@ export default function Controls(props: Props) {
           </label>
           <div class="relative inline-flex items-center">
             <select
-              class="rounded-md px-3 py-[7px] pr-9 text-[13px] font-ui font-semibold cursor-pointer outline-none min-w-[145px] transition-all"
+              class="appearance-none bg-surface text-tx border border-border rounded-md px-3 py-[7px] pr-9 text-[13px] font-ui font-semibold cursor-pointer outline-none min-w-[145px] transition-all hover:bg-hover hover:border-border-lit focus:border-border-focus focus:shadow-[0_0_0_3px_rgba(255,255,255,0.04)] disabled:opacity-30 disabled:cursor-not-allowed"
               disabled={props.running()}
               value={selectedMic()}
               onChange={(e) => setSelectedMic(e.currentTarget.value)}
@@ -65,7 +65,7 @@ export default function Controls(props: Props) {
 
       <div class="flex items-center gap-2">
         <button
-          class="btn-primary h-[38px] px-5 text-[13px] font-semibold border-none rounded-md cursor-pointer font-ui inline-flex items-center gap-[7px] transition-all tracking-tight disabled:opacity-25 disabled:cursor-not-allowed disabled:pointer-events-none"
+          class="bg-green-soft text-white shadow-[0_1px_4px_rgba(52,211,153,0.2)] hover:not-disabled:bg-green hover:not-disabled:shadow-[0_2px_12px_rgba(52,211,153,0.3)] hover:not-disabled:-translate-y-px h-[38px] px-5 text-[13px] font-semibold border-none rounded-md cursor-pointer font-ui inline-flex items-center gap-[7px] transition-all tracking-tight disabled:opacity-25 disabled:cursor-not-allowed disabled:pointer-events-none"
           disabled={props.running()}
           onClick={() => props.onStart(selectedMic())}
         >
@@ -76,7 +76,7 @@ export default function Controls(props: Props) {
         </button>
 
         <button
-          class={`h-[38px] px-5 text-[13px] font-semibold rounded-md cursor-pointer font-ui inline-flex items-center gap-[7px] transition-all tracking-tight disabled:opacity-25 disabled:cursor-not-allowed disabled:pointer-events-none bg-surface text-tx-3 border border-border btn-danger ${props.running() ? "active" : ""}`}
+          class={`h-[38px] px-5 text-[13px] font-semibold rounded-md cursor-pointer font-ui inline-flex items-center gap-[7px] transition-all tracking-tight disabled:opacity-25 disabled:cursor-not-allowed disabled:pointer-events-none ${props.running() ? "bg-red-soft text-white border-transparent shadow-[0_1px_4px_rgba(248,113,113,0.2)] hover:bg-red hover:shadow-[0_2px_12px_rgba(248,113,113,0.3)] hover:-translate-y-px" : "bg-surface text-tx-3 border border-border"}`}
           disabled={!props.running()}
           onClick={props.onStop}
         >

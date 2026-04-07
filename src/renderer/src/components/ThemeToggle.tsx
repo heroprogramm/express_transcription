@@ -15,7 +15,7 @@ export default function ThemeToggle() {
       onClick={toggle}
     >
       <svg
-        class="icon-sun"
+        class="hidden dark:block"
         width="16"
         height="16"
         viewBox="0 0 24 24"
@@ -36,7 +36,7 @@ export default function ThemeToggle() {
         <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
       </svg>
       <svg
-        class="icon-moon"
+        class="hidden light:block"
         width="16"
         height="16"
         viewBox="0 0 24 24"

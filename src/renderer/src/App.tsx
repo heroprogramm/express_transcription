@@ -171,11 +171,11 @@ export default function App() {
 
   return (
     <>
-      <div class="grain fixed inset-0 pointer-events-none z-[9999] opacity-[0.025] bg-repeat" />
+      <div class="grain fixed inset-0 pointer-events-none z-[9999] opacity-[0.025] light:opacity-[0.015] bg-repeat" />
 
       <header class="flex items-center justify-between h-[60px] px-6 bg-raised border-b border-border shrink-0 relative z-10">
         <div class="flex items-center gap-3.5">
-          <div class="brand-mark w-9 h-9 rounded-md flex items-center justify-center font-ui font-extrabold text-[17px] text-bg relative overflow-hidden">
+          <div class="brand-mark w-9 h-9 rounded-md flex items-center justify-center font-ui font-extrabold text-[17px] text-bg light:text-white relative overflow-hidden">
             <span>E</span>
             <div class="brand-mark-shine absolute inset-0" />
           </div>
