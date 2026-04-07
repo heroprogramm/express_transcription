@@ -33,6 +33,7 @@ function parseTokens(tokens: Token[]): {
 
   for (const t of tokens) {
     if (t.is_final) isFinal = true;
+    if (t.text === "<end>") continue;
     if (t.translation_status === "translation") {
       translatedParts.push(t.text);
     } else {
