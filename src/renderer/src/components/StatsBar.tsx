@@ -1,5 +1,4 @@
 import { type Accessor } from "solid-js";
-import Waveform from "./Waveform";
 
 interface Props {
   latency: Accessor<string>;
@@ -35,19 +34,6 @@ export default function StatsBar(props: Props) {
         <span class="text-[13px] font-semibold text-tx tracking-wider font-mono">
           {props.latency()}
         </span>
-      </StatChip>
-
-      <StatChip>
-        <span class="flex text-tx-3">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-            <rect x="1" y="6" width="2" height="4" rx="0.5" fill="currentColor" opacity="0.5" />
-            <rect x="4.5" y="4" width="2" height="8" rx="0.5" fill="currentColor" opacity="0.7" />
-            <rect x="8" y="2" width="2" height="12" rx="0.5" fill="currentColor" opacity="0.85" />
-            <rect x="11.5" y="5" width="2" height="6" rx="0.5" fill="currentColor" />
-          </svg>
-        </span>
-        <span class="text-[11px] font-semibold text-tx-3 tracking-wide">Audio</span>
-        <Waveform />
       </StatChip>
 
       <StatChip>

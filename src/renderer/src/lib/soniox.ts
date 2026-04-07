@@ -4,7 +4,7 @@ import { getApiKey, logTranslation } from "./tauri-bridge";
 
 export interface SonioxCallbacks {
   onTranscript: (timestamp: string, text: string, isPartial: boolean) => void;
-  onTranslation: (timestamp: string, text: string) => void;
+  onTranslation: (timestamp: string, text: string, latencyMs: number) => void;
   onError: (message: string, isApiKeyError: boolean) => void;
   onStateChange: (state: "started" | "stopped" | "loading") => void;
 }
@@ -52,10 +52,6 @@ function parseTokens(tokens: Token[]): {
 
 export function getWordCount(): number {
   return wordCount;
-}
-
-export function getStartTime(): number {
-  return startTime;
 }
 
 export async function startTranscription(
@@ -108,9 +104,10 @@ export async function startTranscription(
         callbacks.onTranscript(ts, original, isPartial);
       }
 
-      if (translated) {
+      if (translated && hasEnd) {
         wordCount += translated.split(/\s+/).filter(Boolean).length;
-        callbacks.onTranslation(ts, translated);
+        const latencyMs = elapsed - result.total_audio_proc_ms;
+        callbacks.onTranslation(ts, translated, latencyMs);
         logTranslation(ts, translated).catch(() => {});
       }
     },

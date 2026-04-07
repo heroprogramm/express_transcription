@@ -6,7 +6,6 @@ import {
   stopTranscription,
   cancelTranscription,
   getWordCount,
-  getStartTime,
 } from "./lib/soniox";
 import StatsBar from "./components/StatsBar";
 import Controls from "./components/Controls";
@@ -81,18 +80,15 @@ export default function App() {
             });
             if (!isPartial) setSttCount((c) => c + 1);
           },
-          onTranslation(timestamp, text) {
+          onTranslation(timestamp, text, latencyMs) {
             setTransEntries((prev) => {
               const next = [...prev, { id: entryId++, timestamp, text }];
               return next.length > MAX_ENTRIES ? next.slice(-MAX_ENTRIES) : next;
             });
             setTransCount((c) => c + 1);
             setWords(getWordCount());
-            const parts = timestamp.split(/[:.]/).map(Number);
-            if (parts.length === 4) {
-              const ms = parts[0] * 3600000 + parts[1] * 60000 + parts[2] * 1000 + parts[3];
-              const lat = (Date.now() - getStartTime() - ms) / 1000;
-              if (lat >= 0) setLatency(`${lat.toFixed(1)}s`);
+            if (latencyMs >= 0) {
+              setLatency(`${(latencyMs / 1000).toFixed(1)}s`);
             }
           },
           onError(message, isApiKeyError) {
@@ -107,7 +103,7 @@ export default function App() {
           },
           onStateChange(state) {
             if (state === "started") {
-              startTime = getStartTime();
+              startTime = Date.now();
               setStatus("live");
               setStatusText("On Air");
               uptimeInterval = setInterval(updateUptime, 1000);
