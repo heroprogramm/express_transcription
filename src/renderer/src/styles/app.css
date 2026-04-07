@@ -92,7 +92,8 @@ layer(base);
 
 /* ── Base ─────────────────────────────────────────────────────── */
 html,
-body {
+body,
+#root {
   height: 100%;
   overflow: hidden;
 }
@@ -102,6 +103,13 @@ body {
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
 }
 
 ::selection {

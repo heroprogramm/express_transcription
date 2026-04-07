@@ -25,17 +25,14 @@ function formatTimestamp(ms: number): string {
 function parseTokens(tokens: Token[]): {
   original: string;
   translated: string | null;
-  hasEnd: boolean;
+  isFinal: boolean;
 } {
   const originalParts: string[] = [];
   const translatedParts: string[] = [];
-  let hasEnd = false;
+  let isFinal = false;
 
   for (const t of tokens) {
-    if (t.text === "<end>" || t.text === "<fin>") {
-      hasEnd = true;
-      continue;
-    }
+    if (t.is_final) isFinal = true;
     if (t.translation_status === "translation") {
       translatedParts.push(t.text);
     } else {
@@ -46,7 +43,7 @@ function parseTokens(tokens: Token[]): {
   return {
     original: originalParts.join(""),
     translated: translatedParts.length > 0 ? translatedParts.join("") : null,
-    hasEnd,
+    isFinal,
   };
 }
 
@@ -97,14 +94,13 @@ export async function startTranscription(
     onPartialResult: (result: SpeechToTextAPIResponse) => {
       const elapsed = Date.now() - startTime;
       const ts = formatTimestamp(elapsed);
-      const { original, translated, hasEnd } = parseTokens(result.tokens);
-      const isPartial = !hasEnd;
+      const { original, translated, isFinal } = parseTokens(result.tokens);
 
       if (original) {
-        callbacks.onTranscript(ts, original, isPartial);
+        callbacks.onTranscript(ts, original, !isFinal);
       }
 
-      if (translated && hasEnd) {
+      if (translated) {
         wordCount += translated.split(/\s+/).filter(Boolean).length;
         const latencyMs = elapsed - result.total_audio_proc_ms;
         callbacks.onTranslation(ts, translated, latencyMs);
