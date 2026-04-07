@@ -14,32 +14,36 @@ declare global {
   }
 }
 
-const api = window.electronAPI;
+function getApi() {
+  const api = window.electronAPI;
+  if (!api) throw new Error("electronAPI not available — preload script may not have loaded");
+  return api;
+}
 
 export async function getApiKey(): Promise<string | null> {
-  return api.getApiKey();
+  return getApi().getApiKey();
 }
 
 export async function saveApiKey(key: string): Promise<void> {
-  return api.saveApiKey(key);
+  return getApi().saveApiKey(key);
 }
 
 export async function hasApiKey(): Promise<boolean> {
-  return api.hasApiKey();
+  return getApi().hasApiKey();
 }
 
 export async function getConfig(): Promise<AppConfig> {
-  return api.getConfig();
+  return getApi().getConfig();
 }
 
 export async function startSession(): Promise<void> {
-  return api.startSession();
+  return getApi().startSession();
 }
 
 export async function stopSession(): Promise<void> {
-  return api.stopSession();
+  return getApi().stopSession();
 }
 
 export async function logTranslation(timestamp: string, text: string): Promise<void> {
-  return api.logTranslation(timestamp, text);
+  return getApi().logTranslation(timestamp, text);
 }
