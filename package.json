@@ -1,0 +1,45 @@
+{
+  "name": "express-transcribe",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "dist": "electron-vite build && electron-builder"
+  },
+  "dependencies": {
+    "@electron-toolkit/utils": "^4.0.0",
+    "@soniox/speech-to-text-web": "^1.4.0",
+    "electron-store": "^11.0.2",
+    "solid-js": "^1.9.12"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.2",
+    "electron": "^41.1.1",
+    "electron-builder": "^26.8.1",
+    "electron-vite": "^5.0.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.0.4",
+    "vite-plugin-solid": "^2.11.12"
+  },
+  "build": {
+    "appId": "com.express247.transcribe",
+    "productName": "Express Transcribe",
+    "files": [
+      "out/**/*",
+      "config/**/*"
+    ],
+    "mac": {
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": ["deb", "AppImage"]
+    }
+  }
+}

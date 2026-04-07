@@ -1,0 +1,8 @@
+[soniox]
+language = "ur"
+model = "stt-rt-v4"
+translate_to = "en"
+
+[output]
+feed_file = "feed.txt"
+session_log_dir = "sessions"
