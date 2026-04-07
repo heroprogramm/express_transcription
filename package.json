@@ -11,7 +11,8 @@
     "dist": "electron-vite build && electron-builder",
     "lint": "oxlint src/",
     "fmt": "oxfmt --write src/",
-    "fmt:check": "oxfmt --check src/"
+    "fmt:check": "oxfmt --check src/",
+    "prepare": "lefthook install"
   },
   "dependencies": {
     "@electron-toolkit/utils": "^4.0.0",
