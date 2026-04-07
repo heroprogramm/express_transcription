@@ -38,7 +38,9 @@ export default function App() {
 
   onMount(async () => {
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
-    try { setConfig(await getConfig()); } catch {}
+    try {
+      setConfig(await getConfig());
+    } catch {}
     const hasKey = await hasApiKey();
     setKeyReady(hasKey);
     if (!hasKey) setShowSettings(true);
@@ -96,23 +98,29 @@ export default function App() {
             ...prev,
             { id: entryId++, timestamp: "", text: `[ERROR] ${message}`, isPartial: false },
           ]);
-          if (isApiKeyError) { handleStopped(); setShowSettings(true); }
+          if (isApiKeyError) {
+            handleStopped();
+            setShowSettings(true);
+          }
         },
         onStateChange(state) {
           if (state === "started") {
-            setStatus("live"); setStatusText("On Air");
+            setStatus("live");
+            setStatusText("On Air");
             uptimeInterval = setInterval(updateUptime, 1000);
           } else if (state === "stopped") {
             handleStopped();
           } else if (state === "loading") {
-            setStatus("loading"); setStatusText("Loading\u2026");
+            setStatus("loading");
+            setStatusText("Loading\u2026");
           }
         },
       });
     } catch (e) {
       const msg = String(e);
       setSttEntries((prev) => [
-        ...prev, { id: entryId++, timestamp: "", text: `[ERROR] ${msg}`, isPartial: false },
+        ...prev,
+        { id: entryId++, timestamp: "", text: `[ERROR] ${msg}`, isPartial: false },
       ]);
       handleStopped();
       if (/api.key|unauthorized|invalid.*key|no soniox/i.test(msg)) setShowSettings(true);
@@ -126,13 +134,23 @@ export default function App() {
   }
 
   function handleStopped() {
-    setRunning(false); setStatus("standby"); setStatusText("Standby");
-    if (uptimeInterval) { clearInterval(uptimeInterval); uptimeInterval = undefined; }
+    setRunning(false);
+    setStatus("standby");
+    setStatusText("Standby");
+    if (uptimeInterval) {
+      clearInterval(uptimeInterval);
+      uptimeInterval = undefined;
+    }
   }
 
   function handleClear() {
-    setSttEntries([]); setTransEntries([]);
-    setSttCount(0); setTransCount(0); setWords(0); setLatency("\u2014"); entryId = 0;
+    setSttEntries([]);
+    setTransEntries([]);
+    setSttCount(0);
+    setTransCount(0);
+    setWords(0);
+    setLatency("\u2014");
+    entryId = 0;
   }
 
   const badgeClass = () =>
@@ -158,7 +176,9 @@ export default function App() {
         <StatsBar latency={latency} words={words} uptime={uptime} />
 
         <div class="flex items-center gap-2.5">
-          <div class={`flex items-center gap-2 py-[7px] pl-3 pr-4 border border-border-lit rounded-full bg-surface text-xs font-bold tracking-wider text-tx-3 transition-all duration-400 ${badgeClass()}`}>
+          <div
+            class={`flex items-center gap-2 py-[7px] pl-3 pr-4 border border-border-lit rounded-full bg-surface text-xs font-bold tracking-wider text-tx-3 transition-all duration-400 ${badgeClass()}`}
+          >
             <span class="status-dot w-2 h-2 rounded-full bg-tx-4 shrink-0 transition-all duration-400" />
             <span>{statusText()}</span>
           </div>
@@ -179,10 +199,7 @@ export default function App() {
       </main>
 
       <Show when={showSettings()}>
-        <SettingsModal
-          onClose={() => setShowSettings(false)}
-          onSaved={() => setKeyReady(true)}
-        />
+        <SettingsModal onClose={() => setShowSettings(false)} onSaved={() => setKeyReady(true)} />
       </Show>
     </>
   );

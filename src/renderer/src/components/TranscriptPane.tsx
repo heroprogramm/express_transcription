@@ -8,7 +8,9 @@ interface SttPaneProps {
 
 export function SttPane(props: SttPaneProps) {
   let container: HTMLDivElement | undefined;
-  const scrollToBottom = () => { if (container) container.scrollTop = container.scrollHeight; };
+  const scrollToBottom = () => {
+    if (container) container.scrollTop = container.scrollHeight;
+  };
 
   return (
     <section class="flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-[14px] overflow-hidden">
@@ -21,14 +23,28 @@ export function SttPane(props: SttPaneProps) {
           <Show when={props.count() > 0}>{props.count()} lines</Show>
         </span>
       </div>
-      <div ref={container} class="transcript-scroll flex-1 overflow-y-auto px-5 py-4 font-mono text-sm leading-relaxed break-words scroll-smooth" dir="rtl">
+      <div
+        ref={container}
+        class="transcript-scroll flex-1 overflow-y-auto px-5 py-4 font-mono text-sm leading-relaxed break-words scroll-smooth"
+        dir="rtl"
+      >
         <Show
           when={props.entries().length > 0}
           fallback={
             <div class="flex flex-col items-center justify-center h-full gap-3 text-tx-4">
-              <svg class="opacity-40" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+              <svg
+                class="opacity-40"
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.2"
+              >
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="23" />
+                <line x1="8" y1="23" x2="16" y2="23" />
               </svg>
               <p class="font-ui text-[13px] font-medium">Waiting for audio input...</p>
             </div>
@@ -43,7 +59,9 @@ export function SttPane(props: SttPaneProps) {
                   <span class="inline text-[10px] font-medium font-mono text-tx-4 tracking-wide mr-1.5 align-baseline">
                     {entry.timestamp} {marker}
                   </span>
-                  <span class={`text-tx font-urdu text-lg leading-[2] ${entry.isPartial ? "partial-text text-amber opacity-70" : ""}`}>
+                  <span
+                    class={`text-tx font-urdu text-lg leading-[2] ${entry.isPartial ? "partial-text text-amber opacity-70" : ""}`}
+                  >
                     {entry.text}
                   </span>
                 </div>
@@ -63,7 +81,9 @@ interface TransPaneProps {
 
 export function TranslationPane(props: TransPaneProps) {
   let container: HTMLDivElement | undefined;
-  const scrollToBottom = () => { if (container) container.scrollTop = container.scrollHeight; };
+  const scrollToBottom = () => {
+    if (container) container.scrollTop = container.scrollHeight;
+  };
 
   return (
     <section class="flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-[14px] overflow-hidden">
@@ -76,13 +96,25 @@ export function TranslationPane(props: TransPaneProps) {
           <Show when={props.count() > 0}>{props.count()} lines</Show>
         </span>
       </div>
-      <div ref={container} class="transcript-scroll flex-1 overflow-y-auto px-5 py-4 font-mono text-sm leading-relaxed break-words scroll-smooth">
+      <div
+        ref={container}
+        class="transcript-scroll flex-1 overflow-y-auto px-5 py-4 font-mono text-sm leading-relaxed break-words scroll-smooth"
+      >
         <Show
           when={props.entries().length > 0}
           fallback={
             <div class="flex flex-col items-center justify-center h-full gap-3 text-tx-4">
-              <svg class="opacity-40" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-                <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" />
+              <svg
+                class="opacity-40"
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="2" y1="12" x2="22" y2="12" />
                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
               </svg>
               <p class="font-ui text-[13px] font-medium">Translations will appear here</p>

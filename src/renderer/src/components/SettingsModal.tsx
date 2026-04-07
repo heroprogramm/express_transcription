@@ -13,14 +13,21 @@ export default function SettingsModal(props: Props) {
 
   async function handleSave() {
     const value = key().trim();
-    if (!value) { setError("API key cannot be empty"); return; }
-    setSaving(true); setError("");
+    if (!value) {
+      setError("API key cannot be empty");
+      return;
+    }
+    setSaving(true);
+    setError("");
     try {
       await saveApiKey(value);
-      props.onSaved(); props.onClose();
+      props.onSaved();
+      props.onClose();
     } catch (e) {
       setError(`Failed to save: ${e}`);
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleKeyDown(e: KeyboardEvent) {
@@ -31,11 +38,15 @@ export default function SettingsModal(props: Props) {
   return (
     <div
       class="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm flex items-center justify-center"
-      onClick={(e) => { if (e.target === e.currentTarget) props.onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) props.onClose();
+      }}
     >
       <div class="bg-raised border border-border rounded-[14px] p-8 w-[420px] max-w-[90vw] shadow-2xl">
         <h2 class="text-lg font-bold text-tx mb-1">Soniox API Key</h2>
-        <p class="text-[13px] text-tx-3 mb-6">Enter your Soniox API key to enable speech-to-text transcription.</p>
+        <p class="text-[13px] text-tx-3 mb-6">
+          Enter your Soniox API key to enable speech-to-text transcription.
+        </p>
         <label class="block text-xs font-semibold text-tx-2 mb-1">API Key</label>
         <input
           type="password"

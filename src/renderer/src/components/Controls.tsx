@@ -27,7 +27,9 @@ export default function Controls(props: Props) {
     <div class="flex items-center justify-between h-14 px-6 bg-inset border-b border-border shrink-0">
       <div class="flex gap-5">
         <div class="flex items-center gap-2.5">
-          <label class="text-[11px] font-semibold text-tx-3 tracking-wide whitespace-nowrap">Microphone</label>
+          <label class="text-[11px] font-semibold text-tx-3 tracking-wide whitespace-nowrap">
+            Microphone
+          </label>
           <div class="relative inline-flex items-center">
             <select
               class="rounded-md px-3 py-[7px] pr-9 text-[13px] font-ui font-semibold cursor-pointer outline-none min-w-[145px] transition-all"
@@ -40,8 +42,18 @@ export default function Controls(props: Props) {
                 <option value={mic.deviceId}>{mic.label || `Microphone ${i + 1}`}</option>
               ))}
             </select>
-            <svg class="absolute right-2.5 w-4 h-4 text-tx-3 pointer-events-none" viewBox="0 0 16 16" fill="none">
-              <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            <svg
+              class="absolute right-2.5 w-4 h-4 text-tx-3 pointer-events-none"
+              viewBox="0 0 16 16"
+              fill="none"
+            >
+              <path
+                d="M4 6l4 4 4-4"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
             </svg>
           </div>
         </div>
@@ -84,7 +96,16 @@ export default function Controls(props: Props) {
           onClick={props.onSettings}
           aria-label="Settings"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <circle cx="12" cy="12" r="3" />
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
           </svg>

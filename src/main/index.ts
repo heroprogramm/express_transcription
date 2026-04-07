@@ -26,7 +26,11 @@ function loadConfig(): AppConfig {
     for (const line of raw.split("\n")) {
       const trimmed = line.trim();
       const sm = trimmed.match(/^\[(\w+)\]$/);
-      if (sm) { section = sm[1]; config[section] = {}; continue; }
+      if (sm) {
+        section = sm[1];
+        config[section] = {};
+        continue;
+      }
       const kv = trimmed.match(/^(\w+)\s*=\s*"(.+)"$/);
       if (kv && section) config[section][kv[1]] = kv[2];
     }
@@ -107,7 +111,10 @@ ipcMain.handle("start-session", () => {
 });
 
 ipcMain.handle("stop-session", () => {
-  if (sessionFile) { sessionFile.end(); sessionFile = null; }
+  if (sessionFile) {
+    sessionFile.end();
+    sessionFile = null;
+  }
 });
 
 ipcMain.handle("log-translation", (_event, timestamp: string, text: string) => {

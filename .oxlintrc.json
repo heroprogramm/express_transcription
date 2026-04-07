@@ -1,0 +1,27 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+  "rules": {
+    "eqeqeq": "error",
+    "no-var": "error",
+    "no-debugger": "warn",
+    "no-duplicate-imports": "error",
+    "no-self-compare": "error",
+    "no-template-curly-in-string": "warn",
+    "no-constant-binary-expression": "error",
+    "no-constructor-return": "error",
+    "no-unassigned-vars": "off",
+    "no-unused-vars": "warn",
+    "no-console": "off",
+    "prefer-const": "warn",
+    "default-case-last": "warn",
+    "no-lonely-if": "warn",
+    "no-useless-rename": "warn",
+    "prefer-exponentiation-operator": "warn"
+  },
+  "ignorePatterns": [
+    "out",
+    "dist",
+    "node_modules",
+    "*.config.*"
+  ]
+}

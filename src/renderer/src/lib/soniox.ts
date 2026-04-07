@@ -1,5 +1,4 @@
-import { SonioxClient } from "@soniox/speech-to-text-web";
-import type { SpeechToTextAPIResponse, Token } from "@soniox/speech-to-text-web";
+import { SonioxClient, type SpeechToTextAPIResponse, type Token } from "@soniox/speech-to-text-web";
 import type { AppConfig } from "./types";
 import { getApiKey, logTranslation } from "./tauri-bridge";
 
