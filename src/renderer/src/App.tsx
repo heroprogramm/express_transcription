@@ -1,4 +1,4 @@
-import { createSignal, onMount, onCleanup, Show } from "solid-js";
+import { createSignal, onMount, onCleanup, Show, batch, lazy } from "solid-js";
 import type { TranscriptEntry, TranslationEntry, AppConfig } from "./lib/types";
 import { hasApiKey, getConfig, startSession, stopSession } from "./lib/tauri-bridge";
 import {
@@ -10,14 +10,14 @@ import {
 import StatsBar from "./components/StatsBar";
 import Controls from "./components/Controls";
 import { SttPane, TranslationPane } from "./components/TranscriptPane";
-import SettingsModal from "./components/SettingsModal";
+
+const SettingsModal = lazy(() => import("./components/SettingsModal"));
 
 const MAX_ENTRIES = 500;
 
 export default function App() {
   const [running, setRunning] = createSignal(false);
   const [showSettings, setShowSettings] = createSignal(false);
-  const [, setKeyReady] = createSignal(false);
   const [config, setConfig] = createSignal<AppConfig | null>(null);
 
   const [status, setStatus] = createSignal<"standby" | "loading" | "live">("standby");
@@ -29,8 +29,6 @@ export default function App() {
 
   const [sttEntries, setSttEntries] = createSignal<TranscriptEntry[]>([]);
   const [transEntries, setTransEntries] = createSignal<TranslationEntry[]>([]);
-  const [sttCount, setSttCount] = createSignal(0);
-  const [transCount, setTransCount] = createSignal(0);
 
   let entryId = 0;
   let uptimeInterval: ReturnType<typeof setInterval> | undefined;
@@ -41,9 +39,7 @@ export default function App() {
     try {
       setConfig(await getConfig());
     } catch {}
-    const hasKey = await hasApiKey();
-    setKeyReady(hasKey);
-    if (!hasKey) setShowSettings(true);
+    if (!(await hasApiKey())) setShowSettings(true);
   });
 
   onCleanup(() => {
@@ -56,6 +52,28 @@ export default function App() {
     const mins = String(Math.floor(elapsed / 60)).padStart(2, "0");
     const secs = String(elapsed % 60).padStart(2, "0");
     setUptime(`${mins}:${secs}`);
+  }
+
+  function pushSttEntry(entry: TranscriptEntry) {
+    setSttEntries((prev) => {
+      if (prev.length >= MAX_ENTRIES) {
+        const next = prev.slice(-(MAX_ENTRIES - 1));
+        next.push(entry);
+        return next;
+      }
+      return [...prev, entry];
+    });
+  }
+
+  function pushTransEntry(entry: TranslationEntry) {
+    setTransEntries((prev) => {
+      if (prev.length >= MAX_ENTRIES) {
+        const next = prev.slice(-(MAX_ENTRIES - 1));
+        next.push(entry);
+        return next;
+      }
+      return [...prev, entry];
+    });
   }
 
   async function handleStart(micDeviceId: string) {
@@ -74,28 +92,24 @@ export default function App() {
         {
           onTranscript(timestamp, text, isPartial) {
             if (!isPartial && !text.trim()) return;
-            setSttEntries((prev) => {
-              const next = [...prev, { id: entryId++, timestamp, text, isPartial }];
-              return next.length > MAX_ENTRIES ? next.slice(-MAX_ENTRIES) : next;
-            });
-            if (!isPartial) setSttCount((c) => c + 1);
+            pushSttEntry({ id: entryId++, timestamp, text, isPartial });
           },
           onTranslation(timestamp, text, latencyMs) {
-            setTransEntries((prev) => {
-              const next = [...prev, { id: entryId++, timestamp, text }];
-              return next.length > MAX_ENTRIES ? next.slice(-MAX_ENTRIES) : next;
+            batch(() => {
+              pushTransEntry({ id: entryId++, timestamp, text });
+              setWords(getWordCount());
+              if (latencyMs >= 0) {
+                setLatency(`${(latencyMs / 1000).toFixed(1)}s`);
+              }
             });
-            setTransCount((c) => c + 1);
-            setWords(getWordCount());
-            if (latencyMs >= 0) {
-              setLatency(`${(latencyMs / 1000).toFixed(1)}s`);
-            }
           },
           onError(message, isApiKeyError) {
-            setSttEntries((prev) => [
-              ...prev,
-              { id: entryId++, timestamp: "", text: `[ERROR] ${message}`, isPartial: false },
-            ]);
+            pushSttEntry({
+              id: entryId++,
+              timestamp: "",
+              text: `[ERROR] ${message}`,
+              isPartial: false,
+            });
             if (isApiKeyError) {
               handleStopped();
               setShowSettings(true);
@@ -119,10 +133,7 @@ export default function App() {
       );
     } catch (e) {
       const msg = String(e);
-      setSttEntries((prev) => [
-        ...prev,
-        { id: entryId++, timestamp: "", text: `[ERROR] ${msg}`, isPartial: false },
-      ]);
+      pushSttEntry({ id: entryId++, timestamp: "", text: `[ERROR] ${msg}`, isPartial: false });
       handleStopped();
       if (/api.key|unauthorized|invalid.*key|no soniox/i.test(msg)) setShowSettings(true);
     }
@@ -145,12 +156,12 @@ export default function App() {
   }
 
   function handleClear() {
-    setSttEntries([]);
-    setTransEntries([]);
-    setSttCount(0);
-    setTransCount(0);
-    setWords(0);
-    setLatency("\u2014");
+    batch(() => {
+      setSttEntries([]);
+      setTransEntries([]);
+      setWords(0);
+      setLatency("\u2014");
+    });
     entryId = 0;
   }
 
@@ -161,7 +172,6 @@ export default function App() {
     <>
       <div class="grain fixed inset-0 pointer-events-none z-[9999] opacity-[0.025] bg-repeat" />
 
-      {/* Top Bar */}
       <header class="flex items-center justify-between h-[60px] px-6 bg-raised border-b border-border shrink-0 relative z-10">
         <div class="flex items-center gap-3.5">
           <div class="brand-mark w-9 h-9 rounded-md flex items-center justify-center font-ui font-extrabold text-[17px] text-bg relative overflow-hidden">
@@ -195,12 +205,12 @@ export default function App() {
       />
 
       <main class="flex flex-1 min-h-0 overflow-hidden p-4 gap-4 bg-bg">
-        <SttPane entries={sttEntries} count={sttCount} />
-        <TranslationPane entries={transEntries} count={transCount} />
+        <SttPane entries={sttEntries} />
+        <TranslationPane entries={transEntries} />
       </main>
 
       <Show when={showSettings()}>
-        <SettingsModal onClose={() => setShowSettings(false)} onSaved={() => setKeyReady(true)} />
+        <SettingsModal onClose={() => setShowSettings(false)} onSaved={() => {}} />
       </Show>
     </>
   );

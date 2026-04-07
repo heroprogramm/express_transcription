@@ -1,16 +1,16 @@
-import { createEffect, For, Show, type Accessor } from "solid-js";
+import { createEffect, createMemo, For, Show, type Accessor } from "solid-js";
 import type { TranscriptEntry, TranslationEntry } from "../lib/types";
 
 interface SttPaneProps {
   entries: Accessor<TranscriptEntry[]>;
-  count: Accessor<number>;
 }
 
 export function SttPane(props: SttPaneProps) {
   let container: HTMLDivElement | undefined;
+  const count = createMemo(() => props.entries().filter((e) => !e.isPartial).length);
 
   createEffect(() => {
-    const _ = props.entries().length; // track signal for auto-scroll
+    const _ = props.entries().length;
     requestAnimationFrame(() => {
       if (container) container.scrollTop = container.scrollHeight;
     });
@@ -24,7 +24,7 @@ export function SttPane(props: SttPaneProps) {
           <h2 class="text-[13px] font-bold text-tx-2 tracking-wide">STT Output</h2>
         </div>
         <span class="text-[11px] text-tx-3 font-mono">
-          <Show when={props.count() > 0}>{props.count()} lines</Show>
+          <Show when={count() > 0}>{count()} lines</Show>
         </span>
       </div>
       <div
@@ -79,14 +79,14 @@ export function SttPane(props: SttPaneProps) {
 
 interface TransPaneProps {
   entries: Accessor<TranslationEntry[]>;
-  count: Accessor<number>;
 }
 
 export function TranslationPane(props: TransPaneProps) {
   let container: HTMLDivElement | undefined;
+  const count = createMemo(() => props.entries().length);
 
   createEffect(() => {
-    const _ = props.entries().length; // track signal for auto-scroll
+    const _ = props.entries().length;
     requestAnimationFrame(() => {
       if (container) container.scrollTop = container.scrollHeight;
     });
@@ -100,7 +100,7 @@ export function TranslationPane(props: TransPaneProps) {
           <h2 class="text-[13px] font-bold text-tx-2 tracking-wide">Translation</h2>
         </div>
         <span class="text-[11px] text-tx-3 font-mono">
-          <Show when={props.count() > 0}>{props.count()} lines</Show>
+          <Show when={count() > 0}>{count()} lines</Show>
         </span>
       </div>
       <div

@@ -3,6 +3,7 @@ import { join, basename } from "path";
 import { is } from "@electron-toolkit/utils";
 import Store from "electron-store";
 import * as fs from "fs";
+import * as fsp from "fs/promises";
 
 const store = new Store();
 const STORE_KEY = "soniox_api_key";
@@ -121,11 +122,11 @@ ipcMain.handle("stop-session", () => {
   }
 });
 
-ipcMain.handle("log-translation", (_event, timestamp: string, text: string) => {
+ipcMain.handle("log-translation", async (_event, timestamp: string, text: string) => {
   if (sessionFile) sessionFile.write(`[${timestamp}] ${text}\n`);
   if (feedPath) {
     const tmp = `${feedPath}.tmp`;
-    fs.writeFileSync(tmp, `[${timestamp}] ${text}\n`);
-    fs.renameSync(tmp, feedPath);
+    await fsp.writeFile(tmp, `[${timestamp}] ${text}\n`);
+    await fsp.rename(tmp, feedPath);
   }
 });
