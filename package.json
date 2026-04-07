@@ -1,5 +1,5 @@
 {
-  "name": "express-transcribe",
+  "name": "express-text",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -35,8 +35,8 @@
     "vite-plugin-solid": "^2.11.12"
   },
   "build": {
-    "appId": "com.express247.transcribe",
-    "productName": "Express Transcribe",
+    "appId": "com.express247.text",
+    "productName": "ExpressText",
     "files": [
       "out/**/*",
       "config/**/*"

@@ -1,4 +1,4 @@
-# Express Transcribe
+# ExpressText
 
 A cross-platform desktop application for real-time speech-to-text transcription and translation. Built for the Express 24/7 newsroom workflow, it captures live audio from a microphone, transcribes it using the [Soniox](https://soniox.com/) speech-to-text API, and provides one-way translation (e.g., Urdu to English) -- all in a single window.
 
@@ -43,7 +43,7 @@ A cross-platform desktop application for real-time speech-to-text transcription 
 
 ```bash
 git clone <repo-url>
-cd express-transcribe-v2
+cd express-text
 ```
 
 ### 2. Install dependencies
@@ -95,9 +95,9 @@ Application settings are loaded from `config/default.json`:
 
 Output files are written to the Electron `userData` directory:
 
-- **macOS** -- `~/Library/Application Support/express-transcribe/`
-- **Windows** -- `%APPDATA%/express-transcribe/`
-- **Linux** -- `~/.config/express-transcribe/`
+- **macOS** -- `~/Library/Application Support/express-text/`
+- **Windows** -- `%APPDATA%/express-text/`
+- **Linux** -- `~/.config/express-text/`
 
 ## Scripts
 
@@ -130,7 +130,7 @@ This compiles the app and runs electron-builder, producing platform-specific out
 ## Project Structure
 
 ```
-express-transcribe-v2/
+express-text/
   config/
     default.json            # App configuration
   src/
