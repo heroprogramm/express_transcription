@@ -3,4 +3,6 @@ import { render } from "solid-js/web";
 import App from "./App";
 import "./styles/app.css";
 
-render(() => <App />, document.getElementById("root")!);
+const root = document.getElementById("root")!;
+root.innerHTML = "";
+render(() => <App />, root);
