@@ -6,6 +6,7 @@ import {
   stopTranscription,
   cancelTranscription,
   getWordCount,
+  getStartTime,
 } from "./lib/soniox";
 import StatsBar from "./components/StatsBar";
 import Controls from "./components/Controls";
@@ -58,7 +59,7 @@ export default function App() {
     setUptime(`${mins}:${secs}`);
   }
 
-  async function handleStart(_micDeviceId: string) {
+  async function handleStart(micDeviceId: string) {
     if (running()) return;
     const cfg = config();
     if (!cfg) return;
@@ -66,56 +67,60 @@ export default function App() {
     setRunning(true);
     setStatus("loading");
     setStatusText("Starting\u2026");
-    startTime = Date.now();
 
     try {
       await startSession();
-      await startTranscription(cfg, {
-        onTranscript(timestamp, text, isPartial) {
-          if (!isPartial && !text.trim()) return;
-          setSttEntries((prev) => {
-            const next = [...prev, { id: entryId++, timestamp, text, isPartial }];
-            return next.length > MAX_ENTRIES ? next.slice(-MAX_ENTRIES) : next;
-          });
-          if (!isPartial) setSttCount((c) => c + 1);
+      await startTranscription(
+        cfg,
+        {
+          onTranscript(timestamp, text, isPartial) {
+            if (!isPartial && !text.trim()) return;
+            setSttEntries((prev) => {
+              const next = [...prev, { id: entryId++, timestamp, text, isPartial }];
+              return next.length > MAX_ENTRIES ? next.slice(-MAX_ENTRIES) : next;
+            });
+            if (!isPartial) setSttCount((c) => c + 1);
+          },
+          onTranslation(timestamp, text) {
+            setTransEntries((prev) => {
+              const next = [...prev, { id: entryId++, timestamp, text }];
+              return next.length > MAX_ENTRIES ? next.slice(-MAX_ENTRIES) : next;
+            });
+            setTransCount((c) => c + 1);
+            setWords(getWordCount());
+            const parts = timestamp.split(/[:.]/).map(Number);
+            if (parts.length === 4) {
+              const ms = parts[0] * 3600000 + parts[1] * 60000 + parts[2] * 1000 + parts[3];
+              const lat = (Date.now() - getStartTime() - ms) / 1000;
+              if (lat >= 0) setLatency(`${lat.toFixed(1)}s`);
+            }
+          },
+          onError(message, isApiKeyError) {
+            setSttEntries((prev) => [
+              ...prev,
+              { id: entryId++, timestamp: "", text: `[ERROR] ${message}`, isPartial: false },
+            ]);
+            if (isApiKeyError) {
+              handleStopped();
+              setShowSettings(true);
+            }
+          },
+          onStateChange(state) {
+            if (state === "started") {
+              startTime = getStartTime();
+              setStatus("live");
+              setStatusText("On Air");
+              uptimeInterval = setInterval(updateUptime, 1000);
+            } else if (state === "stopped") {
+              handleStopped();
+            } else if (state === "loading") {
+              setStatus("loading");
+              setStatusText("Loading\u2026");
+            }
+          },
         },
-        onTranslation(timestamp, text) {
-          setTransEntries((prev) => {
-            const next = [...prev, { id: entryId++, timestamp, text }];
-            return next.length > MAX_ENTRIES ? next.slice(-MAX_ENTRIES) : next;
-          });
-          setTransCount((c) => c + 1);
-          setWords(getWordCount());
-          const parts = timestamp.split(/[:.]/).map(Number);
-          if (parts.length === 4) {
-            const ms = parts[0] * 3600000 + parts[1] * 60000 + parts[2] * 1000 + parts[3];
-            const lat = (Date.now() - startTime - ms) / 1000;
-            if (lat >= 0) setLatency(`${lat.toFixed(1)}s`);
-          }
-        },
-        onError(message, isApiKeyError) {
-          setSttEntries((prev) => [
-            ...prev,
-            { id: entryId++, timestamp: "", text: `[ERROR] ${message}`, isPartial: false },
-          ]);
-          if (isApiKeyError) {
-            handleStopped();
-            setShowSettings(true);
-          }
-        },
-        onStateChange(state) {
-          if (state === "started") {
-            setStatus("live");
-            setStatusText("On Air");
-            uptimeInterval = setInterval(updateUptime, 1000);
-          } else if (state === "stopped") {
-            handleStopped();
-          } else if (state === "loading") {
-            setStatus("loading");
-            setStatusText("Loading\u2026");
-          }
-        },
-      });
+        micDeviceId || undefined,
+      );
     } catch (e) {
       const msg = String(e);
       setSttEntries((prev) => [

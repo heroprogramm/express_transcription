@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain, shell } from "electron";
-import { join } from "path";
+import { join, basename } from "path";
 import { is } from "@electron-toolkit/utils";
 import Store from "electron-store";
 import * as fs from "fs";
@@ -17,29 +17,22 @@ interface AppConfig {
   output: { feed_file: string; session_log_dir: string };
 }
 
+const DEFAULT_CONFIG: AppConfig = {
+  soniox: { language: "ur", model: "stt-rt-v4", translate_to: "en" },
+  output: { feed_file: "feed.txt", session_log_dir: "sessions" },
+};
+
 function loadConfig(): AppConfig {
   try {
-    const configPath = join(__dirname, "..", "..", "config", "default.toml");
+    const configPath = join(__dirname, "..", "..", "config", "default.json");
     const raw = fs.readFileSync(configPath, "utf-8");
-    const config: Record<string, Record<string, string>> = {};
-    let section = "";
-    for (const line of raw.split("\n")) {
-      const trimmed = line.trim();
-      const sm = trimmed.match(/^\[(\w+)\]$/);
-      if (sm) {
-        section = sm[1];
-        config[section] = {};
-        continue;
-      }
-      const kv = trimmed.match(/^(\w+)\s*=\s*"(.+)"$/);
-      if (kv && section) config[section][kv[1]] = kv[2];
-    }
-    return config as unknown as AppConfig;
-  } catch {
+    const parsed = JSON.parse(raw) as AppConfig;
     return {
-      soniox: { language: "ur", model: "stt-rt-v4", translate_to: "en" },
-      output: { feed_file: "feed.txt", session_log_dir: "sessions" },
+      soniox: { ...DEFAULT_CONFIG.soniox, ...parsed.soniox },
+      output: { ...DEFAULT_CONFIG.output, ...parsed.output },
     };
+  } catch {
+    return DEFAULT_CONFIG;
   }
 }
 
@@ -55,14 +48,17 @@ function createWindow(): void {
       preload: join(__dirname, "../preload/index.mjs"),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
+      sandbox: true,
     },
   });
 
   mainWindow.on("ready-to-show", () => mainWindow?.show());
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url);
+    const url = details.url;
+    if (url.startsWith("https://") || url.startsWith("http://")) {
+      shell.openExternal(url);
+    }
     return { action: "deny" };
   });
 
@@ -96,7 +92,8 @@ ipcMain.handle("get-config", (): AppConfig => appConfig);
 
 ipcMain.handle("start-session", () => {
   const dataDir = app.getPath("userData");
-  const sessionDir = join(dataDir, appConfig.output.session_log_dir);
+  const safeDirName = basename(appConfig.output.session_log_dir);
+  const sessionDir = join(dataDir, safeDirName);
   fs.mkdirSync(sessionDir, { recursive: true });
 
   const now = new Date();
@@ -105,7 +102,8 @@ ipcMain.handle("start-session", () => {
   const sessionPath = join(sessionDir, `session_${ts}.txt`);
   sessionFile = fs.createWriteStream(sessionPath, { flags: "a" });
 
-  feedPath = join(dataDir, appConfig.output.feed_file);
+  const safeFeedName = basename(appConfig.output.feed_file);
+  feedPath = join(dataDir, safeFeedName);
   console.log(`Session log: ${sessionPath}`);
   console.log(`Feed file: ${feedPath}`);
 });

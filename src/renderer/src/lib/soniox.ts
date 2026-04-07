@@ -54,9 +54,14 @@ export function getWordCount(): number {
   return wordCount;
 }
 
+export function getStartTime(): number {
+  return startTime;
+}
+
 export async function startTranscription(
   config: AppConfig,
   callbacks: SonioxCallbacks,
+  micDeviceId?: string,
 ): Promise<void> {
   callbacks.onStateChange("loading");
   wordCount = 0;
@@ -71,7 +76,15 @@ export async function startTranscription(
     keepAliveInterval: 5000,
   });
 
-  startTime = performance.now();
+  const audioConstraints: MediaTrackConstraints = {
+    echoCancellation: false,
+    noiseSuppression: false,
+  };
+  if (micDeviceId) {
+    audioConstraints.deviceId = { exact: micDeviceId };
+  }
+
+  startTime = Date.now();
 
   await client.start({
     model: config.soniox.model,
@@ -81,15 +94,12 @@ export async function startTranscription(
       type: "one_way",
       target_language: config.soniox.translate_to,
     },
-    audioConstraints: {
-      echoCancellation: false,
-      noiseSuppression: false,
-    },
+    audioConstraints,
     onStarted: () => {
       callbacks.onStateChange("started");
     },
     onPartialResult: (result: SpeechToTextAPIResponse) => {
-      const elapsed = Math.floor(performance.now() - startTime);
+      const elapsed = Date.now() - startTime;
       const ts = formatTimestamp(elapsed);
       const { original, translated, hasEnd } = parseTokens(result.tokens);
       const isPartial = !hasEnd;

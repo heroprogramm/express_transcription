@@ -1,4 +1,4 @@
-import { createSignal, onMount, type Accessor } from "solid-js";
+import { createSignal, onMount, onCleanup, type Accessor } from "solid-js";
 import ThemeToggle from "./ThemeToggle";
 
 interface Props {
@@ -21,6 +21,10 @@ export default function Controls(props: Props) {
   onMount(() => {
     populateMics();
     navigator.mediaDevices.addEventListener("devicechange", populateMics);
+  });
+
+  onCleanup(() => {
+    navigator.mediaDevices.removeEventListener("devicechange", populateMics);
   });
 
   return (

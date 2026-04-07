@@ -1,4 +1,4 @@
-import { For, Show, type Accessor } from "solid-js";
+import { createEffect, For, Show, type Accessor } from "solid-js";
 import type { TranscriptEntry, TranslationEntry } from "../lib/types";
 
 interface SttPaneProps {
@@ -8,9 +8,13 @@ interface SttPaneProps {
 
 export function SttPane(props: SttPaneProps) {
   let container: HTMLDivElement | undefined;
-  const scrollToBottom = () => {
-    if (container) container.scrollTop = container.scrollHeight;
-  };
+
+  createEffect(() => {
+    const _ = props.entries().length; // track signal for auto-scroll
+    requestAnimationFrame(() => {
+      if (container) container.scrollTop = container.scrollHeight;
+    });
+  });
 
   return (
     <section class="flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-[14px] overflow-hidden">
@@ -52,10 +56,9 @@ export function SttPane(props: SttPaneProps) {
         >
           <For each={props.entries()}>
             {(entry) => {
-              requestAnimationFrame(scrollToBottom);
               const marker = entry.isPartial ? "\u2026" : "\u25B6";
               return (
-                <div class={`py-1.5 border-b border-border last:border-b-0 animate-entry`}>
+                <div class="py-1.5 border-b border-border last:border-b-0 animate-entry">
                   <span class="inline text-[10px] font-medium font-mono text-tx-4 tracking-wide mr-1.5 align-baseline">
                     {entry.timestamp} {marker}
                   </span>
@@ -81,9 +84,13 @@ interface TransPaneProps {
 
 export function TranslationPane(props: TransPaneProps) {
   let container: HTMLDivElement | undefined;
-  const scrollToBottom = () => {
-    if (container) container.scrollTop = container.scrollHeight;
-  };
+
+  createEffect(() => {
+    const _ = props.entries().length; // track signal for auto-scroll
+    requestAnimationFrame(() => {
+      if (container) container.scrollTop = container.scrollHeight;
+    });
+  });
 
   return (
     <section class="flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-[14px] overflow-hidden">
@@ -122,17 +129,14 @@ export function TranslationPane(props: TransPaneProps) {
           }
         >
           <For each={props.entries()}>
-            {(entry) => {
-              requestAnimationFrame(scrollToBottom);
-              return (
-                <div class="py-2 border-b border-border last:border-b-0 animate-entry text-sm leading-relaxed text-tx">
-                  <span class="inline text-[10px] font-medium font-mono text-tx-4 tracking-wide mr-2">
-                    {entry.timestamp}
-                  </span>
-                  {entry.text}
-                </div>
-              );
-            }}
+            {(entry) => (
+              <div class="py-2 border-b border-border last:border-b-0 animate-entry text-sm leading-relaxed text-tx">
+                <span class="inline text-[10px] font-medium font-mono text-tx-4 tracking-wide mr-2">
+                  {entry.timestamp}
+                </span>
+                {entry.text}
+              </div>
+            )}
           </For>
         </Show>
       </div>
