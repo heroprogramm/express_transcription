@@ -5,7 +5,7 @@ export default function ThemeToggle() {
     const next = html.dataset.theme === "dark" ? "light" : "dark";
     html.dataset.theme = next;
     localStorage.setItem("theme", next);
-    setTimeout(() => document.body.classList.remove("theme-transitioning"), 350);
+    setTimeout(() => document.body.classList.remove("theme-transitioning"), 250);
   }
 
   return (

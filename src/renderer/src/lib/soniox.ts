@@ -13,6 +13,27 @@ let client: SonioxClient | null = null;
 let startTime = 0;
 let wordCount = 0;
 
+// ── IPC batching ──
+let logQueue: { ts: string; text: string }[] = [];
+let logFlushTimer: ReturnType<typeof setTimeout> | null = null;
+const LOG_FLUSH_INTERVAL_MS = 200;
+
+function queueLogTranslation(ts: string, text: string): void {
+  logQueue.push({ ts, text });
+  if (!logFlushTimer) {
+    logFlushTimer = setTimeout(flushLogQueue, LOG_FLUSH_INTERVAL_MS);
+  }
+}
+
+function flushLogQueue(): void {
+  logFlushTimer = null;
+  const batch = logQueue;
+  logQueue = [];
+  for (const { ts, text } of batch) {
+    logTranslation(ts, text).catch(() => {});
+  }
+}
+
 function formatTimestamp(ms: number): string {
   const totalSec = Math.floor(ms / 1000);
   const hours = String(Math.floor(totalSec / 3600)).padStart(2, "0");
@@ -105,7 +126,7 @@ export async function startTranscription(
         wordCount += translated.split(/\s+/).filter(Boolean).length;
         const latencyMs = elapsed - result.total_audio_proc_ms;
         callbacks.onTranslation(ts, translated, latencyMs);
-        logTranslation(ts, translated).catch(() => {});
+        queueLogTranslation(ts, translated);
       }
     },
     onFinished: () => {
@@ -121,6 +142,11 @@ export async function startTranscription(
 }
 
 export function stopTranscription(): void {
+  if (logFlushTimer) {
+    clearTimeout(logFlushTimer);
+    logFlushTimer = null;
+  }
+  flushLogQueue();
   if (client) {
     client.stop();
     client = null;
@@ -128,6 +154,11 @@ export function stopTranscription(): void {
 }
 
 export function cancelTranscription(): void {
+  if (logFlushTimer) {
+    clearTimeout(logFlushTimer);
+    logFlushTimer = null;
+  }
+  flushLogQueue();
   if (client) {
     client.cancel();
     client = null;

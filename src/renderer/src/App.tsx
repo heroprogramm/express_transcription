@@ -1,4 +1,4 @@
-import { createSignal, onMount, onCleanup, Show, batch, lazy } from "solid-js";
+import { createSignal, createMemo, onMount, onCleanup, Show, batch, lazy } from "solid-js";
 import type { TranscriptEntry, TranslationEntry, AppConfig } from "./lib/types";
 import { hasApiKey, getConfig, startSession, stopSession } from "./lib/tauri-bridge";
 import {
@@ -165,8 +165,9 @@ export default function App() {
     entryId = 0;
   }
 
-  const badgeClass = () =>
-    status() === "live" ? "badge-live" : status() === "loading" ? "badge-loading" : "";
+  const badgeClass = createMemo(() =>
+    status() === "live" ? "badge-live" : status() === "loading" ? "badge-loading" : "",
+  );
 
   return (
     <>

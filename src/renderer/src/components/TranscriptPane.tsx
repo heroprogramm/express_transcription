@@ -11,19 +11,27 @@ function useVirtualList<T extends { id: number }>(
   const [scrollTop, setScrollTop] = createSignal(0);
   const [viewHeight, setViewHeight] = createSignal(400);
   const [autoScroll, setAutoScroll] = createSignal(true);
+  let scrollRafId: number | null = null;
+  let autoScrollRafId: number | null = null;
 
   function onScroll(e: Event) {
     const el = e.currentTarget as HTMLDivElement;
-    setScrollTop(el.scrollTop);
-    setViewHeight(el.clientHeight);
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < ITEM_HEIGHT * 2;
-    setAutoScroll(atBottom);
+    if (scrollRafId) cancelAnimationFrame(scrollRafId);
+    scrollRafId = requestAnimationFrame(() => {
+      scrollRafId = null;
+      setScrollTop(el.scrollTop);
+      setViewHeight(el.clientHeight);
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < ITEM_HEIGHT * 2;
+      setAutoScroll(atBottom);
+    });
   }
 
   createEffect(() => {
     const _ = entries().length;
     if (autoScroll()) {
-      requestAnimationFrame(() => {
+      if (autoScrollRafId) cancelAnimationFrame(autoScrollRafId);
+      autoScrollRafId = requestAnimationFrame(() => {
+        autoScrollRafId = null;
         const el = containerRef();
         if (el) el.scrollTop = el.scrollHeight;
       });
