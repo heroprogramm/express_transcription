@@ -1,12 +1,12 @@
 import { createEffect, createMemo, createSignal, For, Show, type Accessor } from "solid-js";
 import type { TranscriptEntry, TranslationEntry } from "../lib/types";
 
-const ITEM_HEIGHT = 40;
 const OVERSCAN = 5;
 
 function useVirtualList<T extends { id: number }>(
   entries: Accessor<T[]>,
   containerRef: () => HTMLDivElement | undefined,
+  itemHeight: number,
 ) {
   const [scrollTop, setScrollTop] = createSignal(0);
   const [viewHeight, setViewHeight] = createSignal(400);
@@ -21,7 +21,7 @@ function useVirtualList<T extends { id: number }>(
       scrollRafId = null;
       setScrollTop(el.scrollTop);
       setViewHeight(el.clientHeight);
-      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < ITEM_HEIGHT * 2;
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < itemHeight * 2;
       setAutoScroll(atBottom);
     });
   }
@@ -38,13 +38,13 @@ function useVirtualList<T extends { id: number }>(
     }
   });
 
-  const totalHeight = createMemo(() => entries().length * ITEM_HEIGHT);
+  const totalHeight = createMemo(() => entries().length * itemHeight);
 
   const visibleRange = createMemo(() => {
-    const start = Math.max(0, Math.floor(scrollTop() / ITEM_HEIGHT) - OVERSCAN);
+    const start = Math.max(0, Math.floor(scrollTop() / itemHeight) - OVERSCAN);
     const end = Math.min(
       entries().length,
-      Math.ceil((scrollTop() + viewHeight()) / ITEM_HEIGHT) + OVERSCAN,
+      Math.ceil((scrollTop() + viewHeight()) / itemHeight) + OVERSCAN,
     );
     return { start, end };
   });
@@ -54,19 +54,24 @@ function useVirtualList<T extends { id: number }>(
     return entries().slice(start, end);
   });
 
-  const offsetY = createMemo(() => visibleRange().start * ITEM_HEIGHT);
+  const offsetY = createMemo(() => visibleRange().start * itemHeight);
 
-  return { totalHeight, visibleItems, offsetY, onScroll };
+  return { totalHeight, visibleItems, offsetY, onScroll, itemHeight };
 }
+
+// STT: Urdu Nastaliq with text-lg leading-[2] needs ~56px per row
+const STT_ITEM_HEIGHT = 56;
+// Translation: English text-sm leading-relaxed fits in ~40px
+const TRANS_ITEM_HEIGHT = 40;
 
 interface SttPaneProps {
   entries: Accessor<TranscriptEntry[]>;
+  finalCount: Accessor<number>;
 }
 
 export function SttPane(props: SttPaneProps) {
   let container: HTMLDivElement | undefined;
-  const count = createMemo(() => props.entries().filter((e) => !e.isPartial).length);
-  const vl = useVirtualList(props.entries, () => container);
+  const vl = useVirtualList(props.entries, () => container, STT_ITEM_HEIGHT);
 
   return (
     <section class="flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-[14px] overflow-hidden">
@@ -76,7 +81,7 @@ export function SttPane(props: SttPaneProps) {
           <h2 class="text-[13px] font-bold text-tx-2 tracking-wide">STT Output</h2>
         </div>
         <span class="text-[11px] text-tx-3 font-mono">
-          <Show when={count() > 0}>{count()} lines</Show>
+          <Show when={props.finalCount() > 0}>{props.finalCount()} lines</Show>
         </span>
       </div>
       <div
@@ -114,12 +119,8 @@ export function SttPane(props: SttPaneProps) {
                   const marker = entry.isPartial ? "\u2026" : "\u25B6";
                   return (
                     <div
-                      class="border-b border-border last:border-b-0 animate-entry"
-                      style={{
-                        height: `${ITEM_HEIGHT}px`,
-                        display: "flex",
-                        "align-items": "center",
-                      }}
+                      class="border-b border-border last:border-b-0 animate-entry flex items-center"
+                      style={{ height: `${vl.itemHeight}px` }}
                     >
                       <span class="inline text-[10px] font-medium font-mono text-tx-4 tracking-wide mr-1.5 align-baseline">
                         {entry.timestamp} {marker}
@@ -148,7 +149,7 @@ interface TransPaneProps {
 export function TranslationPane(props: TransPaneProps) {
   let container: HTMLDivElement | undefined;
   const count = createMemo(() => props.entries().length);
-  const vl = useVirtualList(props.entries, () => container);
+  const vl = useVirtualList(props.entries, () => container, TRANS_ITEM_HEIGHT);
 
   return (
     <section class="flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-[14px] overflow-hidden">
@@ -192,8 +193,8 @@ export function TranslationPane(props: TransPaneProps) {
               <For each={vl.visibleItems()}>
                 {(entry) => (
                   <div
-                    class="border-b border-border last:border-b-0 animate-entry text-sm leading-relaxed text-tx"
-                    style={{ height: `${ITEM_HEIGHT}px`, display: "flex", "align-items": "center" }}
+                    class="border-b border-border last:border-b-0 animate-entry text-sm leading-relaxed text-tx flex items-center"
+                    style={{ height: `${vl.itemHeight}px` }}
                   >
                     <span class="inline text-[10px] font-medium font-mono text-tx-4 tracking-wide mr-2">
                       {entry.timestamp}

@@ -29,6 +29,7 @@ export default function App() {
 
   const [sttEntries, setSttEntries] = createSignal<TranscriptEntry[]>([]);
   const [transEntries, setTransEntries] = createSignal<TranslationEntry[]>([]);
+  const [sttCount, setSttCount] = createSignal(0);
 
   let entryId = 0;
   let uptimeInterval: ReturnType<typeof setInterval> | undefined;
@@ -93,6 +94,7 @@ export default function App() {
           onTranscript(timestamp, text, isPartial) {
             if (!isPartial && !text.trim()) return;
             pushSttEntry({ id: entryId++, timestamp, text, isPartial });
+            if (!isPartial) setSttCount((c) => c + 1);
           },
           onTranslation(timestamp, text, latencyMs) {
             batch(() => {
@@ -159,6 +161,7 @@ export default function App() {
     batch(() => {
       setSttEntries([]);
       setTransEntries([]);
+      setSttCount(0);
       setWords(0);
       setLatency("\u2014");
     });
@@ -206,7 +209,7 @@ export default function App() {
       />
 
       <main class="flex flex-1 min-h-0 overflow-hidden p-4 gap-4 bg-bg">
-        <SttPane entries={sttEntries} />
+        <SttPane entries={sttEntries} finalCount={sttCount} />
         <TranslationPane entries={transEntries} />
       </main>
 

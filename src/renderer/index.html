@@ -6,10 +6,105 @@
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Express 24/7 — Live Transcription</title>
+    <title>ExpressText</title>
+    <style>
+      /* Inline skeleton — shown before JS loads, removed by SolidJS mount */
+      .skeleton {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        font-family: system-ui, sans-serif;
+      }
+      .skeleton-bar {
+        height: 60px;
+        background: var(--bg-raised, #13161f);
+        border-bottom: 1px solid var(--border, #1f2433);
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        gap: 14px;
+        flex-shrink: 0;
+      }
+      .skeleton-logo {
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        background: linear-gradient(145deg, #f5b731, #e09500);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 17px;
+        color: #0c0f16;
+      }
+      .skeleton-text {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .skeleton-text span:first-child {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text, #e2e5ef);
+      }
+      .skeleton-text span:last-child {
+        font-size: 11px;
+        color: var(--text-3, #6b7394);
+      }
+      .skeleton-body {
+        flex: 1;
+        display: flex;
+        gap: 16px;
+        padding: 16px;
+        background: var(--bg, #0c0f16);
+      }
+      .skeleton-panel {
+        flex: 1;
+        border-radius: 14px;
+        background: var(--bg-raised, #13161f);
+        border: 1px solid var(--border, #1f2433);
+        overflow: hidden;
+        position: relative;
+      }
+      .skeleton-panel::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.03) 50%,
+          transparent 100%
+        );
+        animation: shimmer 1.5s ease-in-out infinite;
+      }
+      @keyframes shimmer {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(100%);
+        }
+      }
+    </style>
   </head>
   <body class="h-full overflow-hidden font-ui bg-bg text-tx antialiased flex flex-col">
-    <div id="root" class="h-full flex flex-col overflow-hidden"></div>
+    <div id="root" class="h-full flex flex-col overflow-hidden">
+      <!-- Skeleton shown instantly, replaced when SolidJS mounts -->
+      <div class="skeleton">
+        <div class="skeleton-bar">
+          <div class="skeleton-logo">E</div>
+          <div class="skeleton-text">
+            <span>Express 24/7</span>
+            <span>Live Transcription</span>
+          </div>
+        </div>
+        <div class="skeleton-body">
+          <div class="skeleton-panel"></div>
+          <div class="skeleton-panel"></div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="./src/index.tsx"></script>
   </body>
 </html>
