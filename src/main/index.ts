@@ -12,6 +12,28 @@ let mainWindow: BrowserWindow | null = null;
 let sessionFile: fs.WriteStream | null = null;
 let feedPath = "";
 
+// ── Buffered write queue ──
+let feedBuffer: string[] = [];
+let feedFlushTimer: ReturnType<typeof setTimeout> | null = null;
+const FEED_FLUSH_INTERVAL_MS = 200;
+
+function scheduleFeedFlush(): void {
+  if (feedFlushTimer) return;
+  feedFlushTimer = setTimeout(flushFeed, FEED_FLUSH_INTERVAL_MS);
+}
+
+async function flushFeed(): Promise<void> {
+  feedFlushTimer = null;
+  if (!feedPath || feedBuffer.length === 0) return;
+  const lastLine = feedBuffer[feedBuffer.length - 1];
+  feedBuffer = [];
+  const tmp = `${feedPath}.tmp`;
+  try {
+    await fsp.writeFile(tmp, lastLine);
+    await fsp.rename(tmp, feedPath);
+  } catch {}
+}
+
 // ── Config ──
 interface AppConfig {
   soniox: { language: string; model: string; translate_to: string };
@@ -115,18 +137,23 @@ ipcMain.handle("start-session", () => {
   console.log(`Feed file: ${feedPath}`);
 });
 
-ipcMain.handle("stop-session", () => {
+ipcMain.handle("stop-session", async () => {
+  if (feedFlushTimer) {
+    clearTimeout(feedFlushTimer);
+    feedFlushTimer = null;
+  }
+  await flushFeed();
   if (sessionFile) {
     sessionFile.end();
     sessionFile = null;
   }
 });
 
-ipcMain.handle("log-translation", async (_event, timestamp: string, text: string) => {
-  if (sessionFile) sessionFile.write(`[${timestamp}] ${text}\n`);
+ipcMain.handle("log-translation", (_event, timestamp: string, text: string) => {
+  const line = `[${timestamp}] ${text}\n`;
+  if (sessionFile) sessionFile.write(line);
   if (feedPath) {
-    const tmp = `${feedPath}.tmp`;
-    await fsp.writeFile(tmp, `[${timestamp}] ${text}\n`);
-    await fsp.rename(tmp, feedPath);
+    feedBuffer.push(line);
+    scheduleFeedFlush();
   }
 });

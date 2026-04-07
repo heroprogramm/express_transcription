@@ -1,5 +1,55 @@
-import { createEffect, createMemo, For, Show, type Accessor } from "solid-js";
+import { createEffect, createMemo, createSignal, For, Show, type Accessor } from "solid-js";
 import type { TranscriptEntry, TranslationEntry } from "../lib/types";
+
+const ITEM_HEIGHT = 40;
+const OVERSCAN = 5;
+
+function useVirtualList<T extends { id: number }>(
+  entries: Accessor<T[]>,
+  containerRef: () => HTMLDivElement | undefined,
+) {
+  const [scrollTop, setScrollTop] = createSignal(0);
+  const [viewHeight, setViewHeight] = createSignal(400);
+  const [autoScroll, setAutoScroll] = createSignal(true);
+
+  function onScroll(e: Event) {
+    const el = e.currentTarget as HTMLDivElement;
+    setScrollTop(el.scrollTop);
+    setViewHeight(el.clientHeight);
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < ITEM_HEIGHT * 2;
+    setAutoScroll(atBottom);
+  }
+
+  createEffect(() => {
+    const _ = entries().length;
+    if (autoScroll()) {
+      requestAnimationFrame(() => {
+        const el = containerRef();
+        if (el) el.scrollTop = el.scrollHeight;
+      });
+    }
+  });
+
+  const totalHeight = createMemo(() => entries().length * ITEM_HEIGHT);
+
+  const visibleRange = createMemo(() => {
+    const start = Math.max(0, Math.floor(scrollTop() / ITEM_HEIGHT) - OVERSCAN);
+    const end = Math.min(
+      entries().length,
+      Math.ceil((scrollTop() + viewHeight()) / ITEM_HEIGHT) + OVERSCAN,
+    );
+    return { start, end };
+  });
+
+  const visibleItems = createMemo(() => {
+    const { start, end } = visibleRange();
+    return entries().slice(start, end);
+  });
+
+  const offsetY = createMemo(() => visibleRange().start * ITEM_HEIGHT);
+
+  return { totalHeight, visibleItems, offsetY, onScroll };
+}
 
 interface SttPaneProps {
   entries: Accessor<TranscriptEntry[]>;
@@ -8,13 +58,7 @@ interface SttPaneProps {
 export function SttPane(props: SttPaneProps) {
   let container: HTMLDivElement | undefined;
   const count = createMemo(() => props.entries().filter((e) => !e.isPartial).length);
-
-  createEffect(() => {
-    const _ = props.entries().length;
-    requestAnimationFrame(() => {
-      if (container) container.scrollTop = container.scrollHeight;
-    });
-  });
+  const vl = useVirtualList(props.entries, () => container);
 
   return (
     <section class="flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-[14px] overflow-hidden">
@@ -29,7 +73,8 @@ export function SttPane(props: SttPaneProps) {
       </div>
       <div
         ref={container}
-        class="transcript-scroll flex-1 overflow-y-auto px-5 py-4 font-mono text-sm leading-relaxed break-words scroll-smooth"
+        onScroll={vl.onScroll}
+        class="transcript-scroll flex-1 overflow-y-auto px-5 font-mono text-sm leading-relaxed break-words"
         dir="rtl"
       >
         <Show
@@ -54,23 +99,34 @@ export function SttPane(props: SttPaneProps) {
             </div>
           }
         >
-          <For each={props.entries()}>
-            {(entry) => {
-              const marker = entry.isPartial ? "\u2026" : "\u25B6";
-              return (
-                <div class="py-1.5 border-b border-border last:border-b-0 animate-entry">
-                  <span class="inline text-[10px] font-medium font-mono text-tx-4 tracking-wide mr-1.5 align-baseline">
-                    {entry.timestamp} {marker}
-                  </span>
-                  <span
-                    class={`text-tx font-urdu text-lg leading-[2] ${entry.isPartial ? "partial-text text-amber opacity-70" : ""}`}
-                  >
-                    {entry.text}
-                  </span>
-                </div>
-              );
-            }}
-          </For>
+          <div style={{ height: `${vl.totalHeight()}px`, position: "relative" }}>
+            <div style={{ transform: `translateY(${vl.offsetY()}px)` }}>
+              <For each={vl.visibleItems()}>
+                {(entry) => {
+                  const marker = entry.isPartial ? "\u2026" : "\u25B6";
+                  return (
+                    <div
+                      class="border-b border-border last:border-b-0 animate-entry"
+                      style={{
+                        height: `${ITEM_HEIGHT}px`,
+                        display: "flex",
+                        "align-items": "center",
+                      }}
+                    >
+                      <span class="inline text-[10px] font-medium font-mono text-tx-4 tracking-wide mr-1.5 align-baseline">
+                        {entry.timestamp} {marker}
+                      </span>
+                      <span
+                        class={`text-tx font-urdu text-lg leading-[2] ${entry.isPartial ? "partial-text text-amber opacity-70" : ""}`}
+                      >
+                        {entry.text}
+                      </span>
+                    </div>
+                  );
+                }}
+              </For>
+            </div>
+          </div>
         </Show>
       </div>
     </section>
@@ -84,13 +140,7 @@ interface TransPaneProps {
 export function TranslationPane(props: TransPaneProps) {
   let container: HTMLDivElement | undefined;
   const count = createMemo(() => props.entries().length);
-
-  createEffect(() => {
-    const _ = props.entries().length;
-    requestAnimationFrame(() => {
-      if (container) container.scrollTop = container.scrollHeight;
-    });
-  });
+  const vl = useVirtualList(props.entries, () => container);
 
   return (
     <section class="flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-[14px] overflow-hidden">
@@ -105,7 +155,8 @@ export function TranslationPane(props: TransPaneProps) {
       </div>
       <div
         ref={container}
-        class="transcript-scroll flex-1 overflow-y-auto px-5 py-4 font-mono text-sm leading-relaxed break-words scroll-smooth"
+        onScroll={vl.onScroll}
+        class="transcript-scroll flex-1 overflow-y-auto px-5 font-mono text-sm leading-relaxed break-words"
       >
         <Show
           when={props.entries().length > 0}
@@ -128,16 +179,23 @@ export function TranslationPane(props: TransPaneProps) {
             </div>
           }
         >
-          <For each={props.entries()}>
-            {(entry) => (
-              <div class="py-2 border-b border-border last:border-b-0 animate-entry text-sm leading-relaxed text-tx">
-                <span class="inline text-[10px] font-medium font-mono text-tx-4 tracking-wide mr-2">
-                  {entry.timestamp}
-                </span>
-                {entry.text}
-              </div>
-            )}
-          </For>
+          <div style={{ height: `${vl.totalHeight()}px`, position: "relative" }}>
+            <div style={{ transform: `translateY(${vl.offsetY()}px)` }}>
+              <For each={vl.visibleItems()}>
+                {(entry) => (
+                  <div
+                    class="border-b border-border last:border-b-0 animate-entry text-sm leading-relaxed text-tx"
+                    style={{ height: `${ITEM_HEIGHT}px`, display: "flex", "align-items": "center" }}
+                  >
+                    <span class="inline text-[10px] font-medium font-mono text-tx-4 tracking-wide mr-2">
+                      {entry.timestamp}
+                    </span>
+                    {entry.text}
+                  </div>
+                )}
+              </For>
+            </div>
+          </div>
         </Show>
       </div>
     </section>
