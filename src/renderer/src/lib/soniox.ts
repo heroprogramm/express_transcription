@@ -134,8 +134,9 @@ export async function startTranscription(
     },
     onError: (status, message, errorCode) => {
       const isApiKeyError =
-        status === "api_error" &&
-        (errorCode === 401 || /api.key|unauthorized|invalid.*key|authentication/i.test(message));
+        (status === "api_error" &&
+          /api.key|unauthorized|invalid.*key|authentication/i.test(message)) ||
+        /no soniox api key/i.test(message);
       callbacks.onError(message, isApiKeyError);
     },
   });

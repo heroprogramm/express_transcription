@@ -112,8 +112,8 @@ export default function App() {
               text: `[ERROR] ${message}`,
               isPartial: false,
             });
+            handleStopped();
             if (isApiKeyError) {
-              handleStopped();
               setShowSettings(true);
             }
           },
