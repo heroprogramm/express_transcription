@@ -2,6 +2,11 @@
   "name": "express-text",
   "private": true,
   "version": "0.1.0",
+  "description": "Real-time speech transcription and translation desktop app",
+  "author": {
+    "name": "Hamza Shafique",
+    "email": "hamzashafiquehere@gmail.com"
+  },
   "type": "module",
   "main": "./out/main/index.js",
   "scripts": {
