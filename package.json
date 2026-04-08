@@ -47,7 +47,12 @@
       "config/**/*"
     ],
     "mac": {
-      "target": "dmg"
+      "target": "dmg",
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "ExpressText needs microphone access for real-time speech transcription."
+      }
     },
     "win": {
       "target": "nsis"
