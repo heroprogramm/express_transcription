@@ -1,7 +1,7 @@
 import type { JSX } from "solid-js";
 
 const base =
-  "font-ui font-semibold cursor-pointer inline-flex items-center justify-center transition-all disabled:opacity-25 disabled:cursor-not-allowed disabled:pointer-events-none";
+  "font-ui font-semibold cursor-pointer inline-flex items-center justify-center transition-all active:not-disabled:scale-[0.97] disabled:opacity-25 disabled:cursor-not-allowed disabled:pointer-events-none";
 
 const variants = {
   primary: `${base} h-[34px] px-4 text-[13px] gap-1.5 rounded-md border-none bg-green-soft text-white shadow-[0_1px_4px_rgba(52,211,153,0.15)] hover:not-disabled:bg-green hover:not-disabled:shadow-[0_2px_10px_rgba(52,211,153,0.25)] hover:not-disabled:-translate-y-px active:not-disabled:translate-y-0`,

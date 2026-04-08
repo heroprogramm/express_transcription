@@ -180,9 +180,19 @@ export default function App() {
     <>
       <div class="grain fixed inset-0 pointer-events-none z-[9999] opacity-[0.02] light:opacity-[0.012] bg-repeat" />
 
-      <header class="flex items-center justify-between h-[52px] px-5 bg-raised border-b border-border shrink-0 relative z-10">
+      {/* Ambient floating orbs */}
+      <div class={`ambient-orb ambient-orb-1 ${running() ? "is-active" : ""}`} />
+      <div class={`ambient-orb ambient-orb-2 ${running() ? "is-active" : ""}`} />
+      <div class={`ambient-orb ambient-orb-3 ${running() ? "is-active" : ""}`} />
+
+      <header class="stagger-1 flex items-center justify-between h-[52px] px-5 bg-raised border-b border-border shrink-0 relative z-10">
+        {/* Header underglow */}
+        <div class={`header-underglow ${status() === "live" ? "is-live" : ""}`} />
+
         <div class="flex items-center gap-3">
-          <div class="brand-mark w-8 h-8 rounded-[7px] flex items-center justify-center font-ui font-extrabold text-[15px] text-bg light:text-white relative overflow-hidden">
+          <div
+            class={`brand-mark w-8 h-8 rounded-[7px] flex items-center justify-center font-ui font-extrabold text-[15px] text-bg light:text-white relative overflow-hidden ${running() ? "brand-mark-live" : ""}`}
+          >
             <span>E</span>
             <div class="brand-mark-shine absolute inset-0" />
           </div>
@@ -197,7 +207,7 @@ export default function App() {
 
           <div class="w-px h-6 bg-border mx-1" />
 
-          <StatsBar latency={latency} words={words} uptime={uptime} />
+          <StatsBar latency={latency} words={words} uptime={uptime} live={running} />
         </div>
 
         <div class="flex items-center gap-2">
@@ -210,20 +220,28 @@ export default function App() {
         </div>
       </header>
 
-      <Controls
-        running={running}
-        onStart={handleStart}
-        onStop={handleStop}
-        onClear={handleClear}
-        onSettings={() => setShowSettings(true)}
-      />
+      <div class="stagger-2">
+        <Controls
+          running={running}
+          onStart={handleStart}
+          onStop={handleStop}
+          onClear={handleClear}
+          onSettings={() => setShowSettings(true)}
+        />
+      </div>
 
-      <main class="flex flex-1 min-h-0 overflow-hidden p-3 gap-0 bg-bg">
-        <SpeechPane entries={sttEntries} finalCount={sttCount} />
+      <main class="stagger-3 flex flex-1 min-h-0 overflow-hidden p-3 gap-0 bg-bg">
+        <SpeechPane entries={sttEntries} finalCount={sttCount} live={running} />
 
         {/* Flow arrow connecting panes */}
         <div class="flex items-center justify-center w-8 shrink-0">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="text-tx-4 opacity-50">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            class={`text-tx-4 transition-all duration-300 ${running() ? "flow-arrow-live text-amber" : "opacity-50"}`}
+          >
             <path
               d="M6 3l5 5-5 5"
               stroke="currentColor"
@@ -234,7 +252,7 @@ export default function App() {
           </svg>
         </div>
 
-        <TranslationPane entries={transEntries} />
+        <TranslationPane entries={transEntries} live={running} />
       </main>
 
       <Show when={showSettings()}>
