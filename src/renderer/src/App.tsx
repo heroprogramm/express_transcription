@@ -95,7 +95,7 @@ export default function App() {
         return;
       }
       if (micAccess === "opened-settings") {
-        showToast("Please enable microphone access in Windows Settings, then try again.", "info");
+        showToast("Please enable microphone access in Settings, then try again.", "info");
         handleStopped();
         return;
       }

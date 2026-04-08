@@ -15,6 +15,12 @@ export function registerIpcHandlers(getConfig: () => AppConfig): void {
       if (process.platform === "darwin") {
         const status = systemPreferences.getMediaAccessStatus("microphone");
         if (status === "granted") return "granted";
+        if (status === "denied") {
+          await shell.openExternal(
+            "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone",
+          );
+          return "opened-settings";
+        }
         const granted = await systemPreferences.askForMediaAccess("microphone");
         return granted ? "granted" : "denied";
       }
