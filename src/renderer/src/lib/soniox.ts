@@ -41,8 +41,7 @@ function formatTimestamp(ms: number): string {
   const hours = String(Math.floor(totalSec / 3600)).padStart(2, "0");
   const mins = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
   const secs = String(totalSec % 60).padStart(2, "0");
-  const millis = String(ms % 1000).padStart(3, "0");
-  return `${hours}:${mins}:${secs}.${millis}`;
+  return `${hours}:${mins}:${secs}`;
 }
 
 function parseTokens(tokens: Token[]): {

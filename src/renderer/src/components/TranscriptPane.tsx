@@ -136,9 +136,6 @@ export function SpeechPane(props: SpeechPaneProps) {
     <section
       class={`pane-amber flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-xl overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
     >
-      {/* CRT Scanline */}
-      <div class={`pane-scanline ${props.live() ? "is-live" : ""}`} />
-
       <div class="flex justify-between items-center px-4 py-2.5 border-b border-border shrink-0">
         <div class="flex items-center gap-2">
           <span
@@ -179,7 +176,7 @@ export function SpeechPane(props: SpeechPaneProps) {
                         {entry.timestamp} {marker}
                       </span>
                       <span
-                        class={`text-tx font-urdu text-lg leading-[2] ${entry.isPartial ? "text-amber opacity-70 light:opacity-85" : ""}`}
+                        class={`font-urdu text-lg leading-[2] ${entry.isPartial ? "text-amber opacity-70 light:opacity-85" : "text-tx"}`}
                       >
                         {entry.text}
                       </span>
@@ -210,9 +207,6 @@ export function TranslationPane(props: TransPaneProps) {
     <section
       class={`pane-teal flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-xl overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
     >
-      {/* CRT Scanline */}
-      <div class={`pane-scanline pane-scanline-teal ${props.live() ? "is-live" : ""}`} />
-
       <div class="flex justify-between items-center px-4 py-2.5 border-b border-border shrink-0">
         <div class="flex items-center gap-2">
           <span

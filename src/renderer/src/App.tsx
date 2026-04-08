@@ -28,7 +28,7 @@ export default function App() {
 
   const [latency, setLatency] = createSignal("\u2014");
   const [words, setWords] = createSignal(0);
-  const [uptime, setUptime] = createSignal("00:00");
+  const [uptime, setUptime] = createSignal("00:00:00");
 
   const [sttEntries, setSttEntries] = createSignal<TranscriptEntry[]>([]);
   const [transEntries, setTransEntries] = createSignal<TranslationEntry[]>([]);
@@ -70,9 +70,10 @@ export default function App() {
 
   function updateUptime() {
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    const mins = String(Math.floor(elapsed / 60)).padStart(2, "0");
+    const hrs = String(Math.floor(elapsed / 3600)).padStart(2, "0");
+    const mins = String(Math.floor((elapsed % 3600) / 60)).padStart(2, "0");
     const secs = String(elapsed % 60).padStart(2, "0");
-    setUptime(`${mins}:${secs}`);
+    setUptime(`${hrs}:${mins}:${secs}`);
   }
 
   function pushSttEntry(entry: TranscriptEntry) {
@@ -265,24 +266,7 @@ export default function App() {
       <main class="stagger-3 flex flex-1 min-h-0 overflow-hidden p-3 gap-0 bg-bg">
         <SpeechPane entries={sttEntries} finalCount={sttCount} live={running} />
 
-        {/* Flow arrow connecting panes */}
-        <div class="flex items-center justify-center w-8 shrink-0">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            class={`text-tx-4 transition-all duration-300 ${running() ? "flow-arrow-live text-amber" : "opacity-50"}`}
-          >
-            <path
-              d="M6 3l5 5-5 5"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </div>
+        <div class="w-3 shrink-0" />
 
         <TranslationPane entries={transEntries} live={running} />
       </main>
