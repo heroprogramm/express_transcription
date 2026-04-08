@@ -140,7 +140,9 @@ export async function startTranscription(
       }
 
       if (translated) {
-        wordCount += translated.split(/\s+/).filter(Boolean).length;
+        if (isFinal) {
+          wordCount += translated.split(/\s+/).filter(Boolean).length;
+        }
         const latencyMs = elapsed - result.total_audio_proc_ms;
         callbacks.onTranslation(ts, translated, latencyMs);
         queueLogTranslation(ts, translated);

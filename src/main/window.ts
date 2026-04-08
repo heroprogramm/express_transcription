@@ -14,11 +14,13 @@ export function createWindow(): void {
     height: 800,
     title: "ExpressText",
     show: false,
+    backgroundThrottling: false,
     webPreferences: {
       preload: join(__dirname, "../preload/index.mjs"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      v8CacheOptions: "code",
     },
   });
 
