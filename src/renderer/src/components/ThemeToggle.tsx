@@ -1,3 +1,5 @@
+import Button from "./Button";
+
 export default function ThemeToggle() {
   function toggle() {
     document.body.classList.add("theme-transitioning");
@@ -9,15 +11,16 @@ export default function ThemeToggle() {
   }
 
   return (
-    <button
-      class="w-[34px] h-[34px] rounded-full border border-border bg-surface text-tx-3 cursor-pointer flex items-center justify-center transition-all shrink-0 hover:bg-hover hover:text-tx-2 hover:border-border-lit [&_svg]:transition-transform [&:hover_svg]:rotate-[30deg]"
+    <Button
+      variant="icon"
       aria-label="Toggle theme"
       onClick={toggle}
+      class="[&_svg]:transition-transform [&:hover_svg]:rotate-[30deg]"
     >
       <svg
         class="hidden dark:block"
-        width="16"
-        height="16"
+        width="14"
+        height="14"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -37,8 +40,8 @@ export default function ThemeToggle() {
       </svg>
       <svg
         class="hidden light:block"
-        width="16"
-        height="16"
+        width="14"
+        height="14"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -48,6 +51,6 @@ export default function ThemeToggle() {
       >
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
       </svg>
-    </button>
+    </Button>
   );
 }

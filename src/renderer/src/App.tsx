@@ -9,7 +9,7 @@ import {
 } from "./lib/soniox";
 import StatsBar from "./components/StatsBar";
 import Controls from "./components/Controls";
-import { SttPane, TranslationPane } from "./components/TranscriptPane";
+import { SpeechPane, TranslationPane } from "./components/TranscriptPane";
 
 const SettingsModal = lazy(() => import("./components/SettingsModal"));
 
@@ -168,33 +168,43 @@ export default function App() {
     entryId = 0;
   }
 
-  const badgeClass = createMemo(() =>
-    status() === "live" ? "badge-live" : status() === "loading" ? "badge-loading" : "",
-  );
+  const BADGE_CLASS = {
+    standby: "badge-idle",
+    loading: "badge-loading",
+    live: "badge-live",
+  } as const;
+
+  const badgeClass = createMemo(() => BADGE_CLASS[status()]);
 
   return (
     <>
-      <div class="grain fixed inset-0 pointer-events-none z-[9999] opacity-[0.025] light:opacity-[0.015] bg-repeat" />
+      <div class="grain fixed inset-0 pointer-events-none z-[9999] opacity-[0.02] light:opacity-[0.012] bg-repeat" />
 
-      <header class="flex items-center justify-between h-[60px] px-6 bg-raised border-b border-border shrink-0 relative z-10">
-        <div class="flex items-center gap-3.5">
-          <div class="brand-mark w-9 h-9 rounded-md flex items-center justify-center font-ui font-extrabold text-[17px] text-bg light:text-white relative overflow-hidden">
+      <header class="flex items-center justify-between h-[52px] px-5 bg-raised border-b border-border shrink-0 relative z-10">
+        <div class="flex items-center gap-3">
+          <div class="brand-mark w-8 h-8 rounded-[7px] flex items-center justify-center font-ui font-extrabold text-[15px] text-bg light:text-white relative overflow-hidden">
             <span>E</span>
             <div class="brand-mark-shine absolute inset-0" />
           </div>
-          <div class="flex flex-col gap-0.5">
-            <span class="text-[15px] font-bold text-tx tracking-wide">Express 24/7</span>
-            <span class="text-[11px] font-medium text-tx-3 tracking-wide">Live Transcription</span>
+          <div class="flex flex-col">
+            <span class="text-[15px] font-bold text-tx tracking-wide leading-tight">
+              ExpressText
+            </span>
+            <span class="text-[11px] font-medium text-tx-4 tracking-wider uppercase leading-tight">
+              Transcribe & Translate
+            </span>
           </div>
+
+          <div class="w-px h-6 bg-border mx-1" />
+
+          <StatsBar latency={latency} words={words} uptime={uptime} />
         </div>
 
-        <StatsBar latency={latency} words={words} uptime={uptime} />
-
-        <div class="flex items-center gap-2.5">
+        <div class="flex items-center gap-2">
           <div
-            class={`flex items-center gap-2 py-[7px] pl-3 pr-4 border border-border-lit rounded-full bg-surface text-xs font-bold tracking-wider text-tx-3 transition-all duration-400 ${badgeClass()}`}
+            class={`flex items-center gap-1.5 py-1.5 pl-3 pr-3.5 border rounded-full text-[12px] font-bold tracking-wider transition-all duration-300 ${badgeClass()}`}
           >
-            <span class="status-dot w-2 h-2 rounded-full bg-tx-4 shrink-0 transition-all duration-400" />
+            <span class="status-dot w-[7px] h-[7px] rounded-full shrink-0 transition-all duration-300" />
             <span>{statusText()}</span>
           </div>
         </div>
@@ -208,8 +218,22 @@ export default function App() {
         onSettings={() => setShowSettings(true)}
       />
 
-      <main class="flex flex-1 min-h-0 overflow-hidden p-4 gap-4 bg-bg">
-        <SttPane entries={sttEntries} finalCount={sttCount} />
+      <main class="flex flex-1 min-h-0 overflow-hidden p-3 gap-0 bg-bg">
+        <SpeechPane entries={sttEntries} finalCount={sttCount} />
+
+        {/* Flow arrow connecting panes */}
+        <div class="flex items-center justify-center w-8 shrink-0">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" class="text-tx-4 opacity-50">
+            <path
+              d="M6 3l5 5-5 5"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+
         <TranslationPane entries={transEntries} />
       </main>
 
