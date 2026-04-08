@@ -204,7 +204,7 @@ export function TranslationPane(props: TransPaneProps) {
   let container: HTMLDivElement | undefined;
   const count = createMemo(() => props.entries().length);
   const vl = useVirtualList(props.entries, () => container, TRANS_ITEM_HEIGHT);
-  const seen = new Set<number>();
+  let lastSeenId = -1;
 
   return (
     <section
@@ -238,8 +238,8 @@ export function TranslationPane(props: TransPaneProps) {
             <div style={{ transform: `translateY(${vl.offsetY()}px)` }}>
               <For each={vl.visibleItems()}>
                 {(entry) => {
-                  const isNew = !seen.has(entry.id);
-                  if (isNew) seen.add(entry.id);
+                  const isNew = entry.id > lastSeenId;
+                  if (isNew) lastSeenId = entry.id;
                   const duration = entry.text.length / 80;
 
                   return (
