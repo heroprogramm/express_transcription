@@ -100,18 +100,20 @@ export async function startTranscription(
     audioConstraints.deviceId = { exact: micDeviceId };
   }
 
-  try {
-    activeStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
-  } catch (err) {
-    const name = err instanceof DOMException ? err.name : "";
-    if (name === "NotReadableError" || name === "NotAllowedError") {
-      const micErr = new Error(
-        "Microphone not accessible. On Windows, check Settings \u2192 Privacy \u2192 Microphone.",
-      );
-      micErr.name = "MicAccessError";
-      throw micErr;
+  if (navigator.userAgent.includes("Windows")) {
+    try {
+      activeStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
+    } catch (err) {
+      const name = err instanceof DOMException ? err.name : "";
+      if (name === "NotReadableError" || name === "NotAllowedError") {
+        const micErr = new Error(
+          "Microphone not accessible. Check Settings \u2192 Privacy \u2192 Microphone.",
+        );
+        micErr.name = "MicAccessError";
+        throw micErr;
+      }
+      throw err;
     }
-    throw err;
   }
 
   startTime = Date.now();
@@ -125,7 +127,7 @@ export async function startTranscription(
       target_language: config.soniox.translate_to,
     },
     audioConstraints,
-    stream: activeStream,
+    ...(activeStream ? { stream: activeStream } : {}),
     onStarted: () => {
       callbacks.onStateChange("started");
     },
