@@ -10,6 +10,7 @@ import {
 import StatsBar from "./components/StatsBar";
 import Controls from "./components/Controls";
 import { SpeechPane, TranslationPane } from "./components/TranscriptPane";
+import ToastContainer, { showToast } from "./components/Toast";
 
 const SettingsModal = lazy(() => import("./components/SettingsModal"));
 
@@ -89,22 +90,12 @@ export default function App() {
     try {
       const micAccess = await ensureMicAccess();
       if (micAccess === "denied") {
-        pushSttEntry({
-          id: entryId++,
-          timestamp: "",
-          text: "[ERROR] Microphone access denied. Please grant permission and try again.",
-          isPartial: false,
-        });
+        showToast("Microphone access denied. Please grant permission and try again.");
         handleStopped();
         return;
       }
       if (micAccess === "opened-settings") {
-        pushSttEntry({
-          id: entryId++,
-          timestamp: "",
-          text: "[INFO] Please enable microphone access in Windows Settings, then try again.",
-          isPartial: false,
-        });
+        showToast("Please enable microphone access in Windows Settings, then try again.", "info");
         handleStopped();
         return;
       }
@@ -128,12 +119,7 @@ export default function App() {
             });
           },
           onError(message, isApiKeyError) {
-            pushSttEntry({
-              id: entryId++,
-              timestamp: "",
-              text: `[ERROR] ${message}`,
-              isPartial: false,
-            });
+            showToast(message);
             handleStopped();
             if (isApiKeyError) {
               setShowSettings(true);
@@ -157,7 +143,7 @@ export default function App() {
       );
     } catch (e) {
       const msg = String(e);
-      pushSttEntry({ id: entryId++, timestamp: "", text: `[ERROR] ${msg}`, isPartial: false });
+      showToast(msg);
       handleStopped();
       if (/api.key|unauthorized|invalid.*key|no soniox/i.test(msg)) setShowSettings(true);
     }
@@ -276,6 +262,8 @@ export default function App() {
 
         <TranslationPane entries={transEntries} live={running} />
       </main>
+
+      <ToastContainer />
 
       <Show when={showSettings()}>
         <SettingsModal onClose={() => setShowSettings(false)} onSaved={() => {}} />

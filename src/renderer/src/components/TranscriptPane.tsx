@@ -27,7 +27,7 @@ function useVirtualList<T extends { id: number }>(
   }
 
   createEffect(() => {
-    const _ = entries().length;
+    void entries().length;
     if (autoScroll()) {
       if (autoScrollRafId) cancelAnimationFrame(autoScrollRafId);
       autoScrollRafId = requestAnimationFrame(() => {
@@ -179,7 +179,7 @@ export function SpeechPane(props: SpeechPaneProps) {
                         {entry.timestamp} {marker}
                       </span>
                       <span
-                        class={`text-tx font-urdu text-lg leading-[2] ${entry.isPartial ? "text-amber opacity-70 light:opacity-85 typing-cursor" : ""}`}
+                        class={`text-tx font-urdu text-lg leading-[2] ${entry.isPartial ? "text-amber opacity-70 light:opacity-85" : ""}`}
                       >
                         {entry.text}
                       </span>
@@ -204,6 +204,7 @@ export function TranslationPane(props: TransPaneProps) {
   let container: HTMLDivElement | undefined;
   const count = createMemo(() => props.entries().length);
   const vl = useVirtualList(props.entries, () => container, TRANS_ITEM_HEIGHT);
+  const seen = new Set<number>();
 
   return (
     <section
@@ -236,17 +237,32 @@ export function TranslationPane(props: TransPaneProps) {
           <div style={{ height: `${vl.totalHeight()}px`, position: "relative" }}>
             <div style={{ transform: `translateY(${vl.offsetY()}px)` }}>
               <For each={vl.visibleItems()}>
-                {(entry) => (
-                  <div
-                    class="animate-entry text-sm leading-relaxed text-tx flex items-center border-l-2 border-l-teal/25 pl-2"
-                    style={{ height: `${vl.itemHeight}px` }}
-                  >
-                    <span class="inline text-[9px] font-medium font-mono text-tx-4 tracking-wide mr-2 tabular-nums opacity-60">
-                      {entry.timestamp}
-                    </span>
-                    {entry.text}
-                  </div>
-                )}
+                {(entry) => {
+                  const isNew = !seen.has(entry.id);
+                  if (isNew) seen.add(entry.id);
+                  const duration = entry.text.length / 80;
+
+                  return (
+                    <div
+                      class="animate-entry text-sm leading-relaxed text-tx flex items-center border-l-2 border-l-teal/25 pl-2"
+                      style={{ height: `${vl.itemHeight}px` }}
+                    >
+                      <span class="inline text-[9px] font-medium font-mono text-tx-4 tracking-wide mr-2 tabular-nums opacity-60">
+                        {entry.timestamp}
+                      </span>
+                      <span
+                        class={isNew ? "type-reveal" : undefined}
+                        style={
+                          isNew
+                            ? { "--type-steps": entry.text.length, "--type-dur": `${duration}s` }
+                            : undefined
+                        }
+                      >
+                        {entry.text}
+                      </span>
+                    </div>
+                  );
+                }}
               </For>
             </div>
           </div>
