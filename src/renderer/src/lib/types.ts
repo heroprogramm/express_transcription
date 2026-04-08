@@ -22,3 +22,20 @@ export interface TranslationEntry {
   timestamp: string;
   text: string;
 }
+
+export interface PerfSnapshot {
+  ts: number;
+  processes: Array<{
+    pid: number;
+    type: string;
+    cpu: { percentCPUUsage: number };
+    memory: { workingSetSize: number; privateBytes: number };
+  }>;
+  mainMemory: {
+    rss: number;
+    heapTotal: number;
+    heapUsed: number;
+    external: number;
+  };
+  eventLoopLagMs: number;
+}

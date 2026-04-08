@@ -1,4 +1,4 @@
-import type { AppConfig } from "./types";
+import type { AppConfig, PerfSnapshot } from "./types";
 
 declare global {
   interface Window {
@@ -10,7 +10,12 @@ declare global {
       startSession: () => Promise<void>;
       stopSession: () => Promise<void>;
       logTranslation: (timestamp: string, text: string) => Promise<void>;
+      logTranslationsBatch: (batch: Array<{ ts: string; text: string }>) => Promise<void>;
       ensureMicAccess: () => Promise<"granted" | "denied" | "opened-settings">;
+      perfStart: () => Promise<void>;
+      perfStop: () => Promise<void>;
+      perfPing: () => Promise<number>;
+      onPerfSnapshot: (cb: (snapshot: PerfSnapshot) => void) => () => void;
     };
   }
 }
@@ -49,6 +54,28 @@ export async function logTranslation(timestamp: string, text: string): Promise<v
   return getApi().logTranslation(timestamp, text);
 }
 
+export async function logTranslationsBatch(
+  batch: Array<{ ts: string; text: string }>,
+): Promise<void> {
+  return getApi().logTranslationsBatch(batch);
+}
+
 export async function ensureMicAccess(): Promise<"granted" | "denied" | "opened-settings"> {
   return getApi().ensureMicAccess();
+}
+
+export async function perfStart(): Promise<void> {
+  return getApi().perfStart();
+}
+
+export async function perfStop(): Promise<void> {
+  return getApi().perfStop();
+}
+
+export async function perfPing(): Promise<number> {
+  return getApi().perfPing();
+}
+
+export function onPerfSnapshot(cb: (snapshot: PerfSnapshot) => void): () => void {
+  return getApi().onPerfSnapshot(cb);
 }

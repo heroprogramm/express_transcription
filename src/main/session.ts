@@ -18,16 +18,23 @@ function scheduleFeedFlush(): void {
 async function flushFeed(): Promise<void> {
   feedFlushTimer = null;
   if (!feedPath || feedBuffer.length === 0) return;
-  const lastLine = feedBuffer[feedBuffer.length - 1];
+  const snapshot = feedBuffer;
   feedBuffer = [];
   const tmp = `${feedPath}.tmp`;
   try {
-    await fsp.writeFile(tmp, lastLine);
+    await fsp.writeFile(tmp, snapshot[snapshot.length - 1]);
     await fsp.rename(tmp, feedPath);
-  } catch {}
+  } catch (err) {
+    console.error("[session] feed flush failed:", err);
+    feedBuffer = [...snapshot, ...feedBuffer];
+  }
 }
 
 export function startSession(config: AppConfig): void {
+  if (sessionFile) {
+    sessionFile.end();
+    sessionFile = null;
+  }
   const dataDir = app.getPath("userData");
   const safeDirName = basename(config.output.session_log_dir);
   const sessionDir = join(dataDir, safeDirName);
@@ -52,7 +59,9 @@ export async function stopSession(): Promise<void> {
   }
   await flushFeed();
   if (sessionFile) {
-    sessionFile.end();
+    await new Promise<void>((resolve) => {
+      sessionFile!.end(() => resolve());
+    });
     sessionFile = null;
   }
 }

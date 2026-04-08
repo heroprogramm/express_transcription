@@ -1,13 +1,11 @@
 <!doctype html>
 <html lang="en" data-theme="dark" class="h-full overflow-hidden">
   <head>
-    <script>
-      document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
-    </script>
+    <script src="/theme-init.js"></script>
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' wss://*.soniox.com; media-src 'self' mediastream:; font-src 'self'; img-src 'self' data:;"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' wss://*.soniox.com; media-src 'self' mediastream:; font-src 'self'; img-src 'self' data:;"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ExpressText</title>

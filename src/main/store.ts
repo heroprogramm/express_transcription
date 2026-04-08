@@ -4,7 +4,7 @@ const store = new Store();
 const STORE_KEY = "soniox_api_key";
 
 export function getApiKey(): string | null {
-  const envKey = process.env.SONIOX_API_KEY;
+  const envKey = process.env.SONIOX_API_KEY?.trim();
   if (envKey) return envKey;
   return (store.get(STORE_KEY) as string) || null;
 }

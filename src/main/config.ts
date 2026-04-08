@@ -51,7 +51,8 @@ export async function loadConfig(): Promise<AppConfig> {
     }
 
     return config;
-  } catch {
+  } catch (err) {
+    console.warn("[config] Could not load config file, using defaults:", err);
     return DEFAULT_CONFIG;
   }
 }

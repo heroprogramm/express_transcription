@@ -1,6 +1,6 @@
 import { SonioxClient, type SpeechToTextAPIResponse, type Token } from "@soniox/speech-to-text-web";
 import type { AppConfig } from "./types";
-import { getApiKey, logTranslation } from "./ipc";
+import { getApiKey, logTranslationsBatch } from "./ipc";
 
 export interface SonioxCallbacks {
   onTranscript: (timestamp: string, text: string, isPartial: boolean) => void;
@@ -28,11 +28,12 @@ function queueLogTranslation(ts: string, text: string): void {
 
 function flushLogQueue(): void {
   logFlushTimer = null;
+  if (logQueue.length === 0) return;
   const batch = logQueue;
   logQueue = [];
-  for (const { ts, text } of batch) {
-    logTranslation(ts, text).catch(() => {});
-  }
+  logTranslationsBatch(batch).catch((err) => {
+    console.error("[soniox] batch log failed:", err);
+  });
 }
 
 function formatTimestamp(ms: number): string {
@@ -194,4 +195,12 @@ export function cancelTranscription(): void {
     client.cancel();
     client = null;
   }
+}
+
+export function getAudioHealth(): { active: boolean; trackState: string } {
+  const track = activeStream?.getAudioTracks()[0];
+  return {
+    active: !!track && track.readyState === "live",
+    trackState: track?.readyState ?? "none",
+  };
 }

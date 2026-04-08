@@ -20,11 +20,6 @@ export default defineConfig({
       sourcemap: false,
       rollupOptions: {
         input: resolve(__dirname, "src/renderer/index.html"),
-        output: {
-          manualChunks: {
-            "soniox-vendor": ["@soniox/speech-to-text-web"],
-          },
-        },
       },
     },
     plugins: [tailwindcss(), solid()],

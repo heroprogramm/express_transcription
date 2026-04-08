@@ -2,6 +2,7 @@ import { app, session } from "electron";
 import { loadConfig, DEFAULT_CONFIG, type AppConfig } from "./config";
 import { createWindow, getMainWindow } from "./window";
 import { registerIpcHandlers } from "./ipc";
+import { log } from "./logger";
 
 // ── Single instance lock ──
 const gotLock = app.requestSingleInstanceLock();
@@ -11,10 +12,13 @@ if (!gotLock) {
 
 // ── Process error handlers ──
 process.on("uncaughtException", (err) => {
-  console.error("[uncaughtException]", err);
+  log("error", "uncaughtException", { message: err.message, stack: err.stack });
 });
 process.on("unhandledRejection", (reason) => {
-  console.error("[unhandledRejection]", reason);
+  log("error", "unhandledRejection", {
+    message: reason instanceof Error ? reason.message : String(reason),
+    stack: reason instanceof Error ? reason.stack : undefined,
+  });
 });
 
 // ── App state ──
@@ -44,7 +48,10 @@ app.on("second-instance", () => {
 });
 
 app.on("render-process-gone", (_event, _webContents, details) => {
-  console.error("[render-process-gone]", details.reason);
+  log("error", "render-process-gone", {
+    reason: details.reason,
+    exitCode: details.exitCode,
+  });
   const win = getMainWindow();
   if (win && !win.isDestroyed()) {
     win.destroy();

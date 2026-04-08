@@ -7,12 +7,14 @@ import {
   cancelTranscription,
   getWordCount,
 } from "./lib/soniox";
+import { createPerfMonitor } from "./lib/perf";
 import StatsBar from "./components/StatsBar";
 import Controls from "./components/Controls";
 import { SpeechPane, TranslationPane } from "./components/TranscriptPane";
 import ToastContainer, { showToast } from "./components/Toast";
 
 const SettingsModal = lazy(() => import("./components/SettingsModal"));
+const PerfOverlay = lazy(() => import("./components/PerfOverlay"));
 
 const MAX_ENTRIES = 500;
 
@@ -32,6 +34,8 @@ export default function App() {
   const [transEntries, setTransEntries] = createSignal<TranslationEntry[]>([]);
   const [sttCount, setSttCount] = createSignal(0);
 
+  const perf = createPerfMonitor();
+
   let entryId = 0;
   let uptimeInterval: ReturnType<typeof setInterval> | undefined;
   let startTime = 0;
@@ -40,11 +44,26 @@ export default function App() {
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
     try {
       setConfig(await getConfig());
-    } catch {}
+    } catch (err) {
+      showToast("Failed to load config, using defaults.", "info");
+      console.error("[config]", err);
+    }
     if (!(await hasApiKey())) setShowSettings(true);
   });
 
+  function onKeyDown(e: KeyboardEvent): void {
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "P") {
+      e.preventDefault();
+      perf.toggle();
+    }
+  }
+
+  onMount(() => {
+    document.addEventListener("keydown", onKeyDown);
+  });
+
   onCleanup(() => {
+    document.removeEventListener("keydown", onKeyDown);
     if (uptimeInterval) clearInterval(uptimeInterval);
     cancelTranscription();
   });
@@ -272,6 +291,22 @@ export default function App() {
 
       <Show when={showSettings()}>
         <SettingsModal onClose={() => setShowSettings(false)} onSaved={() => {}} />
+      </Show>
+
+      <Show when={perf.enabled()}>
+        <PerfOverlay
+          fps={perf.fps}
+          ipcRtt={perf.ipcRtt}
+          mainCpu={perf.mainCpu}
+          rendererCpu={perf.rendererCpu}
+          mainMemory={perf.mainMemory}
+          rendererMemory={perf.rendererMemory}
+          eventLoopLag={perf.eventLoopLag}
+          latency={latency}
+          words={words}
+          uptime={uptime}
+          onClose={perf.toggle}
+        />
       </Show>
     </>
   );
