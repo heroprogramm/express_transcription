@@ -35,7 +35,10 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build & package
+      - name: Build app
+        run: bun run build
+
+      - name: Package
         run: bunx electron-builder --${{ matrix.platform }} --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
