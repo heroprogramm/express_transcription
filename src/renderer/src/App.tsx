@@ -141,11 +141,16 @@ export default function App() {
         },
         micDeviceId || undefined,
       );
-    } catch (e) {
-      const msg = String(e);
-      showToast(msg);
+    } catch (e: unknown) {
+      const err = e instanceof Error ? e : new Error(String(e));
+      if (err.name === "MicAccessError") {
+        showToast(err.message, "info");
+        ensureMicAccess().catch(() => {});
+      } else {
+        showToast(String(e));
+        if (/api.key|unauthorized|invalid.*key|no soniox/i.test(String(e))) setShowSettings(true);
+      }
       handleStopped();
-      if (/api.key|unauthorized|invalid.*key|no soniox/i.test(msg)) setShowSettings(true);
     }
   }
 

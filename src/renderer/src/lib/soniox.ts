@@ -10,6 +10,7 @@ export interface SonioxCallbacks {
 }
 
 let client: SonioxClient | null = null;
+let activeStream: MediaStream | null = null;
 let startTime = 0;
 let wordCount = 0;
 
@@ -99,48 +100,78 @@ export async function startTranscription(
     audioConstraints.deviceId = { exact: micDeviceId };
   }
 
+  try {
+    activeStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
+  } catch (err) {
+    const name = err instanceof DOMException ? err.name : "";
+    if (name === "NotReadableError" || name === "NotAllowedError") {
+      const micErr = new Error(
+        "Microphone not accessible. On Windows, check Settings \u2192 Privacy \u2192 Microphone.",
+      );
+      micErr.name = "MicAccessError";
+      throw micErr;
+    }
+    throw err;
+  }
+
   startTime = Date.now();
 
-  await client.start({
-    model: config.soniox.model,
-    languageHints: [config.soniox.language],
-    enableEndpointDetection: true,
-    translation: {
-      type: "one_way",
-      target_language: config.soniox.translate_to,
-    },
-    audioConstraints,
-    onStarted: () => {
-      callbacks.onStateChange("started");
-    },
-    onPartialResult: (result: SpeechToTextAPIResponse) => {
-      const elapsed = Date.now() - startTime;
-      const ts = formatTimestamp(elapsed);
-      const { original, translated, isFinal } = parseTokens(result.tokens);
+  try {
+    await client.start({
+      model: config.soniox.model,
+      languageHints: [config.soniox.language],
+      enableEndpointDetection: true,
+      translation: {
+        type: "one_way",
+        target_language: config.soniox.translate_to,
+      },
+      audioConstraints,
+      stream: activeStream,
+      onStarted: () => {
+        callbacks.onStateChange("started");
+      },
+      onPartialResult: (result: SpeechToTextAPIResponse) => {
+        const elapsed = Date.now() - startTime;
+        const ts = formatTimestamp(elapsed);
+        const { original, translated, isFinal } = parseTokens(result.tokens);
 
-      if (original) {
-        callbacks.onTranscript(ts, original, !isFinal);
-      }
+        if (original) {
+          callbacks.onTranscript(ts, original, !isFinal);
+        }
 
-      if (translated) {
-        wordCount += translated.split(/\s+/).filter(Boolean).length;
-        const latencyMs = elapsed - result.total_audio_proc_ms;
-        callbacks.onTranslation(ts, translated, latencyMs);
-        queueLogTranslation(ts, translated);
-      }
-    },
-    onFinished: () => {
-      callbacks.onStateChange("stopped");
-    },
-    onError: (status, message, errorCode) => {
-      const isApiKeyError =
-        (status === "api_error" &&
-          /api.key|unauthorized|invalid.*key|authentication/i.test(message)) ||
-        /no soniox api key/i.test(message);
-      const detail = errorCode ? `[${status} ${errorCode}] ${message}` : `[${status}] ${message}`;
-      callbacks.onError(detail, isApiKeyError);
-    },
-  });
+        if (translated) {
+          wordCount += translated.split(/\s+/).filter(Boolean).length;
+          const latencyMs = elapsed - result.total_audio_proc_ms;
+          callbacks.onTranslation(ts, translated, latencyMs);
+          queueLogTranslation(ts, translated);
+        }
+      },
+      onFinished: () => {
+        callbacks.onStateChange("stopped");
+      },
+      onError: (status, message, errorCode) => {
+        const isApiKeyError =
+          (status === "api_error" &&
+            /api.key|unauthorized|invalid.*key|authentication/i.test(message)) ||
+          /no soniox api key/i.test(message);
+        const detail = errorCode ? `[${status} ${errorCode}] ${message}` : `[${status}] ${message}`;
+        callbacks.onError(detail, isApiKeyError);
+      },
+    });
+  } catch (err) {
+    if (activeStream) {
+      activeStream.getTracks().forEach((t) => t.stop());
+      activeStream = null;
+    }
+    throw err;
+  }
+}
+
+function stopActiveStream(): void {
+  if (activeStream) {
+    activeStream.getTracks().forEach((t) => t.stop());
+    activeStream = null;
+  }
 }
 
 export function stopTranscription(): void {
@@ -149,6 +180,7 @@ export function stopTranscription(): void {
     logFlushTimer = null;
   }
   flushLogQueue();
+  stopActiveStream();
   if (client) {
     client.stop();
     client = null;
@@ -161,6 +193,7 @@ export function cancelTranscription(): void {
     logFlushTimer = null;
   }
   flushLogQueue();
+  stopActiveStream();
   if (client) {
     client.cancel();
     client = null;
