@@ -150,7 +150,7 @@ express-text/
           TranscriptPane.tsx  # STT and translation panes
         lib/
           soniox.ts          # Soniox SDK integration
-          tauri-bridge.ts    # Electron IPC wrapper
+          ipc.ts             # Electron IPC wrapper
           types.ts           # Shared TypeScript types
         styles/
           app.css            # Global styles

@@ -10,6 +10,7 @@ declare global {
       startSession: () => Promise<void>;
       stopSession: () => Promise<void>;
       logTranslation: (timestamp: string, text: string) => Promise<void>;
+      ensureMicAccess: () => Promise<"granted" | "denied" | "opened-settings">;
     };
   }
 }
@@ -46,4 +47,8 @@ export async function stopSession(): Promise<void> {
 
 export async function logTranslation(timestamp: string, text: string): Promise<void> {
   return getApi().logTranslation(timestamp, text);
+}
+
+export async function ensureMicAccess(): Promise<"granted" | "denied" | "opened-settings"> {
+  return getApi().ensureMicAccess();
 }

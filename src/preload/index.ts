@@ -14,4 +14,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   stopSession: (): Promise<void> => ipcRenderer.invoke("stop-session"),
   logTranslation: (timestamp: string, text: string): Promise<void> =>
     ipcRenderer.invoke("log-translation", timestamp, text),
+  ensureMicAccess: (): Promise<"granted" | "denied" | "opened-settings"> =>
+    ipcRenderer.invoke("ensure-mic-access"),
 });

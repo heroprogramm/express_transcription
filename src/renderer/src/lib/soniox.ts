@@ -1,6 +1,6 @@
 import { SonioxClient, type SpeechToTextAPIResponse, type Token } from "@soniox/speech-to-text-web";
 import type { AppConfig } from "./types";
-import { getApiKey, logTranslation } from "./tauri-bridge";
+import { getApiKey, logTranslation } from "./ipc";
 
 export interface SonioxCallbacks {
   onTranscript: (timestamp: string, text: string, isPartial: boolean) => void;

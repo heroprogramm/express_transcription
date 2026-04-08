@@ -1,6 +1,6 @@
 import { createSignal, createMemo, onMount, onCleanup, Show, batch, lazy } from "solid-js";
 import type { TranscriptEntry, TranslationEntry, AppConfig } from "./lib/types";
-import { hasApiKey, getConfig, startSession, stopSession } from "./lib/tauri-bridge";
+import { hasApiKey, getConfig, startSession, stopSession, ensureMicAccess } from "./lib/ipc";
 import {
   startTranscription,
   stopTranscription,
@@ -87,6 +87,28 @@ export default function App() {
     setStatusText("Starting\u2026");
 
     try {
+      const micAccess = await ensureMicAccess();
+      if (micAccess === "denied") {
+        pushSttEntry({
+          id: entryId++,
+          timestamp: "",
+          text: "[ERROR] Microphone access denied. Please grant permission and try again.",
+          isPartial: false,
+        });
+        handleStopped();
+        return;
+      }
+      if (micAccess === "opened-settings") {
+        pushSttEntry({
+          id: entryId++,
+          timestamp: "",
+          text: "[INFO] Please enable microphone access in Windows Settings, then try again.",
+          isPartial: false,
+        });
+        handleStopped();
+        return;
+      }
+
       await startSession();
       await startTranscription(
         cfg,

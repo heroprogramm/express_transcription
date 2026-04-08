@@ -1,5 +1,5 @@
 import { createSignal } from "solid-js";
-import { saveApiKey } from "../lib/tauri-bridge";
+import { saveApiKey } from "../lib/ipc";
 import Button from "./Button";
 
 interface Props {
