@@ -33,7 +33,7 @@ async function flushFeed(): Promise<void> {
   }
 }
 
-export function startSession(config: AppConfig): void {
+export async function startSession(config: AppConfig): Promise<void> {
   if (sessionFile) {
     sessionFile.end();
     sessionFile = null;
@@ -41,7 +41,7 @@ export function startSession(config: AppConfig): void {
   const dataDir = app.getPath("userData");
   const safeDirName = basename(config.output.session_log_dir);
   const sessionDir = join(dataDir, safeDirName);
-  fs.mkdirSync(sessionDir, { recursive: true });
+  await fsp.mkdir(sessionDir, { recursive: true });
 
   const now = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");

@@ -186,7 +186,7 @@ export function SpeechPane(props: SpeechPaneProps) {
                         "border-l-amber/30": !entry.isPartial,
                         "border-l-amber/10": entry.isPartial,
                       }}
-                      style={{ height: `${vl.itemHeight}px` }}
+                      style={{ height: `${vl.itemHeight}px`, contain: "content" }}
                     >
                       <span class="inline text-[9px] font-medium font-mono text-tx-4 tracking-wide mr-1.5 tabular-nums opacity-60">
                         {entry.timestamp} {marker}
@@ -255,7 +255,7 @@ export function TranslationPane(props: TransPaneProps) {
                   return (
                     <div
                       class="animate-entry text-sm leading-relaxed text-tx flex items-center border-l-2 border-l-teal/25 pl-2"
-                      style={{ height: `${vl.itemHeight}px` }}
+                      style={{ height: `${vl.itemHeight}px`, contain: "content" }}
                     >
                       <span class="inline text-[9px] font-medium font-mono text-tx-4 tracking-wide mr-2 tabular-nums opacity-60">
                         {entry.timestamp}

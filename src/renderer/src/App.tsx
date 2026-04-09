@@ -75,16 +75,15 @@ export default function App() {
 
   function pushSttEntry(entry: TranscriptEntry) {
     setSttEntries((prev) => {
-      // When at capacity, drop oldest entry by slicing then appending
-      const base = prev.length >= MAX_ENTRIES ? prev.slice(1) : prev;
-      return [...base, entry];
+      if (prev.length >= MAX_ENTRIES) prev.shift();
+      return [...prev, entry];
     });
   }
 
   function pushTransEntry(entry: TranslationEntry) {
     setTransEntries((prev) => {
-      const base = prev.length >= MAX_ENTRIES ? prev.slice(1) : prev;
-      return [...base, entry];
+      if (prev.length >= MAX_ENTRIES) prev.shift();
+      return [...prev, entry];
     });
   }
 

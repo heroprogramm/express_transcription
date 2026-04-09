@@ -15,23 +15,32 @@ export function createWindow(): void {
     title: "ExpressText",
     show: false,
     backgroundColor: "#080a10",
-    backgroundThrottling: false,
     webPreferences: {
+      backgroundThrottling: false,
       preload: join(__dirname, "../preload/index.mjs"),
       contextIsolation: true,
       nodeIntegration: false,
+      webSecurity: true,
       sandbox: false,
       v8CacheOptions: "code",
       spellcheck: false,
+      allowRunningInsecureContent: false,
+      experimentalFeatures: false,
+      navigateOnDragDrop: false,
+      autoplayPolicy: "user-gesture-required",
     },
   });
 
   mainWindow.on("ready-to-show", () => mainWindow?.show());
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    const url = details.url;
-    if (url.startsWith("https://") || url.startsWith("http://")) {
-      shell.openExternal(url);
+    try {
+      const parsed = new URL(details.url);
+      if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+        shell.openExternal(details.url);
+      }
+    } catch {
+      // invalid URL, ignore
     }
     return { action: "deny" };
   });

@@ -2,6 +2,8 @@ import { app, dialog, Menu, shell, session } from "electron";
 import { loadConfig, DEFAULT_CONFIG, type AppConfig } from "./config";
 import { createWindow, getMainWindow } from "./window";
 import { registerIpcHandlers } from "./ipc";
+import { stopSession } from "./session";
+import { stopMetricsCollection } from "./metrics";
 import { log, LogLevel } from "./logger";
 
 // ── Single instance lock ──
@@ -24,11 +26,10 @@ process.on("unhandledRejection", (reason) => {
 // ── App state ──
 let appConfig: AppConfig = DEFAULT_CONFIG;
 
-registerIpcHandlers(() => appConfig);
-
 // ── App lifecycle ──
 app.whenReady().then(async () => {
   appConfig = await loadConfig();
+  registerIpcHandlers(() => appConfig);
 
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
     callback(permission === "media");
@@ -110,6 +111,23 @@ app.whenReady().then(async () => {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 
   createWindow();
+});
+
+let shuttingDown = false;
+app.on("before-quit", async (event) => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  event.preventDefault();
+  try {
+    stopMetricsCollection();
+    await stopSession();
+    log(LogLevel.Info, "app:shutdown", { reason: "before-quit" });
+  } catch (err) {
+    log(LogLevel.Error, "app:shutdown-error", {
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
+  app.exit(0);
 });
 
 app.on("window-all-closed", () => app.quit());
