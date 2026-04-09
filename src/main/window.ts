@@ -14,6 +14,7 @@ export function createWindow(): void {
     height: 800,
     title: "ExpressText",
     show: false,
+    backgroundColor: "#080a10",
     backgroundThrottling: false,
     webPreferences: {
       preload: join(__dirname, "../preload/index.mjs"),
@@ -21,6 +22,7 @@ export function createWindow(): void {
       nodeIntegration: false,
       sandbox: false,
       v8CacheOptions: "code",
+      spellcheck: false,
     },
   });
 

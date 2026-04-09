@@ -3,6 +3,7 @@ import { join, basename } from "path";
 import * as fs from "fs";
 import * as fsp from "fs/promises";
 import type { AppConfig } from "./config";
+import { log } from "./logger";
 
 let sessionFile: fs.WriteStream | null = null;
 let feedPath = "";
@@ -25,7 +26,9 @@ async function flushFeed(): Promise<void> {
     await fsp.writeFile(tmp, snapshot[snapshot.length - 1]);
     await fsp.rename(tmp, feedPath);
   } catch (err) {
-    console.error("[session] feed flush failed:", err);
+    log("error", "session:feed-flush-failed", {
+      message: err instanceof Error ? err.message : String(err),
+    });
     feedBuffer = [...snapshot, ...feedBuffer];
   }
 }
@@ -48,8 +51,7 @@ export function startSession(config: AppConfig): void {
 
   const safeFeedName = basename(config.output.feed_file);
   feedPath = join(dataDir, safeFeedName);
-  console.log(`Session log: ${sessionPath}`);
-  console.log(`Feed file: ${feedPath}`);
+  log("info", "session:started", { sessionPath, feedPath });
 }
 
 export async function stopSession(): Promise<void> {

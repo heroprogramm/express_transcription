@@ -1,4 +1,12 @@
-import { createEffect, createMemo, createSignal, For, Show, type Accessor } from "solid-js";
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  For,
+  Show,
+  type Accessor,
+} from "solid-js";
 import type { TranscriptEntry, TranslationEntry } from "../lib/types";
 
 const OVERSCAN = 5;
@@ -26,8 +34,11 @@ function useVirtualList<T extends { id: number }>(
     });
   }
 
+  // Track entry count as a memo so the effect dependency is a scalar, not the full array
+  const entryCount = createMemo(() => entries().length);
+
   createEffect(() => {
-    void entries().length;
+    void entryCount();
     if (autoScroll()) {
       if (autoScrollRafId) cancelAnimationFrame(autoScrollRafId);
       autoScrollRafId = requestAnimationFrame(() => {
@@ -36,6 +47,11 @@ function useVirtualList<T extends { id: number }>(
         if (el) el.scrollTop = el.scrollHeight;
       });
     }
+  });
+
+  onCleanup(() => {
+    if (scrollRafId) cancelAnimationFrame(scrollRafId);
+    if (autoScrollRafId) cancelAnimationFrame(autoScrollRafId);
   });
 
   const totalHeight = createMemo(() => entries().length * itemHeight);

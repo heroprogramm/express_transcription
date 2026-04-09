@@ -42,10 +42,21 @@
   "build": {
     "appId": "com.express247.text",
     "productName": "ExpressText",
+    "asar": true,
+    "compression": "maximum",
     "files": [
       "out/**/*",
-      "config/**/*"
+      "config/**/*",
+      "!**/*.map",
+      "!**/*.d.ts",
+      "!**/README*",
+      "!**/CHANGELOG*",
+      "!**/LICENSE*",
+      "!**/__tests__/**",
+      "!**/*.spec.*",
+      "!**/*.test.*"
     ],
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "mac": {
       "target": "dmg",
       "entitlements": "build/entitlements.mac.plist",

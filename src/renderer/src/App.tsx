@@ -40,17 +40,6 @@ export default function App() {
   let uptimeInterval: ReturnType<typeof setInterval> | undefined;
   let startTime = 0;
 
-  onMount(async () => {
-    document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
-    try {
-      setConfig(await getConfig());
-    } catch (err) {
-      showToast("Failed to load config, using defaults.", "info");
-      console.error("[config]", err);
-    }
-    if (!(await hasApiKey())) setShowSettings(true);
-  });
-
   function onKeyDown(e: KeyboardEvent): void {
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "P") {
       e.preventDefault();
@@ -58,8 +47,16 @@ export default function App() {
     }
   }
 
-  onMount(() => {
+  onMount(async () => {
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
     document.addEventListener("keydown", onKeyDown);
+    try {
+      setConfig(await getConfig());
+    } catch (err) {
+      showToast("Failed to load config, using defaults.", "info");
+      console.error("[config]", err);
+    }
+    if (!(await hasApiKey())) setShowSettings(true);
   });
 
   onCleanup(() => {
@@ -78,23 +75,16 @@ export default function App() {
 
   function pushSttEntry(entry: TranscriptEntry) {
     setSttEntries((prev) => {
-      if (prev.length >= MAX_ENTRIES) {
-        const next = prev.slice(-(MAX_ENTRIES - 1));
-        next.push(entry);
-        return next;
-      }
-      return [...prev, entry];
+      // When at capacity, drop oldest entry by slicing then appending
+      const base = prev.length >= MAX_ENTRIES ? prev.slice(1) : prev;
+      return [...base, entry];
     });
   }
 
   function pushTransEntry(entry: TranslationEntry) {
     setTransEntries((prev) => {
-      if (prev.length >= MAX_ENTRIES) {
-        const next = prev.slice(-(MAX_ENTRIES - 1));
-        next.push(entry);
-        return next;
-      }
-      return [...prev, entry];
+      const base = prev.length >= MAX_ENTRIES ? prev.slice(1) : prev;
+      return [...base, entry];
     });
   }
 

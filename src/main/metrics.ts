@@ -21,26 +21,21 @@ export interface PerfSnapshot {
 const COLLECTION_INTERVAL_MS = 2000;
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
-let lagMs = 0;
 let peakRss = 0;
 let peakHeapUsed = 0;
 let cpuSamples: number[] = [];
 let lagSamples: number[] = [];
 let collectionStartTime = 0;
 
-function measureEventLoopLag(): void {
-  const scheduled = Date.now();
-  setTimeout(() => {
-    lagMs = Date.now() - scheduled;
-  }, 0);
-}
-
 function collectAndSend(win: BrowserWindow): void {
-  measureEventLoopLag();
+  if (win.isDestroyed()) return;
 
-  // Small delay to let the lag measurement complete
-  setTimeout(() => {
-    if (!win || win.isDestroyed()) return;
+  // Measure event loop lag: schedule a zero-delay timer and record drift
+  const lagStart = performance.now();
+  setImmediate(() => {
+    const lagMs = performance.now() - lagStart;
+
+    if (win.isDestroyed()) return;
 
     const appMetrics = app.getAppMetrics();
     const mainMem = process.memoryUsage();
@@ -74,7 +69,7 @@ function collectAndSend(win: BrowserWindow): void {
     lagSamples.push(lagMs);
 
     win.webContents.send("perf:snapshot", snapshot);
-  }, 50);
+  });
 }
 
 export function startMetricsCollection(win: BrowserWindow): void {
