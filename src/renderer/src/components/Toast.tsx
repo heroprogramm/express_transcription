@@ -49,7 +49,7 @@ export default function ToastContainer() {
             } ${
               toast.type === "error"
                 ? "bg-red-soft/15 border-red/25 text-red light:bg-red-soft/10 light:border-red-soft/30 light:text-red-soft"
-                : "bg-amber-soft/15 border-amber/25 text-amber light:bg-amber-soft/10 light:border-amber-soft/30 light:text-amber-soft"
+                : "bg-steel-soft/15 border-steel/25 text-steel light:bg-steel-soft/10 light:border-steel-soft/30 light:text-steel-soft"
             }`}
             onClick={() => dismiss(toast.id)}
           >

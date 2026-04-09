@@ -89,8 +89,8 @@ function SpeechEmpty() {
               style={{
                 height: `${h * 100}%`,
                 "animation-delay": `${i * 0.08}s`,
-                background: "var(--amber)",
-                opacity: 0.25,
+                background: "var(--text-3)",
+                opacity: 0.3,
               }}
             />
           ),
@@ -113,7 +113,7 @@ function TranslationEmpty() {
         height="40"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="var(--teal)"
+        stroke="var(--burgundy)"
         stroke-width="0.8"
       >
         <circle cx="12" cy="12" r="10" />
@@ -166,8 +166,8 @@ export function SpeechPane(props: SpeechPaneProps) {
                     <div
                       class="flex items-center border-l-2 border-l-transparent pl-2"
                       classList={{
-                        "border-l-amber/30": !entry.isPartial,
-                        "border-l-amber/10": entry.isPartial,
+                        "border-l-steel/30": !entry.isPartial,
+                        "border-l-steel/10": entry.isPartial,
                       }}
                       style={{ height: `${vl.itemHeight}px`, contain: "content" }}
                     >
@@ -175,7 +175,7 @@ export function SpeechPane(props: SpeechPaneProps) {
                         {entry.timestamp} {marker}
                       </span>
                       <span
-                        class={`font-urdu text-lg leading-[2] ${entry.isPartial ? "text-amber opacity-70 light:opacity-85" : "text-tx"}`}
+                        class={`font-urdu text-lg leading-[2] ${entry.isPartial ? "text-steel opacity-70 light:opacity-85" : "text-tx"}`}
                       >
                         {entry.text}
                       </span>
