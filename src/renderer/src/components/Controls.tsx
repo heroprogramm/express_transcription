@@ -29,7 +29,7 @@ export default function Controls(props: Props) {
   });
 
   return (
-    <div class="flex items-center justify-between h-11 px-5 bg-inset border-b border-border shrink-0">
+    <div class="flex items-center justify-between h-13 px-5 bg-inset border-b border-border shrink-0 surface-inset">
       <div class="flex items-center gap-2.5">
         <label class="text-[11px] font-semibold text-tx-4 tracking-wider uppercase whitespace-nowrap">
           Mic

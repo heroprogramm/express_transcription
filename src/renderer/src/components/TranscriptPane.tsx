@@ -150,7 +150,7 @@ export function SpeechPane(props: SpeechPaneProps) {
 
   return (
     <section
-      class={`pane-amber flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-xl overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
+      class={`pane-amber surface-raised flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-xl overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
     >
       <div class="flex justify-between items-center px-4 py-2.5 border-b border-border shrink-0">
         <div class="flex items-center gap-2">
@@ -221,7 +221,7 @@ export function TranslationPane(props: TransPaneProps) {
 
   return (
     <section
-      class={`pane-teal flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-xl overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
+      class={`pane-teal surface-raised flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-xl overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
     >
       <div class="flex justify-between items-center px-4 py-2.5 border-b border-border shrink-0">
         <div class="flex items-center gap-2">

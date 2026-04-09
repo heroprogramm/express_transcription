@@ -61,7 +61,7 @@ export default function SettingsModal(props: Props) {
           </div>
           <div>
             <h2 class="text-base font-bold text-tx leading-tight">API Key</h2>
-            <p class="text-[12px] text-tx-3 mt-0.5">Enter your Soniox key for speech-to-text.</p>
+            <p class="text-[12px] text-tx-3 mt-0.5">Enter your Soniox key</p>
           </div>
         </div>
         <input

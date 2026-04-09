@@ -208,7 +208,7 @@ export default function App() {
       <div class={`ambient-orb ambient-orb-2 ${running() ? "is-active" : ""}`} />
       <div class={`ambient-orb ambient-orb-3 ${running() ? "is-active" : ""}`} />
 
-      <header class="stagger-1 flex items-center justify-between h-[52px] px-5 bg-raised border-b border-border shrink-0 relative z-10">
+      <header class="stagger-1 flex items-center justify-between h-[52px] px-5 bg-raised border-b border-border shrink-0 relative z-10 surface-raised-sm">
         {/* Header underglow */}
         <div class={`header-underglow ${status() === "live" ? "is-live" : ""}`} />
 
