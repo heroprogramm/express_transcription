@@ -342,12 +342,12 @@ export default function App() {
           <img
             src={logoDarkSrc}
             alt="Express 24/7"
-            class="h-10 w-auto object-contain dark:block light:hidden"
+            class="h-8 w-auto object-contain dark:block light:hidden"
           />
           <img
             src={logoLightSrc}
             alt="Express 24/7"
-            class="h-10 w-auto object-contain dark:hidden light:block"
+            class="h-8 w-auto object-contain dark:hidden light:block"
           />
 
           <div class="w-px h-6 bg-border mx-1" />
