@@ -85,10 +85,7 @@ export default function OutputPane(props: OutputPaneProps) {
   const vl = useVirtualList(sentEntries, () => container);
 
   return (
-    <div
-      class="border-t border-border bg-[var(--bg-raised)] flex flex-col min-h-0"
-      style={{ flex: "3" }}
-    >
+    <div class="border-t border-border bg-[var(--bg-raised)] flex flex-col min-h-0 flex-1">
       <div class="flex items-center justify-between px-3 py-1.5 border-b border-border shrink-0">
         <div class="flex items-center gap-2">
           <span class="text-[11px] font-bold text-tx-3 tracking-wider uppercase">Final Output</span>
@@ -105,8 +102,28 @@ export default function OutputPane(props: OutputPaneProps) {
         <Show
           when={count() > 0}
           fallback={
-            <div class="flex items-center justify-center h-full py-6">
-              <p class="font-ui text-[12px] text-tx-4">Confirmed translations will appear here</p>
+            <div class="flex flex-col items-center justify-center h-full -mt-4 gap-3">
+              <svg
+                class="opacity-25"
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="0.8"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <path d="M9 15l2 2 4-4" />
+              </svg>
+              <div class="text-center">
+                <p class="font-ui text-[13px] font-medium text-tx-3">
+                  Confirmed translations will appear here
+                </p>
+                <p class="font-ui text-[11px] text-tx-4 mt-1">
+                  Entries are sent after the edit window expires
+                </p>
+              </div>
             </div>
           }
         >
@@ -115,10 +132,10 @@ export default function OutputPane(props: OutputPaneProps) {
               <For each={vl.visibleItems()}>
                 {(entry) => (
                   <div
-                    class="flex items-center border-l-2 border-l-border pl-2"
+                    class="flex items-center border-l-2 border-l-border-lit pl-2"
                     style={{ height: `${ITEM_HEIGHT}px`, contain: "content" }}
                   >
-                    <span class="text-[9px] font-mono text-tx-4 mr-2 tabular-nums shrink-0">
+                    <span class="text-[9px] font-mono text-tx-3 mr-2 tabular-nums shrink-0">
                       {entry.timestamp}
                     </span>
                     <span class="text-[13px] text-tx-2 truncate">{entry.text}</span>

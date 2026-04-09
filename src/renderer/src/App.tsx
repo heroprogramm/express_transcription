@@ -15,6 +15,7 @@ import Button from "./components/Button";
 import ThemeToggle from "./components/ThemeToggle";
 import { SpeechPane, TranslationPane } from "./components/TranscriptPane";
 import OutputPane from "./components/OutputPane";
+import ResizeHandle from "./components/ResizeHandle";
 import ToastContainer from "./components/Toast";
 import { reportError, capturePromise } from "./lib/errors";
 import logoDarkSrc from "./assets/logo-dark.png";
@@ -41,6 +42,24 @@ export default function App() {
   const [transEntries, setTransEntries] = createSignal<TranslationEntry[]>([]);
   const [sttCount, setSttCount] = createSignal(0);
 
+  const [hSplit, setHSplit] = createSignal(50);
+  const [vSplit, setVSplit] = createSignal(70);
+
+  let mainRef: HTMLElement | undefined;
+  let containerRef: HTMLDivElement | undefined;
+
+  function onHResize(delta: number) {
+    if (!mainRef) return;
+    const width = mainRef.clientWidth;
+    setHSplit((prev) => Math.max(20, Math.min(80, prev + (delta / width) * 100)));
+  }
+
+  function onVResize(delta: number) {
+    if (!containerRef) return;
+    const height = containerRef.clientHeight;
+    setVSplit((prev) => Math.max(30, Math.min(85, prev + (delta / height) * 100)));
+  }
+
   const perf = createPerfMonitor();
 
   let entryId = 0;
@@ -48,6 +67,7 @@ export default function App() {
   let startTime = 0;
 
   const entryTimers = new Map<number, ReturnType<typeof setTimeout>>();
+  const editingText = new Map<number, string>();
   let nextWriteIndex = 0;
 
   function feedDelayMs(): number {
@@ -90,6 +110,12 @@ export default function App() {
   }
 
   function startEditEntry(id: number): void {
+    // Auto-save any currently editing entry first
+    const current = transEntries().find((e) => e.status === "editing");
+    if (current) {
+      saveEditEntry(current.id, editingText.get(current.id) ?? current.text);
+    }
+
     const timer = entryTimers.get(id);
     if (timer) {
       clearTimeout(timer);
@@ -99,15 +125,21 @@ export default function App() {
   }
 
   function saveEditEntry(id: number, text: string): void {
+    editingText.delete(id);
     updateEntryStatus(id, "confirmed", text);
     entryTimers.delete(id);
     drainConfirmedQueue();
   }
 
   function cancelEditEntry(id: number): void {
+    editingText.delete(id);
     updateEntryStatus(id, "pending");
     const timer = setTimeout(() => confirmEntry(id), feedDelayMs());
     entryTimers.set(id, timer);
+  }
+
+  function handleEditChange(id: number, text: string): void {
+    editingText.set(id, text);
   }
 
   function flushPendingEntries(): void {
@@ -314,6 +346,8 @@ export default function App() {
         </div>
 
         <div class="flex items-center gap-3">
+          <ThemeToggle />
+
           <Button
             variant="icon"
             onClick={() => setShowSettings(true)}
@@ -335,8 +369,6 @@ export default function App() {
             </svg>
           </Button>
 
-          <ThemeToggle />
-
           <div class="w-px h-6 bg-border" />
 
           <div
@@ -357,23 +389,36 @@ export default function App() {
         />
       </div>
 
-      <div class="stagger-3 flex flex-col flex-1 min-h-0 bg-bg">
-        <main class="flex min-h-0 overflow-hidden p-3 gap-0" style={{ flex: "7" }}>
-          <SpeechPane entries={sttEntries} finalCount={sttCount} live={running} />
+      <div ref={containerRef} class="stagger-3 flex flex-col flex-1 min-h-0 bg-bg">
+        <main
+          ref={mainRef}
+          class="flex min-h-0 overflow-hidden pt-3 px-3 gap-0"
+          style={{ flex: String(vSplit()) }}
+        >
+          <div style={{ flex: String(hSplit()) }} class="min-w-0 flex">
+            <SpeechPane entries={sttEntries} finalCount={sttCount} live={running} />
+          </div>
 
-          <div class="w-3 shrink-0" />
+          <ResizeHandle direction="horizontal" onResize={onHResize} />
 
-          <TranslationPane
-            entries={transEntries}
-            live={running}
-            feedDelayMs={feedDelayMs}
-            onStartEdit={startEditEntry}
-            onSaveEdit={saveEditEntry}
-            onCancelEdit={cancelEditEntry}
-          />
+          <div style={{ flex: String(100 - hSplit()) }} class="min-w-0 flex">
+            <TranslationPane
+              entries={transEntries}
+              live={running}
+              feedDelayMs={feedDelayMs}
+              onStartEdit={startEditEntry}
+              onSaveEdit={saveEditEntry}
+              onCancelEdit={cancelEditEntry}
+              onEditChange={handleEditChange}
+            />
+          </div>
         </main>
 
-        <OutputPane entries={transEntries} />
+        <ResizeHandle direction="vertical" onResize={onVResize} />
+
+        <div style={{ flex: String(100 - vSplit()) }} class="min-h-0 flex flex-col">
+          <OutputPane entries={transEntries} />
+        </div>
       </div>
 
       <ToastContainer />

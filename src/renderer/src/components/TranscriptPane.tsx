@@ -198,6 +198,7 @@ interface TransPaneProps {
   onStartEdit: (id: number) => void;
   onSaveEdit: (id: number, text: string) => void;
   onCancelEdit: (id: number) => void;
+  onEditChange: (id: number, text: string) => void;
 }
 
 function TranslationEntryRow(props: {
@@ -208,6 +209,7 @@ function TranslationEntryRow(props: {
   onStartEdit: (id: number) => void;
   onSaveEdit: (id: number, text: string) => void;
   onCancelEdit: (id: number) => void;
+  onEditChange: (id: number, text: string) => void;
 }) {
   const [editText, setEditText] = createSignal(props.entry.text);
   const [remaining, setRemaining] = createSignal(0);
@@ -258,18 +260,19 @@ function TranslationEntryRow(props: {
     <div
       class="animate-entry text-sm leading-relaxed text-tx flex items-center border-l-2 pl-2"
       classList={{
-        "border-l-border cursor-pointer hover:bg-white/[0.03]": isPending(),
-        "border-l-border": isEditing() || isConfirmed(),
-        "border-l-border opacity-60": isSent(),
+        "border-l-border-lit cursor-pointer hover:bg-white/[0.03]": isPending(),
+        "border-l-border-focus": isEditing(),
+        "border-l-border-lit": isConfirmed(),
+        "border-l-border-lit opacity-60": isSent(),
       }}
       style={{ height: `${props.itemHeight}px`, contain: "content" }}
       onClick={() => isPending() && props.onStartEdit(props.entry.id)}
     >
-      <span class="inline text-[9px] font-medium font-mono text-tx-4 tracking-wide mr-2 tabular-nums opacity-60 shrink-0">
+      <span class="inline text-[9px] font-medium font-mono text-tx-3 tracking-wide mr-2 tabular-nums shrink-0">
         {props.entry.timestamp}
       </span>
       <Show when={isSent()}>
-        <span class="text-tx-4 text-[9px] mr-2 shrink-0">&#10003;</span>
+        <span class="text-tx-3 text-[9px] mr-2 shrink-0">&#10003;</span>
       </Show>
       <Show
         when={!isEditing()}
@@ -277,13 +280,16 @@ function TranslationEntryRow(props: {
           <div class="flex items-center gap-1.5 flex-1 min-w-0">
             <input
               ref={(el) => requestAnimationFrame(() => el.focus())}
-              class="flex-1 min-w-0 bg-transparent border border-border rounded px-1.5 py-0.5 text-sm text-tx outline-none focus:border-border-lit"
+              class="flex-1 min-w-0 bg-transparent border border-border-lit rounded-lg px-1.5 py-0.5 text-sm text-tx outline-none focus:border-border-focus"
               value={editText()}
-              onInput={(e) => setEditText(e.currentTarget.value)}
+              onInput={(e) => {
+                setEditText(e.currentTarget.value);
+                props.onEditChange(props.entry.id, e.currentTarget.value);
+              }}
               onKeyDown={handleKeyDown}
             />
             <button
-              class="text-[10px] text-tx-3 hover:text-tx-2 font-bold shrink-0 px-1"
+              class="text-[11px] text-tx-2 hover:text-tx font-bold shrink-0 px-1.5"
               onClick={(e) => {
                 e.stopPropagation();
                 props.onSaveEdit(props.entry.id, editText());
@@ -293,7 +299,7 @@ function TranslationEntryRow(props: {
               &#10003;
             </button>
             <button
-              class="text-[10px] text-tx-4 hover:text-tx-3 font-bold shrink-0 px-1"
+              class="text-[11px] text-tx-3 hover:text-tx-2 font-bold shrink-0 px-1.5"
               onClick={(e) => {
                 e.stopPropagation();
                 props.onCancelEdit(props.entry.id);
@@ -317,7 +323,7 @@ function TranslationEntryRow(props: {
         </span>
       </Show>
       <Show when={isPending()}>
-        <span class="text-[9px] font-mono text-tx-4 ml-auto pl-2 shrink-0 tabular-nums">
+        <span class="text-[9px] font-mono text-tx-3 ml-auto pl-2 shrink-0 tabular-nums">
           {remaining()}s
         </span>
       </Show>
@@ -365,6 +371,7 @@ export function TranslationPane(props: TransPaneProps) {
                       onStartEdit={props.onStartEdit}
                       onSaveEdit={props.onSaveEdit}
                       onCancelEdit={props.onCancelEdit}
+                      onEditChange={props.onEditChange}
                     />
                   );
                 }}
