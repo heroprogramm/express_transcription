@@ -2,7 +2,12 @@ import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
 
 interface AppConfig {
   soniox: { language: string; model: string; translate_to: string };
-  output: { feed_file: string; session_log_dir: string };
+  output: { feed_file: string; session_log_dir: string; feed_delay_seconds: number };
+}
+
+interface ConfigResult {
+  config: AppConfig;
+  warnings: string[];
 }
 
 interface PerfSnapshot {
@@ -26,7 +31,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getApiKey: (): Promise<string | null> => ipcRenderer.invoke("get-api-key"),
   saveApiKey: (key: string): Promise<void> => ipcRenderer.invoke("save-api-key", key),
   hasApiKey: (): Promise<boolean> => ipcRenderer.invoke("has-api-key"),
-  getConfig: (): Promise<AppConfig> => ipcRenderer.invoke("get-config"),
+  getConfig: (): Promise<ConfigResult> => ipcRenderer.invoke("get-config"),
+  saveConfig: (fields: Record<string, unknown>): Promise<ConfigResult> =>
+    ipcRenderer.invoke("save-config", fields),
   startSession: (): Promise<void> => ipcRenderer.invoke("start-session"),
   stopSession: (): Promise<void> => ipcRenderer.invoke("stop-session"),
   logTranslation: (timestamp: string, text: string): Promise<void> =>

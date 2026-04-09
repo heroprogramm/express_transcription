@@ -6,6 +6,7 @@
   },
   "output": {
     "feed_file": "feed.txt",
-    "session_log_dir": "sessions"
+    "session_log_dir": "sessions",
+    "feed_delay_seconds": 10
   }
 }

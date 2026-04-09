@@ -28,8 +28,15 @@ let appConfig: AppConfig = DEFAULT_CONFIG;
 
 // ── App lifecycle ──
 app.whenReady().then(async () => {
-  appConfig = await loadConfig();
-  registerIpcHandlers(() => appConfig);
+  const configResult = await loadConfig();
+  appConfig = configResult.config;
+  registerIpcHandlers(
+    () => appConfig,
+    (c) => {
+      appConfig = c;
+    },
+    configResult.warnings,
+  );
 
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
     callback(permission === "media");

@@ -29,7 +29,7 @@ let logQueue: { ts: string; text: string }[] = [];
 let logFlushTimer: ReturnType<typeof setTimeout> | null = null;
 const LOG_FLUSH_INTERVAL_MS = 200;
 
-function queueLogTranslation(ts: string, text: string): void {
+export function queueLogTranslation(ts: string, text: string): void {
   logQueue.push({ ts, text });
   if (!logFlushTimer) {
     logFlushTimer = setTimeout(flushLogQueue, LOG_FLUSH_INTERVAL_MS);
@@ -120,7 +120,6 @@ export async function startTranscription(
       }
       const latencyMs = elapsed - result.total_audio_proc_ms;
       callbacks.onTranslation(ts, translated, latencyMs);
-      queueLogTranslation(ts, translated);
     }
   }
 

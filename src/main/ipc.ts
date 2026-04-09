@@ -1,11 +1,15 @@
 import { ipcMain, systemPreferences, shell } from "electron";
-import type { AppConfig } from "./config";
+import { type AppConfig, saveConfigFields, loadConfig } from "./config";
 import { getApiKey, saveApiKey, hasApiKey } from "./store";
 import { startSession, stopSession, logTranslation } from "./session";
 import { startMetricsCollection, stopMetricsCollection } from "./metrics";
 import { getMainWindow } from "./window";
 
-export function registerIpcHandlers(getConfig: () => AppConfig): void {
+export function registerIpcHandlers(
+  getConfig: () => AppConfig,
+  setConfig: (config: AppConfig) => void,
+  configWarnings: string[] = [],
+): void {
   ipcMain.handle("get-api-key", () => getApiKey());
 
   ipcMain.handle("save-api-key", (_event, key: unknown) => {
@@ -14,7 +18,26 @@ export function registerIpcHandlers(getConfig: () => AppConfig): void {
   });
 
   ipcMain.handle("has-api-key", () => hasApiKey());
-  ipcMain.handle("get-config", () => getConfig());
+  ipcMain.handle("get-config", () => ({
+    config: getConfig(),
+    warnings: configWarnings,
+  }));
+
+  ipcMain.handle(
+    "save-config",
+    async (_event, fields: unknown): Promise<{ config: AppConfig; warnings: string[] }> => {
+      if (!fields || typeof fields !== "object") throw new Error("Invalid config fields");
+      const f = fields as Record<string, unknown>;
+      const updates: Partial<{ model: string; feed_delay_seconds: number }> = {};
+      if (typeof f.model === "string") updates.model = f.model;
+      if (typeof f.feed_delay_seconds === "number")
+        updates.feed_delay_seconds = f.feed_delay_seconds;
+      await saveConfigFields(updates);
+      const result = await loadConfig();
+      setConfig(result.config);
+      return { config: result.config, warnings: result.warnings };
+    },
+  );
 
   ipcMain.handle(
     "ensure-mic-access",

@@ -6,7 +6,10 @@ declare global {
       getApiKey: () => Promise<string | null>;
       saveApiKey: (key: string) => Promise<void>;
       hasApiKey: () => Promise<boolean>;
-      getConfig: () => Promise<AppConfig>;
+      getConfig: () => Promise<{ config: AppConfig; warnings: string[] }>;
+      saveConfig: (
+        fields: Record<string, unknown>,
+      ) => Promise<{ config: AppConfig; warnings: string[] }>;
       startSession: () => Promise<void>;
       stopSession: () => Promise<void>;
       logTranslation: (timestamp: string, text: string) => Promise<void>;
@@ -38,8 +41,14 @@ export async function hasApiKey(): Promise<boolean> {
   return getApi().hasApiKey();
 }
 
-export async function getConfig(): Promise<AppConfig> {
+export async function getConfig(): Promise<{ config: AppConfig; warnings: string[] }> {
   return getApi().getConfig();
+}
+
+export async function saveConfig(
+  fields: Record<string, unknown>,
+): Promise<{ config: AppConfig; warnings: string[] }> {
+  return getApi().saveConfig(fields);
 }
 
 export async function startSession(): Promise<void> {

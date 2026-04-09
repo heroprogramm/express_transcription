@@ -7,6 +7,7 @@ export interface AppConfig {
   output: {
     feed_file: string;
     session_log_dir: string;
+    feed_delay_seconds: number;
   };
 }
 
@@ -21,6 +22,8 @@ export interface TranslationEntry {
   id: number;
   timestamp: string;
   text: string;
+  status: "pending" | "editing" | "confirmed" | "sent";
+  createdAt: number;
 }
 
 export interface PerfSnapshot {

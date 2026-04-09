@@ -140,11 +140,10 @@ export function SpeechPane(props: SpeechPaneProps) {
 
   return (
     <section
-      class={`pane-amber surface-raised flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-xl overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
+      class={`surface-raised flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-xl overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
     >
       <div class="flex justify-between items-center px-4 py-2.5 border-b border-border shrink-0">
         <div class="flex items-center gap-2">
-          <span class="w-[6px] h-[6px] rounded-full bg-amber shrink-0" />
           <h2 class="text-[12px] font-bold text-tx-2 tracking-wider uppercase">Speech</h2>
         </div>
         <span class="text-[11px] text-tx-4 font-mono tabular-nums">
@@ -195,6 +194,135 @@ export function SpeechPane(props: SpeechPaneProps) {
 interface TransPaneProps {
   entries: Accessor<TranslationEntry[]>;
   live: Accessor<boolean>;
+  feedDelayMs: () => number;
+  onStartEdit: (id: number) => void;
+  onSaveEdit: (id: number, text: string) => void;
+  onCancelEdit: (id: number) => void;
+}
+
+function TranslationEntryRow(props: {
+  entry: TranslationEntry;
+  isNew: boolean;
+  itemHeight: number;
+  feedDelayMs: () => number;
+  onStartEdit: (id: number) => void;
+  onSaveEdit: (id: number, text: string) => void;
+  onCancelEdit: (id: number) => void;
+}) {
+  const [editText, setEditText] = createSignal(props.entry.text);
+  const [remaining, setRemaining] = createSignal(0);
+
+  const isPending = () => props.entry.status === "pending";
+  const isEditing = () => props.entry.status === "editing";
+  const isConfirmed = () => props.entry.status === "confirmed";
+  const isSent = () => props.entry.status === "sent";
+
+  // Countdown timer for pending entries
+  let countdownInterval: ReturnType<typeof setInterval> | undefined;
+
+  function startCountdown() {
+    updateRemaining();
+    countdownInterval = setInterval(updateRemaining, 500);
+  }
+
+  function updateRemaining() {
+    const elapsed = Date.now() - props.entry.createdAt;
+    const left = Math.max(0, Math.ceil((props.feedDelayMs() - elapsed) / 1000));
+    setRemaining(left);
+  }
+
+  createEffect(() => {
+    if (isPending()) {
+      startCountdown();
+    } else if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = undefined;
+    }
+  });
+
+  onCleanup(() => {
+    if (countdownInterval) clearInterval(countdownInterval);
+  });
+
+  function handleKeyDown(e: KeyboardEvent): void {
+    if (e.key === "Enter") {
+      props.onSaveEdit(props.entry.id, editText());
+    } else if (e.key === "Escape") {
+      props.onCancelEdit(props.entry.id);
+    }
+  }
+
+  const duration = props.entry.text.length / 80;
+
+  return (
+    <div
+      class="animate-entry text-sm leading-relaxed text-tx flex items-center border-l-2 pl-2"
+      classList={{
+        "border-l-border cursor-pointer hover:bg-white/[0.03]": isPending(),
+        "border-l-border": isEditing() || isConfirmed(),
+        "border-l-border opacity-60": isSent(),
+      }}
+      style={{ height: `${props.itemHeight}px`, contain: "content" }}
+      onClick={() => isPending() && props.onStartEdit(props.entry.id)}
+    >
+      <span class="inline text-[9px] font-medium font-mono text-tx-4 tracking-wide mr-2 tabular-nums opacity-60 shrink-0">
+        {props.entry.timestamp}
+      </span>
+      <Show when={isSent()}>
+        <span class="text-tx-4 text-[9px] mr-2 shrink-0">&#10003;</span>
+      </Show>
+      <Show
+        when={!isEditing()}
+        fallback={
+          <div class="flex items-center gap-1.5 flex-1 min-w-0">
+            <input
+              ref={(el) => requestAnimationFrame(() => el.focus())}
+              class="flex-1 min-w-0 bg-transparent border border-border rounded px-1.5 py-0.5 text-sm text-tx outline-none focus:border-border-lit"
+              value={editText()}
+              onInput={(e) => setEditText(e.currentTarget.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <button
+              class="text-[10px] text-tx-3 hover:text-tx-2 font-bold shrink-0 px-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                props.onSaveEdit(props.entry.id, editText());
+              }}
+              title="Save (Enter)"
+            >
+              &#10003;
+            </button>
+            <button
+              class="text-[10px] text-tx-4 hover:text-tx-3 font-bold shrink-0 px-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                props.onCancelEdit(props.entry.id);
+              }}
+              title="Cancel (Esc)"
+            >
+              &#10005;
+            </button>
+          </div>
+        }
+      >
+        <span
+          class={props.isNew && isPending() ? "type-reveal" : undefined}
+          style={
+            props.isNew && isPending()
+              ? { "--type-steps": props.entry.text.length, "--type-dur": `${duration}s` }
+              : undefined
+          }
+        >
+          {props.entry.text}
+        </span>
+      </Show>
+      <Show when={isPending()}>
+        <span class="text-[9px] font-mono text-tx-4 ml-auto pl-2 shrink-0 tabular-nums">
+          {remaining()}s
+        </span>
+      </Show>
+    </div>
+  );
 }
 
 export function TranslationPane(props: TransPaneProps) {
@@ -205,11 +333,10 @@ export function TranslationPane(props: TransPaneProps) {
 
   return (
     <section
-      class={`pane-teal surface-raised flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-xl overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
+      class={`surface-raised flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-xl overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
     >
       <div class="flex justify-between items-center px-4 py-2.5 border-b border-border shrink-0">
         <div class="flex items-center gap-2">
-          <span class="w-[6px] h-[6px] rounded-full bg-teal shrink-0" />
           <h2 class="text-[12px] font-bold text-tx-2 tracking-wider uppercase">Translation</h2>
         </div>
         <span class="text-[11px] text-tx-4 font-mono tabular-nums">
@@ -228,27 +355,17 @@ export function TranslationPane(props: TransPaneProps) {
                 {(entry) => {
                   const isNew = entry.id > lastSeenId;
                   if (isNew) lastSeenId = entry.id;
-                  const duration = entry.text.length / 80;
 
                   return (
-                    <div
-                      class="animate-entry text-sm leading-relaxed text-tx flex items-center border-l-2 border-l-teal/25 pl-2"
-                      style={{ height: `${vl.itemHeight}px`, contain: "content" }}
-                    >
-                      <span class="inline text-[9px] font-medium font-mono text-tx-4 tracking-wide mr-2 tabular-nums opacity-60">
-                        {entry.timestamp}
-                      </span>
-                      <span
-                        class={isNew ? "type-reveal" : undefined}
-                        style={
-                          isNew
-                            ? { "--type-steps": entry.text.length, "--type-dur": `${duration}s` }
-                            : undefined
-                        }
-                      >
-                        {entry.text}
-                      </span>
-                    </div>
+                    <TranslationEntryRow
+                      entry={entry}
+                      isNew={isNew}
+                      itemHeight={vl.itemHeight}
+                      feedDelayMs={props.feedDelayMs}
+                      onStartEdit={props.onStartEdit}
+                      onSaveEdit={props.onSaveEdit}
+                      onCancelEdit={props.onCancelEdit}
+                    />
                   );
                 }}
               </For>
