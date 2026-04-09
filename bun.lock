@@ -6,7 +6,7 @@
       "name": "et-scaffold",
       "dependencies": {
         "@electron-toolkit/utils": "^4.0.0",
-        "@soniox/speech-to-text-web": "^1.4.0",
+        "@soniox/client": "^1.0.2",
         "electron-store": "^11.0.2",
         "solid-js": "^1.9.12",
       },
@@ -283,7 +283,7 @@
 
     "@sindresorhus/is": ["@sindresorhus/is@4.6.0", "", {}, "sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw=="],
 
-    "@soniox/speech-to-text-web": ["@soniox/speech-to-text-web@1.4.0", "", {}, "sha512-ZtwL3yQsPEn7Cf3uYYSa6c4PnD19ohv7/wpZweLfJlNvI5NwoCeQEvENxIMFXGEatG65GvisVkPTl/1MV2WswA=="],
+    "@soniox/client": ["@soniox/client@1.0.2", "", {}, "sha512-5NsUKncu6sJ5CdDb3Ddj2iRAjWtxxElceEmBu6dDnmg8Kcji/fNkabcgSY8k61CshRHzYbUs7WOrYkPcstvaIw=="],
 
     "@szmarczak/http-timer": ["@szmarczak/http-timer@4.0.6", "", { "dependencies": { "defer-to-connect": "^2.0.0" } }, "sha512-4BAffykYOgO+5nzBWYwE3W90sBgLJoUPRWWcL8wlyiM8IB8ipJz3UMJ9KXQd1RKQXpKp8Tutn80HZtWsu2u76w=="],
 

@@ -153,14 +153,9 @@ export default function App() {
       );
     } catch (e: unknown) {
       const err = e instanceof Error ? e : new Error(String(e));
-      if (err.name === "MicAccessError") {
-        reportError("mic", err.message, e);
-        capturePromise("mic", ensureMicAccess());
-      } else {
-        const isApiKeyError = /api.key|unauthorized|invalid.*key|no soniox/i.test(String(e));
-        reportError(isApiKeyError ? "api-key" : "unknown", err.message, e);
-        if (isApiKeyError) setShowSettings(true);
-      }
+      const isApiKeyError = /api.key|unauthorized|invalid.*key|no soniox/i.test(err.message);
+      reportError(isApiKeyError ? "api-key" : "unknown", err.message, e);
+      if (isApiKeyError) setShowSettings(true);
       handleStopped();
     }
   }

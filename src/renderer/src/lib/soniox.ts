@@ -1,4 +1,13 @@
-import { SonioxClient, type SpeechToTextAPIResponse, type Token } from "@soniox/speech-to-text-web";
+import {
+  SonioxClient,
+  BrowserPermissionResolver,
+  MicrophoneSource,
+  AuthError,
+  type Recording,
+  type RealtimeResult,
+  type RealtimeToken,
+  type RecordingState,
+} from "@soniox/client";
 import type { AppConfig } from "./types";
 import { getApiKey, logTranslationsBatch } from "./ipc";
 import { reportError } from "./errors";
@@ -11,7 +20,7 @@ export interface SonioxCallbacks {
 }
 
 let client: SonioxClient | null = null;
-let activeStream: MediaStream | null = null;
+let recording: Recording | null = null;
 let startTime = 0;
 let wordCount = 0;
 
@@ -45,7 +54,7 @@ function formatTimestamp(ms: number): string {
   return `${hours}:${mins}:${secs}`;
 }
 
-function parseTokens(tokens: Token[]): {
+function parseTokens(tokens: RealtimeToken[]): {
   original: string;
   translated: string | null;
   isFinal: boolean;
@@ -84,41 +93,19 @@ export async function startTranscription(
   wordCount = 0;
 
   client = new SonioxClient({
-    apiKey: async () => {
+    api_key: async () => {
       const key = await getApiKey();
       if (!key) throw new Error("No Soniox API key configured");
       return key;
     },
-    keepAlive: true,
-    keepAliveInterval: 5000,
+    permissions: new BrowserPermissionResolver(),
   });
 
-  const audioConstraints: MediaTrackConstraints = {
-    echoCancellation: false,
-    noiseSuppression: false,
-  };
-  if (micDeviceId) {
-    audioConstraints.deviceId = { exact: micDeviceId };
-  }
+  const source = new MicrophoneSource(
+    micDeviceId ? { constraints: { deviceId: { exact: micDeviceId } } } : undefined,
+  );
 
-  try {
-    activeStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
-  } catch (err) {
-    const name = err instanceof DOMException ? err.name : "";
-    if (name === "NotReadableError" || name === "NotAllowedError") {
-      const hint = navigator.userAgent.includes("Mac")
-        ? "Check System Settings \u2192 Privacy & Security \u2192 Microphone."
-        : "Check Settings \u2192 Privacy \u2192 Microphone.";
-      const micErr = new Error(`Microphone not accessible. ${hint}`);
-      micErr.name = "MicAccessError";
-      throw micErr;
-    }
-    throw err;
-  }
-
-  startTime = Date.now();
-
-  function handlePartialResult(result: SpeechToTextAPIResponse): void {
+  function handleResult(result: RealtimeResult): void {
     const elapsed = Date.now() - startTime;
     const ts = formatTimestamp(elapsed);
     const { original, translated, isFinal } = parseTokens(result.tokens);
@@ -137,70 +124,61 @@ export async function startTranscription(
     }
   }
 
-  function handleError(status: string, message: string, errorCode: number | undefined): void {
-    stopActiveStream();
-    const isApiKeyError =
-      (status === "api_error" &&
-        /api.key|unauthorized|invalid.*key|authentication/i.test(message)) ||
-      /no soniox api key/i.test(message);
-    const detail = errorCode ? `[${status} ${errorCode}] ${message}` : `[${status}] ${message}`;
-    callbacks.onError(detail, isApiKeyError);
+  function handleError(err: Error): void {
+    const isApiKeyError = err instanceof AuthError || /no soniox api key/i.test(err.message);
+    callbacks.onError(err.message, isApiKeyError);
   }
 
-  await client.start({
+  recording = client.realtime.record({
     model: config.soniox.model,
-    languageHints: [config.soniox.language],
-    enableEndpointDetection: true,
+    language_hints: [config.soniox.language],
+    language_hints_strict: true,
+    enable_endpoint_detection: true,
     translation: {
       type: "one_way",
       target_language: config.soniox.translate_to,
     },
-    audioConstraints,
-    stream: activeStream,
-    onStarted: () => callbacks.onStateChange("started"),
-    onPartialResult: handlePartialResult,
-    onFinished: () => callbacks.onStateChange("stopped"),
-    onError: handleError,
+    source,
   });
+
+  recording.on("connected", () => {
+    startTime = Date.now();
+    callbacks.onStateChange("started");
+  });
+  recording.on("result", handleResult);
+  recording.on("finished", () => callbacks.onStateChange("stopped"));
+  recording.on("error", handleError);
 }
 
-function stopActiveStream(): void {
-  if (activeStream) {
-    activeStream.getTracks().forEach((t) => t.stop());
-    activeStream = null;
+function cleanup(): void {
+  if (logFlushTimer) {
+    clearTimeout(logFlushTimer);
+    logFlushTimer = null;
   }
+  flushLogQueue();
 }
 
 export function stopTranscription(): void {
-  if (logFlushTimer) {
-    clearTimeout(logFlushTimer);
-    logFlushTimer = null;
+  cleanup();
+  if (recording) {
+    recording.stop().catch(() => {});
+    recording = null;
   }
-  flushLogQueue();
-  stopActiveStream();
-  if (client) {
-    client.stop();
-    client = null;
-  }
+  client = null;
 }
 
 export function cancelTranscription(): void {
-  if (logFlushTimer) {
-    clearTimeout(logFlushTimer);
-    logFlushTimer = null;
+  cleanup();
+  if (recording) {
+    recording.cancel();
+    recording = null;
   }
-  flushLogQueue();
-  stopActiveStream();
-  if (client) {
-    client.cancel();
-    client = null;
-  }
+  client = null;
 }
 
-export function getAudioHealth(): { active: boolean; trackState: string } {
-  const track = activeStream?.getAudioTracks()[0];
+export function getAudioHealth(): { active: boolean; state: RecordingState } {
   return {
-    active: !!track && track.readyState === "live",
-    trackState: track?.readyState ?? "none",
+    active: recording?.state === "recording",
+    state: recording?.state ?? "idle",
   };
 }

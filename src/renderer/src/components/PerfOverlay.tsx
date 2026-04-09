@@ -88,7 +88,7 @@ export default function PerfOverlay(props: Props) {
         <Metric label="RSS" value={formatMB(props.mainMemory().rss)} />
         <Metric
           label="Audio"
-          value={audio().active ? "OK" : audio().trackState}
+          value={audio().active ? "OK" : audio().state}
           colorClass={audio().active ? "text-teal" : "text-red"}
         />
 

@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@electron-toolkit/utils": "^4.0.0",
-    "@soniox/speech-to-text-web": "^1.4.0",
+    "@soniox/client": "^1.0.2",
     "electron-store": "^11.0.2",
     "solid-js": "^1.9.12"
   },
