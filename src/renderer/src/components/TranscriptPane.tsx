@@ -181,7 +181,7 @@ export function SpeechPane(props: SpeechPaneProps) {
                   const marker = entry.isPartial ? "\u2026" : "\u25B6";
                   return (
                     <div
-                      class="animate-entry flex items-center border-l-2 border-l-transparent pl-2"
+                      class="flex items-center border-l-2 border-l-transparent pl-2"
                       classList={{
                         "border-l-amber/30": !entry.isPartial,
                         "border-l-amber/10": entry.isPartial,
