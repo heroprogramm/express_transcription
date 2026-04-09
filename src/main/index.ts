@@ -8,12 +8,9 @@ const pkg = JSON.parse(readFileSync(join(__dirname, "..", "..", "package.json"),
   homepage?: string;
 };
 
-function getAppIcon(variant: "dock" | "about" = "dock"): Electron.NativeImage {
-  const suffix = variant === "about" ? "-about" : "";
+function getAppIcon(): Electron.NativeImage {
   const theme = nativeTheme.shouldUseDarkColors ? "-dark" : "";
-  return nativeImage.createFromPath(
-    join(__dirname, "..", "..", "build", `icon${theme}${suffix}.png`),
-  );
+  return nativeImage.createFromPath(join(__dirname, "..", "..", "build", `icon${theme}.png`));
 }
 import { createWindow, getMainWindow } from "./window";
 import { registerIpcHandlers } from "./ipc";
@@ -75,7 +72,7 @@ app.whenReady().then(async () => {
                 label: `About ${app.name}`,
                 click: () => {
                   dialog.showMessageBox({
-                    icon: getAppIcon("about"),
+                    icon: getAppIcon(),
                     type: "info",
                     title: `About ${app.name}`,
                     message: `${app.name} v${app.getVersion()}`,
@@ -151,7 +148,7 @@ app.whenReady().then(async () => {
                 label: "About ExpressText",
                 click: () => {
                   dialog.showMessageBox({
-                    icon: getAppIcon("about"),
+                    icon: getAppIcon(),
                     type: "info",
                     title: "About ExpressText",
                     message: `ExpressText v${app.getVersion()}`,
