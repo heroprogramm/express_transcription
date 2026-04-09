@@ -2,7 +2,7 @@ import { app, dialog, Menu, shell, session } from "electron";
 import { loadConfig, DEFAULT_CONFIG, type AppConfig } from "./config";
 import { createWindow, getMainWindow } from "./window";
 import { registerIpcHandlers } from "./ipc";
-import { log } from "./logger";
+import { log, LogLevel } from "./logger";
 
 // ── Single instance lock ──
 const gotLock = app.requestSingleInstanceLock();
@@ -12,10 +12,10 @@ if (!gotLock) {
 
 // ── Process error handlers ──
 process.on("uncaughtException", (err) => {
-  log("error", "uncaughtException", { message: err.message, stack: err.stack });
+  log(LogLevel.Error, "uncaughtException", { message: err.message, stack: err.stack });
 });
 process.on("unhandledRejection", (reason) => {
-  log("error", "unhandledRejection", {
+  log(LogLevel.Error, "unhandledRejection", {
     message: reason instanceof Error ? reason.message : String(reason),
     stack: reason instanceof Error ? reason.stack : undefined,
   });
@@ -123,7 +123,7 @@ app.on("second-instance", () => {
 });
 
 app.on("render-process-gone", (_event, _webContents, details) => {
-  log("error", "render-process-gone", {
+  log(LogLevel.Error, "render-process-gone", {
     reason: details.reason,
     exitCode: details.exitCode,
   });

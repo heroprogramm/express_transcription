@@ -1,5 +1,5 @@
 import { app, type BrowserWindow } from "electron";
-import { log } from "./logger";
+import { log, LogLevel } from "./logger";
 
 export interface PerfSnapshot {
   ts: number;
@@ -95,7 +95,7 @@ export function stopMetricsCollection(): void {
   const avgLag =
     lagSamples.length > 0 ? lagSamples.reduce((a, b) => a + b, 0) / lagSamples.length : 0;
 
-  log("info", "perf-summary", {
+  log(LogLevel.Info, "perf-summary", {
     durationSec: Math.round(durationSec),
     peakRssMB: Math.round(peakRss / 1024 / 1024),
     peakHeapMB: Math.round(peakHeapUsed / 1024 / 1024),
