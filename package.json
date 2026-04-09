@@ -1,5 +1,5 @@
 {
-  "name": "express-text",
+  "name": "ExpressText",
   "private": true,
   "version": "0.1.5",
   "description": "Real-time speech transcription and translation desktop app",
