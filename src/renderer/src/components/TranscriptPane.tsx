@@ -89,7 +89,7 @@ function SpeechEmpty() {
               style={{
                 height: `${h * 100}%`,
                 "animation-delay": `${i * 0.08}s`,
-                background: `linear-gradient(to top, var(--amber-glow), var(--amber))`,
+                background: "var(--amber)",
                 opacity: 0.25,
               }}
             />
@@ -107,29 +107,19 @@ function SpeechEmpty() {
 function TranslationEmpty() {
   return (
     <div class="flex flex-col items-center justify-center h-full -mt-12 gap-4">
-      <div class="relative globe-bob">
-        <svg
-          class="opacity-20 animate-[spin_20s_linear_infinite]"
-          width="40"
-          height="40"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="0.8"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <line x1="2" y1="12" x2="22" y2="12" />
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-          <ellipse cx="12" cy="12" rx="10" ry="4" opacity="0.4" />
-        </svg>
-        <div
-          class="absolute inset-0 rounded-full"
-          style={{
-            background: "radial-gradient(circle, var(--teal-glow), transparent 70%)",
-            filter: "blur(8px)",
-          }}
-        />
-      </div>
+      <svg
+        class="opacity-30 animate-[spin_20s_linear_infinite]"
+        width="40"
+        height="40"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="var(--teal)"
+        stroke-width="0.8"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <line x1="2" y1="12" x2="22" y2="12" />
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      </svg>
       <div class="text-center">
         <p class="font-ui text-[13px] font-medium text-tx-3">Translations will appear here</p>
         <p class="font-ui text-[11px] text-tx-4 mt-1">Speech is translated in real time</p>
@@ -154,13 +144,7 @@ export function SpeechPane(props: SpeechPaneProps) {
     >
       <div class="flex justify-between items-center px-4 py-2.5 border-b border-border shrink-0">
         <div class="flex items-center gap-2">
-          <span
-            class={`w-[6px] h-[6px] rounded-full bg-amber shrink-0 transition-all duration-500 ${
-              props.live()
-                ? "shadow-[0_0_12px_var(--amber),0_0_4px_var(--amber)]"
-                : "shadow-[0_0_8px_var(--amber-glow)]"
-            }`}
-          />
+          <span class="w-[6px] h-[6px] rounded-full bg-amber shrink-0" />
           <h2 class="text-[12px] font-bold text-tx-2 tracking-wider uppercase">Speech</h2>
         </div>
         <span class="text-[11px] text-tx-4 font-mono tabular-nums">
@@ -225,13 +209,7 @@ export function TranslationPane(props: TransPaneProps) {
     >
       <div class="flex justify-between items-center px-4 py-2.5 border-b border-border shrink-0">
         <div class="flex items-center gap-2">
-          <span
-            class={`w-[6px] h-[6px] rounded-full bg-teal shrink-0 transition-all duration-500 ${
-              props.live()
-                ? "shadow-[0_0_12px_var(--teal),0_0_4px_var(--teal)]"
-                : "shadow-[0_0_8px_var(--teal-glow)]"
-            }`}
-          />
+          <span class="w-[6px] h-[6px] rounded-full bg-teal shrink-0" />
           <h2 class="text-[12px] font-bold text-tx-2 tracking-wider uppercase">Translation</h2>
         </div>
         <span class="text-[11px] text-tx-4 font-mono tabular-nums">

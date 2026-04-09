@@ -27,29 +27,12 @@
         gap: 14px;
         flex-shrink: 0;
       }
-      .skeleton-logo {
-        width: 36px;
-        height: 36px;
-        border-radius: 6px;
-        background: linear-gradient(145deg, #f5b731, #e09500);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        font-size: 17px;
-        color: #0c0f16;
-      }
       .skeleton-text {
         display: flex;
         flex-direction: column;
         gap: 4px;
       }
-      .skeleton-text span:first-child {
-        font-size: 15px;
-        font-weight: 700;
-        color: var(--text, #e2e5ef);
-      }
-      .skeleton-text span:last-child {
+      .skeleton-text span {
         font-size: 11px;
         color: var(--text-3, #6b7394);
       }
@@ -95,11 +78,11 @@
       <!-- Skeleton shown instantly, replaced when SolidJS mounts -->
       <div class="skeleton">
         <div class="skeleton-bar">
-          <div class="skeleton-logo">E</div>
-          <div class="skeleton-text">
-            <span>Express 24/7</span>
-            <span>Transcribe & Translate</span>
-          </div>
+          <img
+            src="./src/assets/logo.png"
+            alt="Express 24/7"
+            style="height: 40px; width: auto; object-fit: contain"
+          />
         </div>
         <div class="skeleton-body">
           <div class="skeleton-panel"></div>

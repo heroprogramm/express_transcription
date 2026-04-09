@@ -13,6 +13,8 @@ import Controls from "./components/Controls";
 import { SpeechPane, TranslationPane } from "./components/TranscriptPane";
 import ToastContainer from "./components/Toast";
 import { reportError, capturePromise } from "./lib/errors";
+import logoDarkSrc from "./assets/logo-dark.png";
+import logoLightSrc from "./assets/logo.png";
 
 const SettingsModal = lazy(() => import("./components/SettingsModal"));
 const PerfOverlay = lazy(() => import("./components/PerfOverlay"));
@@ -122,9 +124,7 @@ export default function App() {
             batch(() => {
               pushTransEntry({ id: entryId++, timestamp, text });
               setWords(getWordCount());
-              if (latencyMs >= 0) {
-                setLatency(`${(latencyMs / 1000).toFixed(1)}s`);
-              }
+              setLatency(`${(Math.abs(latencyMs) / 1000).toFixed(1)}s`);
             });
           },
           onError(message, isApiKeyError) {
@@ -196,32 +196,18 @@ export default function App() {
 
   return (
     <>
-      <div class="grain fixed inset-0 pointer-events-none z-[9999] opacity-[0.02] light:opacity-[0.012] bg-repeat" />
-
-      {/* Ambient floating orbs */}
-      <div class={`ambient-orb ambient-orb-1 ${running() ? "is-active" : ""}`} />
-      <div class={`ambient-orb ambient-orb-2 ${running() ? "is-active" : ""}`} />
-      <div class={`ambient-orb ambient-orb-3 ${running() ? "is-active" : ""}`} />
-
-      <header class="stagger-1 flex items-center justify-between h-[52px] px-5 bg-raised border-b border-border shrink-0 relative z-10 surface-raised-sm">
-        {/* Header underglow */}
-        <div class={`header-underglow ${status() === "live" ? "is-live" : ""}`} />
-
+      <header class="stagger-1 flex items-center justify-between h-[60px] px-5 bg-raised border-b border-border shrink-0 relative z-10 surface-raised-sm">
         <div class="flex items-center gap-3">
-          <div
-            class={`brand-mark w-8 h-8 rounded-[7px] flex items-center justify-center font-ui font-extrabold text-[15px] text-bg light:text-white relative overflow-hidden ${running() ? "brand-mark-live" : ""}`}
-          >
-            <span>E</span>
-            <div class="brand-mark-shine absolute inset-0" />
-          </div>
-          <div class="flex flex-col">
-            <span class="text-[15px] font-bold text-tx tracking-wide leading-tight">
-              ExpressText
-            </span>
-            <span class="text-[11px] font-medium text-tx-4 tracking-wider uppercase leading-tight">
-              Transcribe & Translate
-            </span>
-          </div>
+          <img
+            src={logoDarkSrc}
+            alt="Express 24/7"
+            class="h-10 w-auto object-contain dark:block light:hidden"
+          />
+          <img
+            src={logoLightSrc}
+            alt="Express 24/7"
+            class="h-10 w-auto object-contain dark:hidden light:block"
+          />
 
           <div class="w-px h-6 bg-border mx-1" />
 

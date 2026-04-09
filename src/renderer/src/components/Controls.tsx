@@ -67,7 +67,6 @@ export default function Controls(props: Props) {
           variant="primary"
           disabled={props.running()}
           onClick={() => props.onStart(selectedMic())}
-          class="btn-shine"
         >
           <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
             <polygon points="4,2 14,8 4,14" fill="currentColor" />
@@ -79,7 +78,6 @@ export default function Controls(props: Props) {
           variant={props.running() ? "danger" : "ghost"}
           disabled={!props.running()}
           onClick={props.onStop}
-          class="btn-shine"
         >
           <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
             <rect x="3" y="3" width="10" height="10" rx="1.5" fill="currentColor" />
