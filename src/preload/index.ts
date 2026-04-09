@@ -52,4 +52,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.on("perf:snapshot", handler);
     return () => ipcRenderer.removeListener("perf:snapshot", handler);
   },
+  onOpenSettings: (cb: () => void): (() => void) => {
+    const handler = () => cb();
+    ipcRenderer.on("open-settings", handler);
+    return () => ipcRenderer.removeListener("open-settings", handler);
+  },
 });

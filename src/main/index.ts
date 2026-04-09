@@ -1,10 +1,32 @@
-import { app, dialog, Menu, shell, session } from "electron";
+import { app, dialog, Menu, shell, session, nativeImage, nativeTheme } from "electron";
+import { join } from "path";
+import { readFileSync } from "fs";
 import { loadConfig, DEFAULT_CONFIG, type AppConfig } from "./config";
+
+const pkg = JSON.parse(readFileSync(join(__dirname, "..", "..", "package.json"), "utf-8")) as {
+  author?: { name?: string; email?: string };
+  homepage?: string;
+};
+
+function getAppIcon(variant: "dock" | "about" = "dock"): Electron.NativeImage {
+  const suffix = variant === "about" ? "-about" : "";
+  const theme = nativeTheme.shouldUseDarkColors ? "-dark" : "";
+  return nativeImage.createFromPath(
+    join(__dirname, "..", "..", "build", `icon${theme}${suffix}.png`),
+  );
+}
 import { createWindow, getMainWindow } from "./window";
 import { registerIpcHandlers } from "./ipc";
 import { stopSession } from "./session";
 import { stopMetricsCollection } from "./metrics";
 import { log, LogLevel } from "./logger";
+
+// ── App identity ──
+app.setName("ExpressText");
+if (process.platform === "darwin") {
+  const icon = getAppIcon();
+  if (!icon.isEmpty()) app.dock.setIcon(icon);
+}
 
 // ── Single instance lock ──
 const gotLock = app.requestSingleInstanceLock();
@@ -49,7 +71,26 @@ app.whenReady().then(async () => {
           {
             label: app.name,
             submenu: [
-              { role: "about" as const },
+              {
+                label: `About ${app.name}`,
+                click: () => {
+                  dialog.showMessageBox({
+                    icon: getAppIcon("about"),
+                    type: "info",
+                    title: `About ${app.name}`,
+                    message: `${app.name} v${app.getVersion()}`,
+                    detail: `Real-time speech transcription and translation.\n\nBy ${pkg.author?.name ?? ""}${pkg.author?.email ? `\n${pkg.author.email}` : ""}${pkg.homepage ? `\n${pkg.homepage}` : ""}`,
+                  });
+                },
+              },
+              { type: "separator" as const },
+              {
+                label: "Settings\u2026",
+                accelerator: "CmdOrCtrl+,",
+                click: () => {
+                  getMainWindow()?.webContents.send("open-settings");
+                },
+              },
               { type: "separator" as const },
               { role: "hide" as const },
               { role: "hideOthers" as const },
@@ -90,9 +131,17 @@ app.whenReady().then(async () => {
       label: "Help",
       submenu: [
         {
+          label: "Settings\u2026",
+          accelerator: "CmdOrCtrl+,",
+          click: () => {
+            getMainWindow()?.webContents.send("open-settings");
+          },
+        },
+        { type: "separator" },
+        {
           label: "Send Feedback",
           click: () => {
-            shell.openExternal("mailto:hamzashafiquehere@gmail.com?subject=ExpressText%20Feedback");
+            shell.openExternal(`mailto:${pkg.author?.email ?? ""}?subject=ExpressText%20Feedback`);
           },
         },
         ...(!isMac
@@ -102,10 +151,11 @@ app.whenReady().then(async () => {
                 label: "About ExpressText",
                 click: () => {
                   dialog.showMessageBox({
+                    icon: getAppIcon("about"),
                     type: "info",
                     title: "About ExpressText",
                     message: `ExpressText v${app.getVersion()}`,
-                    detail: "Real-time speech transcription and translation.\n\nBy Hamza Shafique",
+                    detail: `Real-time speech transcription and translation.\n\nBy ${pkg.author?.name ?? ""}${pkg.author?.email ? `\n${pkg.author.email}` : ""}${pkg.homepage ? `\n${pkg.homepage}` : ""}`,
                   });
                 },
               },

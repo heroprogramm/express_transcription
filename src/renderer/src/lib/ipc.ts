@@ -19,6 +19,7 @@ declare global {
       perfStop: () => Promise<void>;
       perfPing: () => Promise<number>;
       onPerfSnapshot: (cb: (snapshot: PerfSnapshot) => void) => () => void;
+      onOpenSettings: (cb: () => void) => () => void;
     };
   }
 }
@@ -87,4 +88,8 @@ export async function perfPing(): Promise<number> {
 
 export function onPerfSnapshot(cb: (snapshot: PerfSnapshot) => void): () => void {
   return getApi().onPerfSnapshot(cb);
+}
+
+export function onOpenSettings(cb: () => void): () => void {
+  return getApi().onOpenSettings(cb);
 }

@@ -1,6 +1,13 @@
 import { createSignal, createMemo, onMount, onCleanup, Show, batch, lazy } from "solid-js";
 import type { TranscriptEntry, TranslationEntry, AppConfig } from "./lib/types";
-import { hasApiKey, getConfig, startSession, stopSession, ensureMicAccess } from "./lib/ipc";
+import {
+  hasApiKey,
+  getConfig,
+  startSession,
+  stopSession,
+  ensureMicAccess,
+  onOpenSettings,
+} from "./lib/ipc";
 import {
   startTranscription,
   stopTranscription,
@@ -177,7 +184,10 @@ export default function App() {
     if (!(await hasApiKey())) setShowSettings(true);
   });
 
+  const cleanupSettingsListener = onOpenSettings(() => setShowSettings(true));
+
   onCleanup(() => {
+    cleanupSettingsListener();
     document.removeEventListener("keydown", onKeyDown);
     if (uptimeInterval) clearInterval(uptimeInterval);
     for (const [, timer] of entryTimers) clearTimeout(timer);
