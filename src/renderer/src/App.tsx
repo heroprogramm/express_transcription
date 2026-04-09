@@ -11,7 +11,8 @@ import { createPerfMonitor } from "./lib/perf";
 import StatsBar from "./components/StatsBar";
 import Controls from "./components/Controls";
 import { SpeechPane, TranslationPane } from "./components/TranscriptPane";
-import ToastContainer, { showToast } from "./components/Toast";
+import ToastContainer from "./components/Toast";
+import { reportError, capturePromise } from "./lib/errors";
 
 const SettingsModal = lazy(() => import("./components/SettingsModal"));
 const PerfOverlay = lazy(() => import("./components/PerfOverlay"));
@@ -53,8 +54,7 @@ export default function App() {
     try {
       setConfig(await getConfig());
     } catch (err) {
-      showToast("Failed to load config, using defaults.", "info");
-      console.error("[config]", err);
+      reportError("config", "Failed to load config, using defaults.", err);
     }
     if (!(await hasApiKey())) setShowSettings(true);
   });
@@ -100,12 +100,12 @@ export default function App() {
     try {
       const micAccess = await ensureMicAccess();
       if (micAccess === "denied") {
-        showToast("Microphone access denied. Please grant permission and try again.");
+        reportError("mic", "Microphone access denied. Please grant permission and try again.");
         handleStopped();
         return;
       }
       if (micAccess === "opened-settings") {
-        showToast("Please enable microphone access in Settings, then try again.", "info");
+        reportError("mic", "Please enable microphone access in Settings, then try again.");
         handleStopped();
         return;
       }
@@ -129,7 +129,7 @@ export default function App() {
             });
           },
           onError(message, isApiKeyError) {
-            showToast(message);
+            reportError("network", message);
             handleStopped();
             if (isApiKeyError) {
               setShowSettings(true);
@@ -154,11 +154,12 @@ export default function App() {
     } catch (e: unknown) {
       const err = e instanceof Error ? e : new Error(String(e));
       if (err.name === "MicAccessError") {
-        showToast(err.message, "info");
-        ensureMicAccess().catch(() => {});
+        reportError("mic", err.message, e);
+        capturePromise("mic", ensureMicAccess());
       } else {
-        showToast(String(e));
-        if (/api.key|unauthorized|invalid.*key|no soniox/i.test(String(e))) setShowSettings(true);
+        const isApiKeyError = /api.key|unauthorized|invalid.*key|no soniox/i.test(String(e));
+        reportError(isApiKeyError ? "api-key" : "unknown", err.message, e);
+        if (isApiKeyError) setShowSettings(true);
       }
       handleStopped();
     }
@@ -166,7 +167,7 @@ export default function App() {
 
   function handleStop() {
     stopTranscription();
-    stopSession().catch(() => {});
+    capturePromise("session", stopSession());
     handleStopped();
   }
 

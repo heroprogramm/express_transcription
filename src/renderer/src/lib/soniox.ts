@@ -1,6 +1,7 @@
 import { SonioxClient, type SpeechToTextAPIResponse, type Token } from "@soniox/speech-to-text-web";
 import type { AppConfig } from "./types";
 import { getApiKey, logTranslationsBatch } from "./ipc";
+import { reportError } from "./errors";
 
 export interface SonioxCallbacks {
   onTranscript: (timestamp: string, text: string, isPartial: boolean) => void;
@@ -32,7 +33,7 @@ function flushLogQueue(): void {
   const batch = logQueue;
   logQueue = [];
   logTranslationsBatch(batch).catch((err) => {
-    console.error("[soniox] batch log failed:", err);
+    reportError("session", "Failed to log translation batch", err);
   });
 }
 
@@ -117,6 +118,35 @@ export async function startTranscription(
 
   startTime = Date.now();
 
+  function handlePartialResult(result: SpeechToTextAPIResponse): void {
+    const elapsed = Date.now() - startTime;
+    const ts = formatTimestamp(elapsed);
+    const { original, translated, isFinal } = parseTokens(result.tokens);
+
+    if (original) {
+      callbacks.onTranscript(ts, original, !isFinal);
+    }
+
+    if (translated) {
+      if (isFinal) {
+        wordCount += translated.split(/\s+/).filter(Boolean).length;
+      }
+      const latencyMs = elapsed - result.total_audio_proc_ms;
+      callbacks.onTranslation(ts, translated, latencyMs);
+      queueLogTranslation(ts, translated);
+    }
+  }
+
+  function handleError(status: string, message: string, errorCode: number | undefined): void {
+    stopActiveStream();
+    const isApiKeyError =
+      (status === "api_error" &&
+        /api.key|unauthorized|invalid.*key|authentication/i.test(message)) ||
+      /no soniox api key/i.test(message);
+    const detail = errorCode ? `[${status} ${errorCode}] ${message}` : `[${status}] ${message}`;
+    callbacks.onError(detail, isApiKeyError);
+  }
+
   await client.start({
     model: config.soniox.model,
     languageHints: [config.soniox.language],
@@ -127,39 +157,10 @@ export async function startTranscription(
     },
     audioConstraints,
     stream: activeStream,
-    onStarted: () => {
-      callbacks.onStateChange("started");
-    },
-    onPartialResult: (result: SpeechToTextAPIResponse) => {
-      const elapsed = Date.now() - startTime;
-      const ts = formatTimestamp(elapsed);
-      const { original, translated, isFinal } = parseTokens(result.tokens);
-
-      if (original) {
-        callbacks.onTranscript(ts, original, !isFinal);
-      }
-
-      if (translated) {
-        if (isFinal) {
-          wordCount += translated.split(/\s+/).filter(Boolean).length;
-        }
-        const latencyMs = elapsed - result.total_audio_proc_ms;
-        callbacks.onTranslation(ts, translated, latencyMs);
-        queueLogTranslation(ts, translated);
-      }
-    },
-    onFinished: () => {
-      callbacks.onStateChange("stopped");
-    },
-    onError: (status, message, errorCode) => {
-      stopActiveStream();
-      const isApiKeyError =
-        (status === "api_error" &&
-          /api.key|unauthorized|invalid.*key|authentication/i.test(message)) ||
-        /no soniox api key/i.test(message);
-      const detail = errorCode ? `[${status} ${errorCode}] ${message}` : `[${status}] ${message}`;
-      callbacks.onError(detail, isApiKeyError);
-    },
+    onStarted: () => callbacks.onStateChange("started"),
+    onPartialResult: handlePartialResult,
+    onFinished: () => callbacks.onStateChange("stopped"),
+    onError: handleError,
   });
 }
 
