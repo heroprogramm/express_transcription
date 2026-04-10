@@ -67,8 +67,8 @@ export function createPerfMonitor() {
     frameCount = 0;
     rafId = requestAnimationFrame(countFrames);
 
-    measureIpcRtt();
-    pingInterval = setInterval(() => measureIpcRtt(), 2000);
+    measureIpcRtt().catch(() => {});
+    pingInterval = setInterval(() => measureIpcRtt().catch(() => {}), 2000);
   }
 
   function stop(): void {

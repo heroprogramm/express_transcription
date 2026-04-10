@@ -25,7 +25,7 @@ function Stat(props: { label: string; value: Accessor<string | number>; live: bo
 
   return (
     <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all duration-300 bg-surface">
-      <span class="text-[10px] font-semibold text-tx-4 tracking-wider uppercase">
+      <span class="text-[10px] font-semibold text-tx-4 tracking-wider uppercase select-none">
         {props.label}
       </span>
       <span

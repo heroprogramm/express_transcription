@@ -32,11 +32,15 @@ export default function Controls(props: Props) {
   return (
     <div class="flex items-center justify-between h-13 px-5 bg-inset border-b border-border shrink-0 surface-inset controls-bar">
       <div class="flex items-center gap-2.5">
-        <label class="text-[11px] font-semibold text-tx-4 tracking-wider uppercase whitespace-nowrap">
+        <label
+          for="mic-select"
+          class="text-[11px] font-semibold text-tx-4 tracking-wider uppercase whitespace-nowrap"
+        >
           Mic
         </label>
         <div class="relative inline-flex items-center">
           <select
+            id="mic-select"
             class="appearance-none bg-surface text-tx border border-border rounded-md px-2.5 py-[5px] pr-8 text-[13px] font-ui font-semibold cursor-pointer outline-none min-w-[130px] transition-all hover:bg-hover hover:border-border-lit focus:border-border-focus focus:shadow-[0_0_0_3px_var(--border)] disabled:opacity-30 disabled:cursor-not-allowed"
             disabled={props.running()}
             value={selectedMic()}

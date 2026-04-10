@@ -206,6 +206,14 @@ function TranslationEntryRow(props: {
         "border-l-border text-st-sent": isSent(),
       }}
       onClick={() => isPending() && props.onStartEdit(props.entry.id)}
+      onKeyDown={(e: KeyboardEvent) => {
+        if ((e.key === "Enter" || e.key === " ") && isPending()) {
+          e.preventDefault();
+          props.onStartEdit(props.entry.id);
+        }
+      }}
+      tabIndex={isPending() ? 0 : undefined}
+      role={isPending() ? "button" : undefined}
     >
       <span class="inline text-[9px] font-medium font-mono text-tx-3 tracking-wide mr-2 tabular-nums shrink-0">
         {props.entry.timestamp}

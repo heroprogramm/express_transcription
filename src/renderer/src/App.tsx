@@ -75,7 +75,13 @@ export default function App() {
       perf.toggle();
     }
     const tag = (e.target as HTMLElement)?.tagName;
-    if (e.key === " " && tag !== "INPUT" && tag !== "TEXTAREA" && tag !== "SELECT") {
+    if (
+      e.key === " " &&
+      tag !== "INPUT" &&
+      tag !== "TEXTAREA" &&
+      tag !== "SELECT" &&
+      tag !== "BUTTON"
+    ) {
       e.preventDefault();
       if (running()) {
         handleStop();
@@ -163,6 +169,7 @@ export default function App() {
             if (state === "started") {
               if (!uptimeInterval) {
                 startTime = Date.now();
+                updateUptime();
                 uptimeInterval = setInterval(updateUptime, 1000);
               }
               setStatus("live");
@@ -206,10 +213,6 @@ export default function App() {
     }
   }
 
-  function handleClear() {
-    entries.clear();
-  }
-
   // ── Render ──
 
   const BADGE_CLASS = {
@@ -228,11 +231,13 @@ export default function App() {
             src={logoDarkSrc}
             alt="Express 24/7"
             class="h-8 w-auto object-contain dark:block light:hidden"
+            draggable={false}
           />
           <img
             src={logoLightSrc}
             alt="Express 24/7"
             class="h-8 w-auto object-contain dark:hidden light:block"
+            draggable={false}
           />
 
           <div class="w-px h-6 bg-border mx-1" />
@@ -273,7 +278,7 @@ export default function App() {
           running={running}
           onStart={handleStart}
           onStop={handleStop}
-          onClear={handleClear}
+          onClear={entries.clear}
         />
       </div>
 

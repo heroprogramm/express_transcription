@@ -15,6 +15,7 @@ export default function ResizeHandle(props: ResizeHandleProps) {
     e.preventDefault();
     startPos = props.direction === "horizontal" ? e.clientX : e.clientY;
     setDragging(true);
+    document.body.style.cursor = props.direction === "horizontal" ? "col-resize" : "row-resize";
     document.addEventListener("pointermove", onPointerMove);
     document.addEventListener("pointerup", onPointerUp);
   }
@@ -28,11 +29,13 @@ export default function ResizeHandle(props: ResizeHandleProps) {
 
   function onPointerUp() {
     setDragging(false);
+    document.body.style.cursor = "";
     document.removeEventListener("pointermove", onPointerMove);
     document.removeEventListener("pointerup", onPointerUp);
   }
 
   onCleanup(() => {
+    document.body.style.cursor = "";
     document.removeEventListener("pointermove", onPointerMove);
     document.removeEventListener("pointerup", onPointerUp);
   });

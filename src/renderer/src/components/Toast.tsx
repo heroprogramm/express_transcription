@@ -54,6 +54,14 @@ export default function ToastContainer() {
             class={`toast-item flex items-start gap-3 px-4 py-3 rounded-md border shadow-lg backdrop-blur-sm cursor-pointer font-ui text-[13px] leading-snug ${
               toast.dismissing ? "toast-out" : "toast-in"
             } ${TOAST_STYLES[toast.type]}`}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e: KeyboardEvent) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                dismiss(toast.id);
+              }
+            }}
             onClick={() => dismiss(toast.id)}
           >
             <div class="toast-icon shrink-0 mt-px">

@@ -25,7 +25,7 @@ export default function AudioWaveform(props: Props) {
   onCleanup(() => stopAudioLevel());
 
   return (
-    <div class="flex items-center gap-[1.5px] h-4">
+    <div class="flex items-center gap-[1.5px] h-4" aria-hidden="true">
       {bars().map((level) => (
         <div class="w-[2px] rounded-full bg-tx-3" style={{ height: `${level * 100}%` }} />
       ))}
