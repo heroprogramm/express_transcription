@@ -50,10 +50,7 @@ bun install
 
 ### Configure your API key
 
-You have two options:
-
-- **Environment variable** -- set `SONIOX_API_KEY` in your shell before running the app.
-- **In-app settings** -- launch the app and enter your key in the Settings modal (stored securely via `electron-store`).
+Launch the app and enter your key in the Settings modal. The key is encrypted using the OS keychain via Electron's `safeStorage` API and persisted locally.
 
 ### Run in development mode
 

@@ -1,3 +1,4 @@
+import { safeStorage } from "electron";
 import Store from "electron-store";
 import type { AppConfig } from "./config";
 
@@ -6,12 +7,12 @@ const store = new Store();
 const STORE_KEY_API = "soniox_api_key";
 const STORE_KEY_CONFIG = "app_config";
 
-// ── API Key ──
+// ── API Key (encrypted via OS keychain) ──
 
 export function getApiKey(): string | null {
-  const envKey = process.env.SONIOX_API_KEY?.trim();
-  if (envKey) return envKey;
-  return (store.get(STORE_KEY_API) as string) || null;
+  const stored = store.get(STORE_KEY_API) as string | undefined;
+  if (!stored) return null;
+  return safeStorage.decryptString(Buffer.from(stored, "base64"));
 }
 
 export function saveApiKey(key: string): void {
@@ -21,11 +22,12 @@ export function saveApiKey(key: string): void {
   if (key.length > 512) {
     throw new Error("API key is too long");
   }
-  store.set(STORE_KEY_API, key.trim());
+  const encrypted = safeStorage.encryptString(key.trim()).toString("base64");
+  store.set(STORE_KEY_API, encrypted);
 }
 
 export function hasApiKey(): boolean {
-  return !!(process.env.SONIOX_API_KEY || store.get(STORE_KEY_API));
+  return !!store.get(STORE_KEY_API);
 }
 
 // ── App Config ──

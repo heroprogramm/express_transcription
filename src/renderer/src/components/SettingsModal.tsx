@@ -105,7 +105,7 @@ export default function SettingsModal(props: Props) {
               </label>
               <input
                 type="password"
-                placeholder="sk-... (leave empty to keep current)"
+                placeholder="Leave empty to keep current"
                 class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
                 value={key()}
                 onInput={(e) => setKey(e.currentTarget.value)}
@@ -138,10 +138,7 @@ export default function SettingsModal(props: Props) {
         </div>
 
         {error() && <div class="text-xs text-red mt-3 font-medium">{error()}</div>}
-        <div class="flex items-center gap-2 mt-5 justify-between">
-          <span class="kbd-hint text-[10px] text-tx-4 font-mono">
-            <kbd class="kbd">Enter</kbd> save &middot; <kbd class="kbd">Esc</kbd> close
-          </span>
+        <div class="flex items-center gap-2 mt-5 justify-end">
           <div class="flex gap-2">
             <Button variant="ghost" onClick={props.onClose}>
               <X size={14} />
