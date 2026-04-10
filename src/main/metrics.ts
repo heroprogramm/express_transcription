@@ -1,6 +1,7 @@
 import { app, type BrowserWindow } from "electron";
 import { log, LogLevel } from "./logger";
 
+/** Point-in-time snapshot of CPU, memory, and event-loop metrics for all Electron processes. */
 export interface PerfSnapshot {
   ts: number;
   processes: Array<{
@@ -72,6 +73,7 @@ function collectAndSend(win: BrowserWindow): void {
   });
 }
 
+/** Begins periodic performance sampling, sending snapshots to the renderer via IPC. */
 export function startMetricsCollection(win: BrowserWindow): void {
   if (intervalId) return;
   peakRss = 0;
@@ -84,6 +86,7 @@ export function startMetricsCollection(win: BrowserWindow): void {
   intervalId = setInterval(() => collectAndSend(win), COLLECTION_INTERVAL_MS);
 }
 
+/** Stops metrics collection and logs a summary of peak memory, average CPU, and event-loop lag. */
 export function stopMetricsCollection(): void {
   if (!intervalId) return;
   clearInterval(intervalId);

@@ -2,6 +2,10 @@ import { createSignal, onCleanup } from "solid-js";
 import type { PerfSnapshot } from "@/lib/types";
 import { perfStart, perfStop, perfPing, onPerfSnapshot } from "@/lib/ipc";
 
+/**
+ * Reactive performance monitor tracking FPS, IPC round-trip, CPU, memory, and event-loop lag.
+ * Call `toggle()` on the returned object to start/stop collection.
+ */
 export function createPerfMonitor() {
   const [enabled, setEnabled] = createSignal(false);
   const [fps, setFps] = createSignal(0);

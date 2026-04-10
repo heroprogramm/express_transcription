@@ -1,0 +1,176 @@
+# Architecture Overview
+
+ExpressText is an Electron desktop application that provides real-time speech-to-text transcription (Urdu) and one-way translation (Urdu to English) using the Soniox SDK. Translated entries pass through a timed edit window before being written to an output feed file consumed by downstream systems.
+
+## High-Level Process Model
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Main Process                         │
+│  index.ts  ipc.ts  config.ts  session.ts  store.ts      │
+│  window.ts  metrics.ts  logger.ts                       │
+├─────────────────────────────────────────────────────────┤
+│                 Preload (contextBridge)                 │
+│  preload/index.ts — exposes electronAPI on window       │
+├─────────────────────────────────────────────────────────┤
+│                  Renderer Process                       │
+│  SolidJS SPA — App.tsx, components, lib hooks           │
+│  Soniox SDK (WebSocket) ── runs in renderer             │
+└─────────────────────────────────────────────────────────┘
+```
+
+The main process owns configuration persistence, session file I/O, feed file writes, API key encryption, microphone permission brokering, and performance metrics collection. The renderer process owns the Soniox WebSocket connection, audio capture, UI rendering, and the entry lifecycle state machine.
+
+## Process Communication
+
+All IPC flows through `contextBridge.exposeInMainWorld("electronAPI", ...)` in the preload script. The renderer never accesses Node APIs directly.
+
+**Renderer -> Main (invoke/handle):**
+
+| Channel                              | Purpose                                           |
+| ------------------------------------ | ------------------------------------------------- |
+| `get-api-key`                      | Retrieve decrypted Soniox API key                 |
+| `save-api-key`                     | Encrypt and persist a new API key                 |
+| `has-api-key`                      | Check whether a key exists                        |
+| `get-config` / `save-config`     | Read/write app configuration                      |
+| `start-session` / `stop-session` | Open/close session log file and feed path         |
+| `log-translation`                  | Write a single translation line to session + feed |
+| `log-translations-batch`           | Write multiple translation lines (batched)        |
+| `ensure-mic-access`                | Request/check microphone permission (OS-level)    |
+| `perf:start` / `perf:stop`       | Start/stop metrics collection interval            |
+| `perf:ping`                        | Measure IPC round-trip time                       |
+
+**Main -> Renderer (webContents.send):**
+
+| Channel           | Purpose                                       |
+| ----------------- | --------------------------------------------- |
+| `perf:snapshot` | Periodic performance metrics (every 2 s)      |
+| `open-settings` | Menu item triggers settings modal in renderer |
+
+## Data Flow
+
+```mermaid
+flowchart LR
+    MIC["Microphone<br/>(Web Audio API)"] --> SONIOX["Soniox SDK<br/>(WebSocket)"]
+    SONIOX -->|"onTranscript()"| STT["STT Entries<br/>(SpeechPane)"]
+    SONIOX -->|"onTranslation()"| TRANS["Translation Entries<br/>(TranslationPane)"]
+    TRANS -->|"timer expires or<br/>manual confirm"| SENT["Sent Entries<br/>(OutputPane)"]
+    SENT -->|"queueLogTranslation()"| BATCH["IPC Batch Queue<br/>(200 ms flush)"]
+    BATCH -->|"log-translations-batch"| MAIN["Main Process"]
+    MAIN -->|"session file"| LOG["session_YYYYMMDD_HHMMSS.txt"]
+    MAIN -->|"atomic write<br/>(tmp + rename)"| FEED["feed.txt"]
+```
+
+1. The renderer captures microphone audio via `MicrophoneSource` (Soniox SDK wrapper around `getUserMedia`).
+2. Audio streams over a WebSocket to Soniox servers. Results arrive as `RealtimeResult` objects containing tokens.
+3. Tokens are parsed into original text (Urdu) and translated text (English). Original text is pushed to `sttEntries`; translations are pushed to `transEntries`.
+4. Each translation entry starts a countdown timer (`feedDelayMs`). When the timer fires (or the user manually confirms), the entry transitions to `confirmed` then `sent`.
+5. Sent entries are batched in a renderer-side queue (`logQueue`) that flushes every 200 ms via the `log-translations-batch` IPC channel.
+6. The main process writes each line to the session log (append-only `WriteStream`) and buffers the latest line for the feed file.
+7. The feed file is atomically updated (write to `.tmp`, then rename) every 200 ms, always containing the most recent translation line.
+
+## Entry Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pending : onTranslation()
+    Pending --> Editing : user clicks entry
+    Pending --> Confirmed : timer expires
+    Editing --> Pending : save / cancel edit
+    Pending --> Confirmed : timer expires (after edit)
+    Confirmed --> Sent : drainConfirmedQueue()
+    Sent --> [*]
+```
+
+| Status              | Behavior                                                                                                                                                  |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Pending**   | Entry is visible with a countdown. User can click to edit. Timer runs for `feed_delay_seconds`.                                                         |
+| **Editing**   | Timer is paused. An inline text input replaces the entry text. Enter saves, Escape cancels. Focus-out auto-saves. Only one entry can be edited at a time. |
+| **Confirmed** | Timer expired or edit was saved. Entry awaits sequential drain.                                                                                           |
+| **Sent**      | Entry has been written to the IPC batch queue and appears in the OutputPane.                                                                              |
+
+The `drainConfirmedQueue()` function processes confirmed entries sequentially from a write-index pointer, ensuring entries are sent to the feed in arrival order even if earlier entries are still being edited.
+
+Entries are capped at `MAX_ENTRIES = 500` per list. When overflow occurs, the oldest entry is removed and the write index is adjusted.
+
+## State Management
+
+The app uses SolidJS fine-grained reactivity throughout:
+
+- **`createSignal`** for all UI state (running, config, status, split ratios, uptime, etc.)
+- **`createMemo`** for derived values (badge class, entry counts, virtual list ranges)
+- **`createEffect`** for side effects (auto-scroll, countdown timers, audio level tracking)
+- **`batch`** to coalesce multiple signal updates into a single render pass
+
+Key reactive hooks:
+
+| Hook                   | Location                 | Purpose                                                                              |
+| ---------------------- | ------------------------ | ------------------------------------------------------------------------------------ |
+| `createEntryManager` | `lib/entry-manager.ts` | Manages STT, translation, and sent entry arrays plus the edit/confirm/send lifecycle |
+| `createPerfMonitor`  | `lib/perf.ts`          | FPS counter, IPC RTT measurement, main/renderer CPU/memory tracking                  |
+| `useVirtualList`     | `lib/virtual-list.ts`  | Windowed rendering for transcript/translation/output lists                           |
+
+State does not use a global store. Each concern is encapsulated in a hook and composed in `App.tsx`.
+
+## Security Model
+
+| Measure                    | Implementation                                                                                             |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `contextIsolation: true` | Renderer has no access to Node.js globals                                                                  |
+| `nodeIntegration: false` | No `require()` in renderer                                                                               |
+| `webSecurity: true`      | Standard CORS enforcement                                                                                  |
+| `sandbox: false`         | Disabled because the app requires direct preload access (documented project constraint)                    |
+| Preload bridge             | Only whitelisted functions exposed via `contextBridge.exposeInMainWorld`                                 |
+| `safeStorage`            | API key encrypted via OS keychain (macOS Keychain / Windows DPAPI) before persisting in `electron-store` |
+| Navigation blocked         | `will-navigate` prevented; external links open in system browser                                         |
+| DevTools disabled in prod  | F12 and Cmd+Shift+I intercepted via `before-input-event`                                                 |
+| Permission handler         | Only `media` permission requests are allowed                                                             |
+| Input validation           | IPC handlers validate types and enforce length limits on timestamps (20 chars) and text (10,000 chars)     |
+| Feed file path safety      | `basename()` strips directory traversal from config-provided file/dir names                              |
+| Single instance lock       | `app.requestSingleInstanceLock()` prevents multiple app instances                                        |
+
+## Performance Optimizations
+
+### Virtual Scrolling
+
+All three panes (Speech, Translation, Output) use `useVirtualList` which renders only visible items plus an overscan of 5 items above and below the viewport. Scroll updates are throttled via `requestAnimationFrame`. Each rendered row uses `contain: content` CSS containment.
+
+### Batched IPC
+
+Translation log writes are batched in a renderer-side queue (`logQueue`) and flushed every 200 ms via a single `log-translations-batch` call, avoiding per-entry IPC overhead.
+
+### Code Splitting
+
+`SettingsModal` and `PerfOverlay` are lazy-loaded with SolidJS `lazy()` so they are not in the critical render path.
+
+### Deferred Menu
+
+The application menu is built inside `setImmediate()` after window creation, so menu construction (which reads `package.json`) does not block the initial window paint.
+
+### Double-Buffer Audio
+
+The `audio-level.ts` module uses two pre-allocated arrays (`outputBufA` / `outputBufB`) that swap each frame, avoiding per-frame array allocation for the waveform visualizer.
+
+### Build Optimizations
+
+- Manual chunks split `@soniox/client` and `solid-js` into separate cached bundles
+- `assetsInlineLimit: 0` prevents fonts from being inlined as data URIs
+- `v8CacheOptions: "code"` enables V8 code caching for faster renderer startup
+- `backgroundThrottling: false` prevents Chromium from throttling the renderer when the window loses focus
+
+### Feed File Atomicity
+
+The feed file is written atomically (write to `feed.txt.tmp`, then `rename`) to prevent readers from seeing partial content. Feed writes are also buffered and flushed every 200 ms.
+
+## Auto-Reconnection Logic
+
+When the Soniox WebSocket connection drops with a transient error (`ConnectionError` or `NetworkError`), the client automatically attempts to reconnect:
+
+1. The error handler checks `isTransientError()` — only `ConnectionError` and `NetworkError` qualify.
+2. If `retryCount < MAX_RETRIES` (5), `attemptReconnect()` is called.
+3. The delay follows exponential backoff: `min(1000 * 2^retryCount, 16000)` ms — so 1 s, 2 s, 4 s, 8 s, 16 s.
+4. The UI transitions to "Reconnecting..." status during retry.
+5. On successful reconnect, `retryCount` resets to 0 and the session timer continues from where it left off (not reset).
+6. If all 5 retries are exhausted, an error is reported and the session stops.
+7. `AuthError` or API key errors are never retried — they immediately stop the session and open the settings modal.
+8. User-initiated stop (`stopTranscription`) sets a `cancelled` flag that prevents any pending retry timers from firing.

@@ -2,6 +2,11 @@ import { createEffect, createMemo, createSignal, onCleanup, type Accessor } from
 
 const OVERSCAN = 5;
 
+/**
+ * SolidJS hook for windowed rendering of a fixed-height list.
+ * Only items visible in the viewport (plus overscan) are rendered.
+ * Auto-scrolls to the bottom when the user is already near the end.
+ */
 export function useVirtualList<T extends { id: number }>(
   entries: Accessor<T[]>,
   containerRef: () => HTMLDivElement | undefined,

@@ -33,6 +33,7 @@ async function flushFeed(): Promise<void> {
   }
 }
 
+/** Opens a new timestamped session log file and sets up the feed output path. */
 export async function startSession(config: AppConfig): Promise<void> {
   if (sessionFile) {
     sessionFile.end();
@@ -54,6 +55,7 @@ export async function startSession(config: AppConfig): Promise<void> {
   log(LogLevel.Info, "session:started", { sessionPath, feedPath });
 }
 
+/** Flushes pending feed writes and closes the session log file. */
 export async function stopSession(): Promise<void> {
   if (feedFlushTimer) {
     clearTimeout(feedFlushTimer);
@@ -68,6 +70,7 @@ export async function stopSession(): Promise<void> {
   }
 }
 
+/** Writes a translated line to both the session log and the feed buffer. */
 export function logTranslation(timestamp: string, text: string): void {
   const line = `[${timestamp}] ${text}\n`;
   if (sessionFile) sessionFile.write(line);

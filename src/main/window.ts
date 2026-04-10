@@ -4,10 +4,12 @@ import { is } from "@electron-toolkit/utils";
 
 let mainWindow: BrowserWindow | null = null;
 
+/** Returns the current main BrowserWindow instance, or null if not yet created. */
 export function getMainWindow(): BrowserWindow | null {
   return mainWindow;
 }
 
+/** Creates the main application window with security-hardened web preferences. */
 export function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1280,

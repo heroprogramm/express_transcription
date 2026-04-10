@@ -1,5 +1,6 @@
 import { createEffect, createSignal, type Accessor } from "solid-js";
 
+/** Props for the {@link StatsBar} component. */
 interface Props {
   latency: Accessor<string>;
   words: Accessor<number>;
@@ -40,6 +41,7 @@ function Stat(props: { label: string; value: Accessor<string | number>; live: bo
   );
 }
 
+/** Header bar displaying live latency, word count, and uptime statistics. */
 export default function StatsBar(props: Props) {
   return (
     <div class="flex items-center gap-2">

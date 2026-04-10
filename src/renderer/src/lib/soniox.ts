@@ -14,6 +14,7 @@ import type { AppConfig } from "@/lib/types";
 import { getApiKey, logTranslationsBatch } from "@/lib/ipc";
 import { reportError } from "@/lib/errors";
 
+/** Callbacks invoked by the Soniox recording lifecycle. */
 export interface SonioxCallbacks {
   onTranscript: (timestamp: string, text: string, isPartial: boolean) => void;
   onTranslation: (timestamp: string, text: string, latencyMs: number) => void;
@@ -41,6 +42,7 @@ let logQueue: { ts: string; text: string }[] = [];
 let logFlushTimer: ReturnType<typeof setTimeout> | null = null;
 const LOG_FLUSH_INTERVAL_MS = 200;
 
+/** Queue a translation entry for batched IPC logging (flushes every 200ms). */
 export function queueLogTranslation(ts: string, text: string): void {
   logQueue.push({ ts, text });
   if (!logFlushTimer) {
@@ -92,6 +94,7 @@ function parseTokens(tokens: RealtimeToken[]): {
   };
 }
 
+/** Return the cumulative number of translated words since the session started. */
 export function getWordCount(): number {
   return wordCount;
 }
@@ -204,6 +207,10 @@ function connectRecording(
   recording.on("error", handleError);
 }
 
+/**
+ * Initialize the Soniox client and begin real-time transcription.
+ * Handles automatic reconnection on transient network errors.
+ */
 export async function startTranscription(
   config: AppConfig,
   callbacks: SonioxCallbacks,
@@ -242,6 +249,7 @@ function cleanup(): void {
   activeMicDeviceId = undefined;
 }
 
+/** Gracefully stop the active recording and flush pending log entries. */
 export function stopTranscription(): void {
   cancelled = true;
   cleanup();
@@ -252,6 +260,7 @@ export function stopTranscription(): void {
   client = null;
 }
 
+/** Immediately cancel the active recording without waiting for final results. */
 export function cancelTranscription(): void {
   cancelled = true;
   cleanup();
@@ -262,6 +271,7 @@ export function cancelTranscription(): void {
   client = null;
 }
 
+/** Return whether the microphone is actively recording and its current state. */
 export function getAudioHealth(): { active: boolean; state: RecordingState } {
   return {
     active: recording?.state === "recording",

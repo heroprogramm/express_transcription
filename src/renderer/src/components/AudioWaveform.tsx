@@ -3,11 +3,13 @@ import { startAudioLevel, stopAudioLevel } from "@/lib/audio-level";
 
 const BAR_COUNT = 20;
 
+/** Props for the {@link AudioWaveform} component. */
 interface Props {
   active: Accessor<boolean>;
   micDeviceId: Accessor<string>;
 }
 
+/** Real-time microphone audio level visualizer rendered as vertical bars. */
 export default function AudioWaveform(props: Props) {
   const [bars, setBars] = createSignal<number[]>(Array.from({ length: BAR_COUNT }, () => 0));
 

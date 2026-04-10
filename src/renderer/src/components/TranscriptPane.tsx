@@ -64,6 +64,7 @@ function TranslationEmpty() {
   );
 }
 
+/** Props for the {@link SpeechPane} component. */
 interface SpeechPaneProps {
   entries: Accessor<TranscriptEntry[]>;
   finalCount: Accessor<number>;
@@ -71,6 +72,7 @@ interface SpeechPaneProps {
   micDeviceId: Accessor<string>;
 }
 
+/** Virtualized RTL pane displaying live Urdu speech-to-text transcription entries. */
 export function SpeechPane(props: SpeechPaneProps) {
   let container: HTMLDivElement | undefined;
   const vl = useVirtualList(props.entries, () => container, STT_ITEM_HEIGHT);
@@ -127,6 +129,7 @@ export function SpeechPane(props: SpeechPaneProps) {
   );
 }
 
+/** Props for the {@link TranslationPane} component. */
 interface TransPaneProps {
   entries: Accessor<TranslationEntry[]>;
   live: Accessor<boolean>;
@@ -277,6 +280,10 @@ function TranslationEntryRow(props: {
   );
 }
 
+/**
+ * Virtualized pane displaying translated entries with inline editing support
+ * and a countdown timer before entries are sent to the output feed.
+ */
 export function TranslationPane(props: TransPaneProps) {
   let container: HTMLDivElement | undefined;
   const count = createMemo(() => props.entries().length);

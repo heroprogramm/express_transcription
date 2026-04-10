@@ -12,10 +12,12 @@ const variants = {
 
 type Variant = keyof typeof variants;
 
+/** Props for the {@link Button} component. */
 interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
 }
 
+/** Themed button with primary, danger, ghost, and icon variants. */
 export default function Button(props: ButtonProps) {
   const variant = () => props.variant || "ghost";
   return (

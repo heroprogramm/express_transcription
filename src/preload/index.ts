@@ -27,6 +27,7 @@ interface PerfSnapshot {
   eventLoopLagMs: number;
 }
 
+/** Exposes a safe, typed API surface to the renderer process via `window.electronAPI`. */
 contextBridge.exposeInMainWorld("electronAPI", {
   getApiKey: (): Promise<string | null> => ipcRenderer.invoke("get-api-key"),
   saveApiKey: (key: string): Promise<void> => ipcRenderer.invoke("save-api-key", key),

@@ -1,10 +1,12 @@
 import { createSignal, onCleanup } from "solid-js";
 
+/** Props for the {@link ResizeHandle} component. */
 interface ResizeHandleProps {
   direction: "horizontal" | "vertical";
   onResize: (delta: number) => void;
 }
 
+/** Draggable handle for resizing adjacent panes horizontally or vertically. */
 export default function ResizeHandle(props: ResizeHandleProps) {
   const [dragging, setDragging] = createSignal(false);
   let startPos = 0;

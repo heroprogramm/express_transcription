@@ -1,6 +1,7 @@
 import { Sun, Moon } from "lucide-solid";
 import Button from "@/components/Button";
 
+/** Icon button that toggles between dark and light themes. */
 export default function ThemeToggle() {
   function toggle() {
     document.body.classList.add("theme-transitioning");

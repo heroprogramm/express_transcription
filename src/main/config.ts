@@ -1,5 +1,6 @@
 import { getStoredConfig, saveStoredConfig } from "./store";
 
+/** Application configuration covering Soniox STT settings and output paths. */
 export interface AppConfig {
   soniox: { language: string; model: string; translate_to: string };
   output: { feed_file: string; session_log_dir: string; feed_delay_seconds: number };
@@ -36,11 +37,13 @@ function validateConfig(config: AppConfig): string[] {
   return errors;
 }
 
+/** Result of loading config: the resolved config plus any validation warnings. */
 export interface ConfigResult {
   config: AppConfig;
   warnings: string[];
 }
 
+/** Loads config from the persistent store, falling back to defaults on missing or invalid values. */
 export function loadConfig(): ConfigResult {
   const stored = getStoredConfig();
   if (!stored) {
@@ -61,6 +64,7 @@ export function loadConfig(): ConfigResult {
   return { config, warnings: [] };
 }
 
+/** Merges partial config updates (model, feed delay) into the current config and persists. */
 export function saveConfigFields(
   fields: Partial<{ model: string; feed_delay_seconds: number }>,
 ): void {
@@ -76,4 +80,5 @@ export function saveConfigFields(
   saveStoredConfig(config);
 }
 
+/** Default configuration values used when no stored config exists or validation fails. */
 export { DEFAULT_CONFIG };

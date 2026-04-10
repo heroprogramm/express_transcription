@@ -1,5 +1,6 @@
 import { showToast } from "@/components/Toast";
 
+/** Broad classification of application errors for routing and display. */
 export type ErrorCategory = "mic" | "api-key" | "session" | "config" | "network" | "unknown";
 
 interface AppError {
@@ -12,6 +13,7 @@ type ErrorHandler = (error: AppError) => void;
 
 const listeners: ErrorHandler[] = [];
 
+/** Register a listener for application errors. Returns an unsubscribe function. */
 export function onAppError(handler: ErrorHandler): () => void {
   listeners.push(handler);
   return () => {
@@ -20,6 +22,7 @@ export function onAppError(handler: ErrorHandler): () => void {
   };
 }
 
+/** Log an error, notify all listeners, and show a toast to the user. */
 export function reportError(category: ErrorCategory, message: string, original?: unknown): void {
   const error: AppError = { category, message, original };
 
@@ -33,6 +36,7 @@ export function reportError(category: ErrorCategory, message: string, original?:
   showToast(message, toastType);
 }
 
+/** Attach an error handler to a promise, reporting failures as application errors. */
 export function capturePromise(
   category: ErrorCategory,
   promise: Promise<unknown>,

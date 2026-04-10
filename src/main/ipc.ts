@@ -5,6 +5,12 @@ import { startSession, stopSession, logTranslation } from "./session";
 import { startMetricsCollection, stopMetricsCollection } from "./metrics";
 import { getMainWindow } from "./window";
 
+/**
+ * Registers all IPC handlers for renderer-to-main communication.
+ * @param getConfig - Returns the current live config
+ * @param setConfig - Updates the in-memory config after save
+ * @param configWarnings - Validation warnings from initial config load
+ */
 export function registerIpcHandlers(
   getConfig: () => AppConfig,
   setConfig: (config: AppConfig) => void,

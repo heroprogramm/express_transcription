@@ -2,6 +2,7 @@ import { createSignal, onMount, onCleanup, type Accessor } from "solid-js";
 import { Play, Square, ChevronDown, Trash2 } from "lucide-solid";
 import Button from "@/components/Button";
 
+/** Props for the {@link Controls} component. */
 interface Props {
   running: Accessor<boolean>;
   onStart: (micDeviceId: string) => void;
@@ -9,6 +10,7 @@ interface Props {
   onClear: () => void;
 }
 
+/** Toolbar with microphone selector and start/stop/clear session controls. */
 export default function Controls(props: Props) {
   const [mics, setMics] = createSignal<MediaDeviceInfo[]>([]);
   const [selectedMic, setSelectedMic] = createSignal("");

@@ -46,6 +46,11 @@ function tick(): void {
   rafId = requestAnimationFrame(tick);
 }
 
+/**
+ * Start capturing microphone audio and emit smoothed frequency-bar levels each frame.
+ * @param count Number of frequency bars to compute.
+ * @param onBars Callback receiving normalized bar values (0-1) every animation frame.
+ */
 export async function startAudioLevel(
   deviceId: string | undefined,
   count: number,
@@ -75,6 +80,7 @@ export async function startAudioLevel(
   rafId = requestAnimationFrame(tick);
 }
 
+/** Stop capturing audio levels and release the microphone stream. */
 export function stopAudioLevel(): void {
   if (rafId !== null) {
     cancelAnimationFrame(rafId);

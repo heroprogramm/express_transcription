@@ -4,6 +4,11 @@ import { getWordCount, queueLogTranslation } from "@/lib/soniox";
 
 const MAX_ENTRIES = 500;
 
+/**
+ * Reactive store managing STT and translation entries with timed auto-confirm and editing.
+ * Entries flow through pending -> confirmed -> sent, with an optional editing pause.
+ * @param feedDelayMs Accessor returning the delay before a pending entry is auto-confirmed.
+ */
 export function createEntryManager(feedDelayMs: () => number) {
   const [sttEntries, setSttEntries] = createSignal<TranscriptEntry[]>([]);
   const [transEntries, setTransEntries] = createSignal<TranslationEntry[]>([]);

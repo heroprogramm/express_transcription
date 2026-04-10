@@ -1,3 +1,4 @@
+/** Application configuration for Soniox transcription and output settings. */
 export interface AppConfig {
   soniox: {
     language: string;
@@ -11,6 +12,7 @@ export interface AppConfig {
   };
 }
 
+/** A single speech-to-text transcript entry from Soniox. */
 export interface TranscriptEntry {
   id: number;
   timestamp: string;
@@ -18,6 +20,7 @@ export interface TranscriptEntry {
   isPartial: boolean;
 }
 
+/** Lifecycle states for a translation entry: pending -> editing/confirmed -> sent. */
 export const EntryStatus = {
   Pending: "pending",
   Editing: "editing",
@@ -25,8 +28,10 @@ export const EntryStatus = {
   Sent: "sent",
 } as const;
 
+/** Union of all entry status string literals. */
 export type EntryStatus = (typeof EntryStatus)[keyof typeof EntryStatus];
 
+/** A translated text entry with its current lifecycle status. */
 export interface TranslationEntry {
   id: number;
   timestamp: string;
@@ -35,6 +40,7 @@ export interface TranslationEntry {
   createdAt: number;
 }
 
+/** Point-in-time snapshot of CPU, memory, and event-loop metrics from the main process. */
 export interface PerfSnapshot {
   ts: number;
   processes: Array<{

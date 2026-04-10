@@ -5,12 +5,14 @@ import { saveApiKey, saveConfig } from "@/lib/ipc";
 import { reportError } from "@/lib/errors";
 import Button from "@/components/Button";
 
+/** Props for the {@link SettingsModal} component. */
 interface Props {
   config: AppConfig | null;
   onClose: () => void;
   onSaved: (config: AppConfig) => void;
 }
 
+/** Modal dialog for editing Soniox API key, model, and output feed delay settings. */
 export default function SettingsModal(props: Props) {
   const [key, setKey] = createSignal("");
   const [model, setModel] = createSignal(props.config?.soniox.model ?? "stt-rt-v4");

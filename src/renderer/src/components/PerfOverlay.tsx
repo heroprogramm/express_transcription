@@ -24,6 +24,7 @@ function Metric(props: { label: string; value: string; colorClass?: string }) {
   );
 }
 
+/** Props for the {@link PerfOverlay} component. */
 interface Props {
   fps: Accessor<number>;
   ipcRtt: Accessor<number>;
@@ -38,6 +39,7 @@ interface Props {
   onClose: () => void;
 }
 
+/** Floating overlay displaying CPU, memory, FPS, IPC, and audio health metrics. */
 export default function PerfOverlay(props: Props) {
   const audio = () => getAudioHealth();
 

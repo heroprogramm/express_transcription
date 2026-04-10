@@ -27,6 +27,7 @@ import logoLightSrc from "@/assets/logo.png";
 const SettingsModal = lazy(() => import("@/components/SettingsModal"));
 const PerfOverlay = lazy(() => import("@/components/PerfOverlay"));
 
+/** Root application component managing transcription sessions, layout, and global state. */
 export default function App() {
   const [running, setRunning] = createSignal(false);
   const [showSettings, setShowSettings] = createSignal(false);
