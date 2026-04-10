@@ -174,7 +174,7 @@ export function SpeechPane(props: SpeechPaneProps) {
                         {entry.timestamp} {marker}
                       </span>
                       <span
-                        class={`font-urdu text-xl leading-[2] ${entry.isPartial ? "text-st-pending" : "text-st-sent"}`}
+                        class={`font-urdu text-xl leading-[2] ${entry.isPartial ? "text-tx-3" : "text-tx"}`}
                       >
                         {entry.text}
                       </span>
