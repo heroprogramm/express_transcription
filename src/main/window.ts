@@ -12,6 +12,8 @@ export function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
+    minWidth: 900,
+    minHeight: 600,
     title: "ExpressText",
     show: false,
     backgroundColor: "#080a10",
