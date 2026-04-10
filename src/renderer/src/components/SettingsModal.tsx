@@ -1,5 +1,5 @@
 import { createSignal } from "solid-js";
-import { Settings as SettingsIcon } from "lucide-solid";
+import { Settings as SettingsIcon, X, Save } from "lucide-solid";
 import type { AppConfig } from "../lib/types";
 import { saveApiKey, saveConfig } from "../lib/ipc";
 import { reportError } from "../lib/errors";
@@ -132,9 +132,11 @@ export default function SettingsModal(props: Props) {
         {error() && <div class="text-xs text-red mt-3 font-medium">{error()}</div>}
         <div class="flex gap-2 mt-5 justify-end">
           <Button variant="ghost" onClick={props.onClose}>
+            <X size={14} />
             Cancel
           </Button>
           <Button variant="primary" onClick={handleSave} disabled={saving()}>
+            <Save size={14} />
             {saving() ? "Saving\u2026" : "Save"}
           </Button>
         </div>
