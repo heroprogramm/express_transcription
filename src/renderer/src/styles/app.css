@@ -5,11 +5,11 @@
 
 /* ── Local Fonts ─────────────────────────────────────────────── */
 @font-face {
-  font-family: "Plus Jakarta Sans";
+  font-family: "Satoshi";
   font-style: normal;
-  font-weight: 400 800;
-  font-display: swap;
-  src: url("../assets/fonts/plus-jakarta-sans-latin.woff2") format("woff2");
+  font-weight: 300 900;
+  font-display: block;
+  src: url("../assets/fonts/satoshi-latin.woff2") format("woff2");
 }
 
 @font-face {
@@ -36,8 +36,8 @@
 
 /* ── Tailwind Theme ───────────────────────────────────────────── */
 @theme {
-  --font-ui: "Plus Jakarta Sans", system-ui, sans-serif;
-  --font-mono: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-ui: "Satoshi", system-ui, sans-serif;
+  --font-mono: "Satoshi", system-ui, sans-serif;
   --font-urdu: "Noto Nastaliq Urdu", serif;
 
   --color-bg: var(--bg);
