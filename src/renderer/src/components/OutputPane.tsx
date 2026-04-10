@@ -138,7 +138,7 @@ export default function OutputPane(props: OutputPaneProps) {
                     <span class="text-[9px] font-mono text-tx-3 mr-2 tabular-nums shrink-0">
                       {entry.timestamp}
                     </span>
-                    <span class="text-[13px] text-tx-2 truncate">{entry.text}</span>
+                    <span class="text-[15px] text-tx-2 truncate">{entry.text}</span>
                   </div>
                 )}
               </For>

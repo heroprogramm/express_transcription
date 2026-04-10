@@ -167,18 +167,14 @@ export function SpeechPane(props: SpeechPaneProps) {
                   const marker = entry.isPartial ? "\u2026" : "\u25B6";
                   return (
                     <div
-                      class="flex items-center border-l-2 pl-2"
-                      classList={{
-                        "border-l-st-sent": !entry.isPartial,
-                        "border-l-st-pending": entry.isPartial,
-                      }}
+                      class="flex items-center"
                       style={{ height: `${vl.itemHeight}px`, contain: "content" }}
                     >
                       <span class="inline text-[9px] font-medium font-mono text-tx-4 tracking-wide mr-1.5 tabular-nums opacity-60">
                         {entry.timestamp} {marker}
                       </span>
                       <span
-                        class={`font-urdu text-lg leading-[2] ${entry.isPartial ? "text-st-pending" : "text-st-sent"}`}
+                        class={`font-urdu text-xl leading-[2] ${entry.isPartial ? "text-st-pending" : "text-st-sent"}`}
                       >
                         {entry.text}
                       </span>
@@ -261,7 +257,7 @@ function TranslationEntryRow(props: {
 
   return (
     <div
-      class="animate-entry text-sm leading-relaxed flex items-center border-l-2 pl-2"
+      class="animate-entry text-base leading-relaxed flex items-center border-l-2 pl-2"
       classList={{
         "border-l-st-pending text-st-pending cursor-pointer hover:bg-white/[0.03]": isPending(),
         "border-l-st-editing text-st-editing": isEditing(),
@@ -280,7 +276,7 @@ function TranslationEntryRow(props: {
           <div class="flex items-center gap-1.5 flex-1 min-w-0">
             <input
               ref={(el) => requestAnimationFrame(() => el.focus())}
-              class="flex-1 min-w-0 bg-transparent border border-border-lit rounded-lg px-1.5 py-0.5 text-sm text-tx outline-none focus:border-border-focus"
+              class="flex-1 min-w-0 bg-transparent border border-border-lit rounded-lg px-1.5 py-0.5 text-base text-tx outline-none focus:border-border-focus"
               value={editText()}
               onInput={(e) => {
                 setEditText(e.currentTarget.value);
