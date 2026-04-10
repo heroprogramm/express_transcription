@@ -1,4 +1,5 @@
 import { createMemo, createSignal, For, Show, type Accessor } from "solid-js";
+
 import { ClipboardCopy, Check } from "lucide-solid";
 import { copyToClipboard as writeClipboard } from "@/lib/ipc";
 import type { TranslationEntry } from "@/lib/types";
@@ -84,7 +85,7 @@ export default function OutputPane(props: OutputPaneProps) {
                 >
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                   <polyline points="14 2 14 8 20 8" />
-                  <path d="M9 15l2 2 4-4" />
+                  <path class="checkmark-draw" d="M9 15l2 2 4-4" />
                 </svg>
               </div>
               <div class="text-center">
@@ -98,22 +99,25 @@ export default function OutputPane(props: OutputPaneProps) {
             </div>
           }
         >
-          <div style={{ height: `${vl.totalHeight()}px`, position: "relative" }}>
-            <div style={{ transform: `translateY(${vl.offsetY()}px)` }}>
-              <For each={vl.visibleItems()}>
-                {(entry) => (
+          <div style={{ height: `${vl.virtualizer.getTotalSize()}px`, position: "relative" }}>
+            <For each={vl.virtualizer.getVirtualItems()}>
+              {(vItem) => {
+                const entry = createMemo(() => props.entries()[vItem.index]);
+                return (
                   <div
-                    class="flex items-center border-l-2 border-l-border-lit pl-2"
-                    style={{ height: `${ITEM_HEIGHT}px`, contain: "content" }}
+                    data-index={vItem.index}
+                    ref={vl.virtualizer.measureElement}
+                    class="flex items-center border-l-2 border-l-border-lit pl-2 py-0.5 min-h-7 absolute top-0 left-0 w-full"
+                    style={{ transform: `translateY(${vItem.start}px)` }}
                   >
-                    <span class="text-[11px] font-mono text-tx-3 mr-2 tabular-nums shrink-0">
-                      {entry.timestamp}
+                    <span class="text-[10px] font-mono text-tx-4 mr-2 tabular-nums shrink-0">
+                      {entry().timestamp}
                     </span>
-                    <span class="text-base text-tx-2 truncate">{entry.text}</span>
+                    <span class="text-sm text-tx-2">{entry().text}</span>
                   </div>
-                )}
-              </For>
-            </div>
+                );
+              }}
+            </For>
           </div>
         </Show>
       </div>

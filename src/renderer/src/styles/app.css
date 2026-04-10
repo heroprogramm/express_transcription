@@ -94,10 +94,10 @@
   --text-2: #a1a8be;
   --text-3: #7b8399;
   --text-4: #4e5672;
-  --status-pending: #8ab8d8;
-  --status-editing: #a0ccee;
-  --status-confirmed: #8a9ca0;
-  --status-sent: #b0bcc0;
+  --status-pending: #c8dff0;
+  --status-editing: #e0eeff;
+  --status-confirmed: #9db8c0;
+  --status-sent: #6a7a82;
 }
 
 /* ── Light Theme ──────────────────────────────────────────────── */
@@ -128,10 +128,10 @@
   --text-2: #4a4f63;
   --text-3: #7b8096;
   --text-4: #a8adc0;
-  --status-pending: #2e6ca8;
-  --status-editing: #1a5c94;
-  --status-confirmed: #2a7a50;
-  --status-sent: #6aaa88;
+  --status-pending: #2b7ac2;
+  --status-editing: #1a65a8;
+  --status-confirmed: #4a5568;
+  --status-sent: #a0aab4;
 }
 
 /* ── Base ─────────────────────────────────────────────────────── */
@@ -373,10 +373,8 @@ body.theme-transitioning h2 {
 .editing-row {
   background: var(--bg-surface);
   border-radius: 6px;
-  margin: -2px -6px;
-  padding-left: 14px;
+  padding-left: 8px;
   padding-right: 8px;
-  transform: translateY(-1px);
   box-shadow:
     0 2px 8px rgba(0, 0, 0, 0.25),
     0 8px 24px rgba(0, 0, 0, 0.15),
@@ -402,22 +400,27 @@ body.theme-transitioning h2 {
 .editing-btn {
   cursor: pointer;
   line-height: 1;
+  border: 1px solid var(--border-lit);
+  background: var(--bg-raised);
+}
+.editing-btn:hover {
+  border-color: var(--border-focus);
 }
 .editing-btn-save {
   color: var(--green);
-  background: var(--green-glow);
+  border-color: var(--green-soft);
 }
 .editing-btn-save:hover {
-  background: var(--green-soft);
-  color: var(--text);
+  background: var(--green-glow);
+  border-color: var(--green);
 }
 .editing-btn-cancel {
-  color: var(--text-3);
-  background: transparent;
+  color: var(--red);
+  border-color: var(--red-soft);
 }
 .editing-btn-cancel:hover {
-  color: var(--text-2);
-  background: var(--bg-hover);
+  background: var(--red-glow);
+  border-color: var(--red);
 }
 
 /* ── Settings Inputs ─────────────────────────────────────────── */
@@ -466,6 +469,20 @@ body.theme-transitioning h2 {
     opacity: 1;
     transform: scale(1.04);
   }
+}
+
+/* ── Checkmark Draw Animation ────────────────────────────────── */
+@keyframes drawCheck {
+  from {
+    stroke-dashoffset: 10;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.checkmark-draw {
+  stroke-dasharray: 10;
+  animation: drawCheck 0.4s ease-out 0.3s both;
 }
 
 /* ── Keyboard Hints ─────────────────────────────────────────── */

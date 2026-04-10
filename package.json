@@ -24,6 +24,7 @@
   "dependencies": {
     "@electron-toolkit/utils": "^4.0.0",
     "@soniox/client": "^1.0.2",
+    "@tanstack/solid-virtual": "^3.13.23",
     "electron-store": "^11.0.2",
     "lucide-solid": "^1.8.0",
     "solid-js": "^1.9.12"

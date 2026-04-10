@@ -1,42 +1,45 @@
 let audioCtx: AudioContext | null = null;
 let analyser: AnalyserNode | null = null;
 let sourceNode: MediaStreamAudioSourceNode | null = null;
-let freqData: Uint8Array<ArrayBuffer> | null = null;
+let timeDomainData: Float32Array | null = null;
 let rafId: number | null = null;
 let barsCallback: ((bars: number[]) => void) | null = null;
 let barCount = 20;
 let smoothed: number[] = [];
-// Double-buffer: write into outputBuf each frame, swap reference to trigger SolidJS reactivity
 let outputBufA: number[] = [];
 let outputBufB: number[] = [];
 let useA = true;
 
-const SMOOTHING = 0.25;
-const DECAY = 0.85;
+const SMOOTHING = 0.15;
+const DECAY = 0.92;
+const SILENCE_THRESHOLD = 0.01;
 
 function tick(): void {
-  if (!analyser || !freqData || !barsCallback) return;
-  analyser.getByteFrequencyData(freqData);
+  if (!analyser || !timeDomainData || !barsCallback) return;
+  analyser.getFloatTimeDomainData(timeDomainData);
 
-  const binCount = freqData.length;
+  // Calculate RMS volume
+  let sumSq = 0;
+  for (let i = 0; i < timeDomainData.length; i++) {
+    sumSq += timeDomainData[i] * timeDomainData[i];
+  }
+  const rms = Math.sqrt(sumSq / timeDomainData.length);
 
+  // Gate: if below silence threshold, all bars are zero
+  const level = rms < SILENCE_THRESHOLD ? 0 : Math.min(1, rms * 5);
+
+  // Distribute level across bars: bell curve (center tall, edges short) + gentle wave
   for (let i = 0; i < barCount; i++) {
-    const lowFrac = i / barCount;
-    const highFrac = (i + 1) / barCount;
-    const low = Math.floor(lowFrac ** 2 * binCount);
-    const high = Math.max(low + 1, Math.floor(highFrac ** 2 * binCount));
-
-    let sum = 0;
-    for (let j = low; j < high && j < binCount; j++) {
-      sum += freqData[j];
-    }
-    const avg = sum / (high - low) / 255;
-    const target = Math.min(1, avg * 2);
+    const center = (i - (barCount - 1) / 2) / ((barCount - 1) / 2); // -1 to 1
+    const bell = 1 - center * center; // 0 at edges, 1 at center
+    const envelope = 0.3 + 0.7 * bell; // 30% min at edges, 100% at center
+    const wave = Math.sin(i * 1.7 + Date.now() * 0.002) * 0.15 + 0.85;
+    const target = level > 0 ? level * envelope * wave : 0;
     const prev = smoothed[i] ?? 0;
     smoothed[i] = target > prev ? prev + (target - prev) * SMOOTHING : prev * DECAY;
+    if (smoothed[i] < 0.005) smoothed[i] = 0;
   }
 
-  // Copy into the inactive buffer then swap — avoids allocating a new array each frame
   const buf = useA ? outputBufA : outputBufB;
   for (let i = 0; i < barCount; i++) {
     buf[i] = smoothed[i];
@@ -47,8 +50,9 @@ function tick(): void {
 }
 
 /**
- * Start capturing microphone audio and emit smoothed frequency-bar levels each frame.
- * @param count Number of frequency bars to compute.
+ * Start capturing microphone audio and emit smoothed volume-based bar levels each frame.
+ * Uses RMS volume instead of frequency analysis for stable, noise-resistant metering.
+ * @param count Number of bars to render.
  * @param onBars Callback receiving normalized bar values (0-1) every animation frame.
  */
 export async function startAudioLevel(
@@ -70,12 +74,11 @@ export async function startAudioLevel(
 
   audioCtx = new AudioContext();
   analyser = audioCtx.createAnalyser();
-  analyser.fftSize = 512;
-  analyser.smoothingTimeConstant = 0.4;
+  analyser.fftSize = 2048;
   sourceNode = audioCtx.createMediaStreamSource(stream);
   sourceNode.connect(analyser);
 
-  freqData = new Uint8Array(analyser.frequencyBinCount) as Uint8Array<ArrayBuffer>;
+  timeDomainData = new Float32Array(analyser.fftSize);
   barsCallback = onBars;
   rafId = requestAnimationFrame(tick);
 }
@@ -100,5 +103,5 @@ export function stopAudioLevel(): void {
     audioCtx = null;
   }
   analyser = null;
-  freqData = null;
+  timeDomainData = null;
 }

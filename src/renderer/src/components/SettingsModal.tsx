@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import { Settings as SettingsIcon, X, Save } from "lucide-solid";
 import type { AppConfig } from "@/lib/types";
-import { saveApiKey, saveConfig } from "@/lib/ipc";
+import { hasApiKey, saveApiKey, saveConfig } from "@/lib/ipc";
 import { reportError } from "@/lib/errors";
 import Button from "@/components/Button";
 
@@ -15,12 +15,17 @@ interface Props {
 /** Modal dialog for editing Soniox API key, model, and output feed delay settings. */
 export default function SettingsModal(props: Props) {
   const [key, setKey] = createSignal("");
+  const [keyExists, setKeyExists] = createSignal(false);
   const [model, setModel] = createSignal(props.config?.soniox.model ?? "stt-rt-v4");
   const [feedDelay, setFeedDelay] = createSignal(
     String(props.config?.output.feed_delay_seconds ?? 10),
   );
   const [error, setError] = createSignal("");
   const [saving, setSaving] = createSignal(false);
+
+  hasApiKey()
+    .then(setKeyExists)
+    .catch(() => {});
 
   async function handleSave() {
     const modelValue = model().trim();
@@ -53,7 +58,7 @@ export default function SettingsModal(props: Props) {
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg);
-      reportError("settings", msg);
+      reportError("config", msg);
     } finally {
       setSaving(false);
     }
@@ -107,7 +112,11 @@ export default function SettingsModal(props: Props) {
               </label>
               <input
                 type="password"
-                placeholder="Leave empty to keep current"
+                placeholder={
+                  keyExists()
+                    ? "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022 (leave empty to keep)"
+                    : "Enter your Soniox API key"
+                }
                 class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
                 value={key()}
                 onInput={(e) => setKey(e.currentTarget.value)}

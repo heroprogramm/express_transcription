@@ -17,7 +17,7 @@ import { log, LogLevel } from "./logger";
 app.setName("ExpressText");
 if (process.platform === "darwin") {
   const icon = getAppIcon();
-  if (!icon.isEmpty()) app.dock.setIcon(icon);
+  if (!icon.isEmpty()) app.dock?.setIcon(icon);
 }
 
 // ── Single instance lock ──
