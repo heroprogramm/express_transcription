@@ -8,6 +8,7 @@ import {
   type Accessor,
 } from "solid-js";
 import type { TranscriptEntry, TranslationEntry } from "../lib/types";
+import AudioWaveform from "./AudioWaveform";
 
 const OVERSCAN = 5;
 
@@ -81,20 +82,18 @@ const TRANS_ITEM_HEIGHT = 40;
 function SpeechEmpty() {
   return (
     <div class="flex flex-col items-center justify-center h-full -mt-12 gap-4">
-      <div class="flex items-end gap-[3px] h-10">
-        {[0.6, 0.3, 0.8, 0.5, 1, 0.4, 0.7, 0.3, 0.9, 0.5, 0.6, 0.4, 0.8, 0.3, 0.7, 0.5].map(
-          (h, i) => (
-            <div
-              class="waveform-bar-enhanced w-[3px] rounded-full"
-              style={{
-                height: `${h * 100}%`,
-                "animation-delay": `${i * 0.08}s`,
-                background: "var(--text-3)",
-                opacity: 0.3,
-              }}
-            />
-          ),
-        )}
+      <div class="flex items-end gap-[4px] h-10">
+        {[0.5, 0.8, 0.4, 1, 0.6, 0.9, 0.3, 0.7].map((h, i) => (
+          <div
+            class="waveform-bar-enhanced w-[5px] rounded-full"
+            style={{
+              height: `${h * 100}%`,
+              "animation-delay": `${i * 0.25}s`,
+              background: "var(--text-3)",
+              opacity: 0.3,
+            }}
+          />
+        ))}
       </div>
       <div class="text-center">
         <p class="font-ui text-[13px] font-medium text-tx-3">Waiting for audio input</p>
@@ -132,6 +131,7 @@ interface SpeechPaneProps {
   entries: Accessor<TranscriptEntry[]>;
   finalCount: Accessor<number>;
   live: Accessor<boolean>;
+  micDeviceId: Accessor<string>;
 }
 
 export function SpeechPane(props: SpeechPaneProps) {
@@ -143,8 +143,11 @@ export function SpeechPane(props: SpeechPaneProps) {
       class={`surface-raised flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-xl overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
     >
       <div class="flex justify-between items-center px-4 py-2.5 border-b border-border shrink-0">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2.5">
           <h2 class="text-[12px] font-bold text-tx-2 tracking-wider uppercase">Speech</h2>
+          <Show when={props.live()}>
+            <AudioWaveform active={props.live} micDeviceId={props.micDeviceId} />
+          </Show>
         </div>
         <span class="text-[11px] text-tx-4 font-mono tabular-nums">
           <Show when={props.finalCount() > 0}>{props.finalCount()} lines</Show>
@@ -271,9 +274,6 @@ function TranslationEntryRow(props: {
       <span class="inline text-[9px] font-medium font-mono text-tx-3 tracking-wide mr-2 tabular-nums shrink-0">
         {props.entry.timestamp}
       </span>
-      <Show when={isSent()}>
-        <span class="text-tx-3 text-[9px] mr-2 shrink-0">&#10003;</span>
-      </Show>
       <Show
         when={!isEditing()}
         fallback={
@@ -321,6 +321,9 @@ function TranslationEntryRow(props: {
         >
           {props.entry.text}
         </span>
+      </Show>
+      <Show when={isSent()}>
+        <span class="text-tx-3 text-[9px] ml-auto pl-2 shrink-0">&#10003;</span>
       </Show>
       <Show when={isPending()}>
         <span class="text-[9px] font-mono text-tx-3 ml-auto pl-2 shrink-0 tabular-nums">

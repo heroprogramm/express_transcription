@@ -433,7 +433,7 @@ body.theme-transitioning h2 {
   }
 }
 .waveform-bar-enhanced {
-  animation: waveEnhanced 1.2s ease-in-out infinite;
+  animation: waveEnhanced 2s ease-in-out infinite;
   transform-origin: bottom;
 }
 

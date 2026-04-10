@@ -37,6 +37,7 @@ export default function App() {
   const [running, setRunning] = createSignal(false);
   const [showSettings, setShowSettings] = createSignal(false);
   const [config, setConfig] = createSignal<AppConfig | null>(null);
+  const [activeMicId, setActiveMicId] = createSignal("");
 
   const [status, setStatus] = createSignal<"standby" | "loading" | "live">("standby");
   const [statusText, setStatusText] = createSignal("Standby");
@@ -50,7 +51,7 @@ export default function App() {
   const [sttCount, setSttCount] = createSignal(0);
 
   const [hSplit, setHSplit] = createSignal(50);
-  const [vSplit, setVSplit] = createSignal(70);
+  const [vSplit, setVSplit] = createSignal(50);
 
   let mainRef: HTMLElement | undefined;
   let containerRef: HTMLDivElement | undefined;
@@ -221,6 +222,7 @@ export default function App() {
     if (running()) return;
     const cfg = config();
     if (!cfg) return;
+    setActiveMicId(micDeviceId);
 
     setRunning(true);
     setStatus("loading");
@@ -406,7 +408,12 @@ export default function App() {
           style={{ flex: String(vSplit()) }}
         >
           <div style={{ flex: String(hSplit()) }} class="min-w-0 flex">
-            <SpeechPane entries={sttEntries} finalCount={sttCount} live={running} />
+            <SpeechPane
+              entries={sttEntries}
+              finalCount={sttCount}
+              live={running}
+              micDeviceId={activeMicId}
+            />
           </div>
 
           <ResizeHandle direction="horizontal" onResize={onHResize} />
