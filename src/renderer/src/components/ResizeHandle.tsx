@@ -39,7 +39,7 @@ export default function ResizeHandle(props: ResizeHandleProps) {
 
   return (
     <div
-      class="shrink-0 flex items-center justify-center group transition-colors"
+      class="resize-handle shrink-0 flex items-center justify-center group transition-colors"
       classList={{
         "w-3 cursor-col-resize hover:bg-hover": isHorizontal(),
         "h-3 cursor-row-resize hover:bg-hover": !isHorizontal(),
@@ -48,10 +48,10 @@ export default function ResizeHandle(props: ResizeHandleProps) {
       onPointerDown={onPointerDown}
     >
       <div
-        class="rounded-full bg-border-lit transition-all group-hover:bg-tx-4"
+        class="resize-handle-dot rounded-full bg-border-lit transition-all group-hover:bg-tx-4"
         classList={{
-          "w-[3px] h-8": isHorizontal(),
-          "h-[3px] w-8": !isHorizontal(),
+          "resize-handle-dot-h w-[3px] h-5": isHorizontal(),
+          "resize-handle-dot-v h-[3px] w-5": !isHorizontal(),
           "!bg-tx-3": dragging(),
         }}
       />

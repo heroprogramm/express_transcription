@@ -28,7 +28,7 @@ export default function Controls(props: Props) {
   });
 
   return (
-    <div class="flex items-center justify-between h-13 px-5 bg-inset border-b border-border shrink-0 surface-inset">
+    <div class="flex items-center justify-between h-13 px-5 bg-inset border-b border-border shrink-0 surface-inset controls-bar">
       <div class="flex items-center gap-2.5">
         <label class="text-[11px] font-semibold text-tx-4 tracking-wider uppercase whitespace-nowrap">
           Mic
@@ -54,6 +54,7 @@ export default function Controls(props: Props) {
           variant="primary"
           disabled={props.running()}
           onClick={() => props.onStart(selectedMic())}
+          title="Start transcription (Space)"
         >
           <Play size={12} fill="currentColor" />
           Start
@@ -63,6 +64,7 @@ export default function Controls(props: Props) {
           variant={props.running() ? "danger" : "ghost"}
           disabled={!props.running()}
           onClick={props.onStop}
+          title="Stop transcription (Space)"
         >
           <Square size={12} fill="currentColor" />
           Stop

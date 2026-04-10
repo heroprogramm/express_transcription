@@ -194,6 +194,37 @@ body.theme-transitioning h2 {
     0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
+/* ── Controls Bar ────────────────────────────────────────────── */
+.controls-bar {
+  position: relative;
+}
+.controls-bar::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: linear-gradient(to bottom, var(--bg-inset), transparent);
+  pointer-events: none;
+}
+
+/* ── Toast Icons ─────────────────────────────────────────────── */
+.toast-error .toast-icon {
+  color: var(--red);
+}
+.toast-info .toast-icon {
+  color: var(--steel);
+}
+.toast-error {
+  border-left-width: 3px;
+  border-left-color: var(--red);
+}
+.toast-info {
+  border-left-width: 3px;
+  border-left-color: var(--steel);
+}
+
 /* ── App mount stagger ────────────────────────────────────────── */
 @keyframes mountSlide {
   from {
@@ -245,6 +276,19 @@ body.theme-transitioning h2 {
 .badge-loading .status-dot {
   background: var(--steel);
   animation: pulse 0.8s ease-in-out infinite;
+}
+
+/* ── Pending Progress Fill ───────────────────────────────────── */
+@keyframes pendingFill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+.pending-fill {
+  animation: pendingFill linear forwards;
 }
 
 /* ── Waveform animation for empty STT state ──────────────────── */
@@ -323,6 +367,137 @@ body.theme-transitioning h2 {
 .type-reveal {
   display: inline-block;
   animation: typeReveal var(--type-dur, 0.5s) steps(var(--type-steps, 20), end) both;
+}
+
+/* ── Editing Row ─────────────────────────────────────────────── */
+.editing-row {
+  background: var(--bg-surface);
+  border-radius: 6px;
+  margin: -2px -6px;
+  padding-left: 14px;
+  padding-right: 8px;
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.25),
+    0 8px 24px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+[data-theme="light"] .editing-row {
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    0 8px 24px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.editing-input {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.editing-input:focus {
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.15),
+    0 0 0 3px var(--border);
+}
+.editing-btn {
+  cursor: pointer;
+  line-height: 1;
+}
+.editing-btn-save {
+  color: var(--green);
+  background: var(--green-glow);
+}
+.editing-btn-save:hover {
+  background: var(--green-soft);
+  color: var(--text);
+}
+.editing-btn-cancel {
+  color: var(--text-3);
+  background: transparent;
+}
+.editing-btn-cancel:hover {
+  color: var(--text-2);
+  background: var(--bg-hover);
+}
+
+/* ── Settings Inputs ─────────────────────────────────────────── */
+.settings-input {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.12);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.settings-input:focus {
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.12),
+    0 0 0 3px var(--border);
+}
+[data-theme="light"] .settings-input {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+[data-theme="light"] .settings-input:focus {
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.06),
+    0 0 0 3px var(--border);
+}
+
+/* ── Empty State Illustrations ──────────────────────────────── */
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
+  animation: emptyPulse 4s ease-in-out infinite;
+}
+[data-theme="light"] .empty-state-icon {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+@keyframes emptyPulse {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+/* ── Keyboard Hints ─────────────────────────────────────────── */
+.kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--border-lit);
+  background: var(--bg-surface);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--text-3);
+  box-shadow: 0 1px 0 var(--border);
+}
+
+/* ── Resize Handles ─────────────────────────────────────────── */
+.resize-handle-dot {
+  transition:
+    width 0.15s ease,
+    height 0.15s ease,
+    opacity 0.15s ease;
+}
+.resize-handle:hover .resize-handle-dot-h {
+  width: 4px;
+  height: 32px;
+  opacity: 1;
+}
+.resize-handle:hover .resize-handle-dot-v {
+  height: 4px;
+  width: 32px;
+  opacity: 1;
 }
 
 /* ── Settings Gear Spin ──────────────────────────────────────── */

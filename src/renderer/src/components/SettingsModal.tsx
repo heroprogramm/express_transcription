@@ -80,36 +80,44 @@ export default function SettingsModal(props: Props) {
           </div>
         </div>
 
-        <div class="flex flex-col gap-4">
-          <div>
-            <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
-              Soniox Model
-            </label>
-            <input
-              type="text"
-              placeholder="stt-rt-v4"
-              class="bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
-              ref={(el) => requestAnimationFrame(() => el.focus())}
-              value={model()}
-              onInput={(e) => setModel(e.currentTarget.value)}
-              onKeyDown={handleKeyDown}
-            />
-          </div>
+        {/* ── Soniox section ── */}
+        <div class="mb-5">
+          <h3 class="text-[10px] font-bold text-tx-4 tracking-widest uppercase mb-3">Soniox</h3>
+          <div class="flex flex-col gap-4">
+            <div>
+              <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                Model
+              </label>
+              <input
+                type="text"
+                placeholder="stt-rt-v4"
+                class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
+                ref={(el) => requestAnimationFrame(() => el.focus())}
+                value={model()}
+                onInput={(e) => setModel(e.currentTarget.value)}
+                onKeyDown={handleKeyDown}
+              />
+            </div>
 
-          <div>
-            <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
-              Soniox API Key
-            </label>
-            <input
-              type="password"
-              placeholder="sk-... (leave empty to keep current)"
-              class="bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
-              value={key()}
-              onInput={(e) => setKey(e.currentTarget.value)}
-              onKeyDown={handleKeyDown}
-            />
+            <div>
+              <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                API Key
+              </label>
+              <input
+                type="password"
+                placeholder="sk-... (leave empty to keep current)"
+                class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
+                value={key()}
+                onInput={(e) => setKey(e.currentTarget.value)}
+                onKeyDown={handleKeyDown}
+              />
+            </div>
           </div>
+        </div>
 
+        {/* ── Output section ── */}
+        <div class="border-t border-border pt-5">
+          <h3 class="text-[10px] font-bold text-tx-4 tracking-widest uppercase mb-3">Output</h3>
           <div>
             <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
               Feed Delay (seconds)
@@ -118,7 +126,7 @@ export default function SettingsModal(props: Props) {
               type="text"
               inputmode="numeric"
               placeholder="10"
-              class="bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
+              class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
               value={feedDelay()}
               onInput={(e) => setFeedDelay(e.currentTarget.value)}
               onKeyDown={handleKeyDown}
@@ -130,15 +138,20 @@ export default function SettingsModal(props: Props) {
         </div>
 
         {error() && <div class="text-xs text-red mt-3 font-medium">{error()}</div>}
-        <div class="flex gap-2 mt-5 justify-end">
-          <Button variant="ghost" onClick={props.onClose}>
-            <X size={14} />
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleSave} disabled={saving()}>
-            <Save size={14} />
-            {saving() ? "Saving\u2026" : "Save"}
-          </Button>
+        <div class="flex items-center gap-2 mt-5 justify-between">
+          <span class="kbd-hint text-[10px] text-tx-4 font-mono">
+            <kbd class="kbd">Enter</kbd> save &middot; <kbd class="kbd">Esc</kbd> close
+          </span>
+          <div class="flex gap-2">
+            <Button variant="ghost" onClick={props.onClose}>
+              <X size={14} />
+              Cancel
+            </Button>
+            <Button variant="primary" onClick={handleSave} disabled={saving()}>
+              <Save size={14} />
+              {saving() ? "Saving\u2026" : "Save"}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

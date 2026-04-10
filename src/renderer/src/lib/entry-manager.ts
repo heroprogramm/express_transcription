@@ -109,18 +109,35 @@ export function createEntryManager(feedDelayMs: () => number) {
     updateEntryStatus(id, EntryStatus.Editing);
   }
 
+  function remainingDelayMs(id: number): number {
+    const entry = transEntries().find((e) => e.id === id);
+    if (!entry) return 0;
+    const elapsed = Date.now() - entry.createdAt;
+    return Math.max(0, feedDelayMs() - elapsed);
+  }
+
   function saveEdit(id: number, text: string): void {
     editingText.delete(id);
     updateEntryStatus(id, EntryStatus.Pending, text);
-    const timer = setTimeout(() => confirmEntry(id), feedDelayMs());
-    entryTimers.set(id, timer);
+    const delay = remainingDelayMs(id);
+    if (delay === 0) {
+      confirmEntry(id);
+    } else {
+      const timer = setTimeout(() => confirmEntry(id), delay);
+      entryTimers.set(id, timer);
+    }
   }
 
   function cancelEdit(id: number): void {
     editingText.delete(id);
     updateEntryStatus(id, EntryStatus.Pending);
-    const timer = setTimeout(() => confirmEntry(id), feedDelayMs());
-    entryTimers.set(id, timer);
+    const delay = remainingDelayMs(id);
+    if (delay === 0) {
+      confirmEntry(id);
+    } else {
+      const timer = setTimeout(() => confirmEntry(id), delay);
+      entryTimers.set(id, timer);
+    }
   }
 
   function onEditChange(id: number, text: string): void {

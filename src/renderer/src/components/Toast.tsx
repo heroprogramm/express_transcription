@@ -1,4 +1,5 @@
 import { createSignal, For, onCleanup } from "solid-js";
+import { CircleX, CircleAlert } from "lucide-solid";
 
 interface ToastItem {
   id: number;
@@ -25,13 +26,17 @@ function dismiss(id: number) {
     clearTimeout(timer);
     timers.delete(id);
   }
-  // Start dismiss animation
   setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, dismissing: true } : t)));
-  // Remove after animation
   setTimeout(() => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, 200);
 }
+
+const TOAST_STYLES = {
+  error:
+    "toast-error bg-red-soft/15 border-red/25 text-red light:bg-red-soft/10 light:border-red-soft/30 light:text-red-soft",
+  info: "toast-info bg-steel-soft/15 border-steel/25 text-steel light:bg-steel-soft/10 light:border-steel-soft/30 light:text-steel-soft",
+} as const;
 
 export default function ToastContainer() {
   onCleanup(() => {
@@ -46,14 +51,12 @@ export default function ToastContainer() {
           <div
             class={`toast-item flex items-start gap-3 px-4 py-3 rounded-md border shadow-lg backdrop-blur-sm cursor-pointer font-ui text-[13px] leading-snug ${
               toast.dismissing ? "toast-out" : "toast-in"
-            } ${
-              toast.type === "error"
-                ? "bg-red-soft/15 border-red/25 text-red light:bg-red-soft/10 light:border-red-soft/30 light:text-red-soft"
-                : "bg-steel-soft/15 border-steel/25 text-steel light:bg-steel-soft/10 light:border-steel-soft/30 light:text-steel-soft"
-            }`}
+            } ${TOAST_STYLES[toast.type]}`}
             onClick={() => dismiss(toast.id)}
           >
-            <span class="shrink-0 mt-px text-[15px]">{toast.type === "error" ? "✕" : "ℹ"}</span>
+            <div class="toast-icon shrink-0 mt-px">
+              {toast.type === "error" ? <CircleX size={16} /> : <CircleAlert size={16} />}
+            </div>
             <span class="flex-1 break-words">{toast.message}</span>
           </div>
         )}

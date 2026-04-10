@@ -17,16 +17,18 @@ const TRANS_ITEM_HEIGHT = 40;
 function SpeechEmpty() {
   return (
     <div class="flex flex-col items-center justify-center h-full -mt-12 gap-4">
-      <div class="flex items-end gap-[4px] h-10">
-        {[0.5, 0.8, 0.4, 1, 0.6, 0.9, 0.3, 0.7].map((h, i) => (
-          <div
-            class="waveform-bar-enhanced w-[5px] rounded-full bg-tx-3 opacity-30"
-            style={{
-              height: `${h * 100}%`,
-              "animation-delay": `${i * 0.25}s`,
-            }}
-          />
-        ))}
+      <div class="empty-state-icon">
+        <div class="flex items-end gap-[3px] h-6">
+          {[0.5, 0.8, 0.4, 1, 0.6, 0.9, 0.3].map((h, i) => (
+            <div
+              class="waveform-bar-enhanced w-[3px] rounded-full bg-tx-3"
+              style={{
+                height: `${h * 100}%`,
+                "animation-delay": `${i * 0.25}s`,
+              }}
+            />
+          ))}
+        </div>
       </div>
       <div class="text-center">
         <p class="font-ui text-[13px] font-medium text-tx-3">Waiting for audio input</p>
@@ -39,19 +41,21 @@ function SpeechEmpty() {
 function TranslationEmpty() {
   return (
     <div class="flex flex-col items-center justify-center h-full -mt-12 gap-4">
-      <svg
-        class="opacity-30 animate-[spin_20s_linear_infinite]"
-        width="40"
-        height="40"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="var(--burgundy)"
-        stroke-width="0.8"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <line x1="2" y1="12" x2="22" y2="12" />
-        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-      </svg>
+      <div class="empty-state-icon">
+        <svg
+          class="animate-[spin_20s_linear_infinite]"
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--burgundy)"
+          stroke-width="1"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <line x1="2" y1="12" x2="22" y2="12" />
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+        </svg>
+      </div>
       <div class="text-center">
         <p class="font-ui text-[13px] font-medium text-tx-3">Translations will appear here</p>
         <p class="font-ui text-[11px] text-tx-4 mt-1">Speech is translated in real time</p>
@@ -190,15 +194,14 @@ function TranslationEntryRow(props: {
 
   return (
     <div
-      class="animate-entry text-base font-medium leading-relaxed flex items-center border-l-2 pl-2 transition-all duration-200"
+      class="animate-entry text-base font-medium leading-relaxed flex items-center border-l-2 pl-2 transition-all duration-200 relative"
       classList={{
         "border-l-st-pending text-st-pending cursor-pointer hover:bg-hover": isPending(),
-        "border-l-st-editing text-st-editing shadow-lg -translate-y-0.5 z-10 bg-raised rounded-md":
-          isEditing(),
+        "editing-row border-l-st-editing text-st-editing z-10": isEditing(),
         "border-l-st-confirmed text-st-confirmed": isConfirmed(),
         "border-l-st-sent text-st-sent": isSent(),
       }}
-      style={{ height: `${props.itemHeight}px`, contain: "content" }}
+      style={{ height: `${props.itemHeight}px`, contain: isEditing() ? undefined : "content" }}
       onClick={() => isPending() && props.onStartEdit(props.entry.id)}
     >
       <span class="inline text-[9px] font-medium font-mono text-tx-3 tracking-wide mr-2 tabular-nums shrink-0">
@@ -207,10 +210,10 @@ function TranslationEntryRow(props: {
       <Show
         when={!isEditing()}
         fallback={
-          <div class="flex items-center gap-1.5 flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-1 min-w-0">
             <input
               ref={(el) => requestAnimationFrame(() => el.focus())}
-              class="flex-1 min-w-0 bg-transparent border border-border-lit rounded-md px-1.5 py-0.5 text-base text-tx outline-none focus:border-border-focus"
+              class="editing-input flex-1 min-w-0 bg-surface border border-border-lit rounded-md px-2 py-1 text-base text-tx outline-none focus:border-border-focus"
               value={editText()}
               onInput={(e) => {
                 setEditText(e.currentTarget.value);
@@ -220,7 +223,7 @@ function TranslationEntryRow(props: {
               onFocusOut={() => props.onSaveEdit(props.entry.id, editText())}
             />
             <button
-              class="text-[11px] text-tx-2 hover:text-tx font-bold shrink-0 px-1.5"
+              class="editing-btn editing-btn-save text-[11px] font-bold shrink-0 px-2 py-0.5 rounded transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 props.onSaveEdit(props.entry.id, editText());
@@ -230,7 +233,7 @@ function TranslationEntryRow(props: {
               &#10003;
             </button>
             <button
-              class="text-[11px] text-tx-3 hover:text-tx-2 font-bold shrink-0 px-1.5"
+              class="editing-btn editing-btn-cancel text-[11px] font-bold shrink-0 px-2 py-0.5 rounded transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 props.onCancelEdit(props.entry.id);
@@ -260,6 +263,15 @@ function TranslationEntryRow(props: {
         <span class="text-[12px] font-mono text-tx-3 ml-auto pl-2 shrink-0 tabular-nums">
           {remaining()}s
         </span>
+        <div class="pending-progress absolute bottom-0 left-0 right-0 h-[2px]">
+          <div
+            class="h-full bg-st-pending opacity-30 rounded-full pending-fill"
+            style={{
+              "animation-duration": `${props.feedDelayMs()}ms`,
+              "animation-delay": `-${Date.now() - props.entry.createdAt}ms`,
+            }}
+          />
+        </div>
       </Show>
     </div>
   );

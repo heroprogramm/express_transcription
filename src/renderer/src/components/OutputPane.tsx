@@ -40,11 +40,23 @@ export default function OutputPane(props: OutputPaneProps) {
         </div>
         <Show when={count() > 0}>
           <button
-            class="text-tx-3 hover:text-tx-2 cursor-pointer transition-colors"
+            class="flex items-center gap-1.5 cursor-pointer transition-all duration-200"
+            classList={{
+              "text-tx-3 hover:text-tx-2": !copied(),
+              "text-green": copied(),
+            }}
             onClick={copyToClipboard}
             title="Copy to clipboard"
           >
-            <Show when={!copied()} fallback={<Check size={14} />}>
+            <Show
+              when={!copied()}
+              fallback={
+                <>
+                  <Check size={14} />
+                  <span class="text-[10px] font-ui font-semibold">Copied</span>
+                </>
+              }
+            >
               <ClipboardCopy size={14} />
             </Show>
           </button>
@@ -53,25 +65,26 @@ export default function OutputPane(props: OutputPaneProps) {
       <div
         ref={container}
         onScroll={vl.onScroll}
-        class="flex-1 overflow-y-auto px-3 font-mono text-sm"
+        class="transcript-scroll flex-1 overflow-y-auto px-3 font-mono text-sm"
       >
         <Show
           when={count() > 0}
           fallback={
             <div class="flex flex-col items-center justify-center h-full -mt-4 gap-3">
-              <svg
-                class="opacity-25"
-                width="40"
-                height="40"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="0.8"
-              >
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <path d="M9 15l2 2 4-4" />
-              </svg>
+              <div class="empty-state-icon">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="var(--text-3)"
+                  stroke-width="1"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <path d="M9 15l2 2 4-4" />
+                </svg>
+              </div>
               <div class="text-center">
                 <p class="font-ui text-[13px] font-medium text-tx-3">
                   Confirmed translations will appear here
