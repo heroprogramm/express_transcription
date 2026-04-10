@@ -174,7 +174,6 @@ export function createEntryManager(feedDelayMs: () => number) {
       setWords(0);
       setLatency("\u2014");
     });
-    entryId = 0;
   }
 
   onCleanup(() => {

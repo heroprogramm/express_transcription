@@ -24,12 +24,20 @@ async function flushFeed(): Promise<void> {
   const tmp = `${feedPath}.tmp`;
   try {
     await fsp.writeFile(tmp, snapshot[snapshot.length - 1]);
-    await fsp.rename(tmp, feedPath);
   } catch (err) {
-    log(LogLevel.Error, "session:feed-flush-failed", {
+    log(LogLevel.Error, "session:feed-write-failed", {
       message: err instanceof Error ? err.message : String(err),
     });
     feedBuffer = [...snapshot, ...feedBuffer];
+    return;
+  }
+  try {
+    await fsp.rename(tmp, feedPath);
+  } catch (err) {
+    log(LogLevel.Error, "session:feed-rename-failed", {
+      message: err instanceof Error ? err.message : String(err),
+    });
+    fsp.unlink(tmp).catch(() => {});
   }
 }
 

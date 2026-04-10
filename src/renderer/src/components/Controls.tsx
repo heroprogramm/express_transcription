@@ -20,13 +20,17 @@ export default function Controls(props: Props) {
     setMics(devices.filter((d) => d.kind === "audioinput"));
   }
 
+  function handleDeviceChange() {
+    populateMics().catch(() => {});
+  }
+
   onMount(() => {
-    populateMics();
-    navigator.mediaDevices.addEventListener("devicechange", populateMics);
+    populateMics().catch(() => {});
+    navigator.mediaDevices.addEventListener("devicechange", handleDeviceChange);
   });
 
   onCleanup(() => {
-    navigator.mediaDevices.removeEventListener("devicechange", populateMics);
+    navigator.mediaDevices.removeEventListener("devicechange", handleDeviceChange);
   });
 
   return (
