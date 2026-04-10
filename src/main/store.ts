@@ -1,12 +1,17 @@
 import Store from "electron-store";
+import type { AppConfig } from "./config";
 
 const store = new Store();
-const STORE_KEY = "soniox_api_key";
+
+const STORE_KEY_API = "soniox_api_key";
+const STORE_KEY_CONFIG = "app_config";
+
+// ── API Key ──
 
 export function getApiKey(): string | null {
   const envKey = process.env.SONIOX_API_KEY?.trim();
   if (envKey) return envKey;
-  return (store.get(STORE_KEY) as string) || null;
+  return (store.get(STORE_KEY_API) as string) || null;
 }
 
 export function saveApiKey(key: string): void {
@@ -16,9 +21,19 @@ export function saveApiKey(key: string): void {
   if (key.length > 512) {
     throw new Error("API key is too long");
   }
-  store.set(STORE_KEY, key.trim());
+  store.set(STORE_KEY_API, key.trim());
 }
 
 export function hasApiKey(): boolean {
-  return !!(process.env.SONIOX_API_KEY || store.get(STORE_KEY));
+  return !!(process.env.SONIOX_API_KEY || store.get(STORE_KEY_API));
+}
+
+// ── App Config ──
+
+export function getStoredConfig(): Partial<AppConfig> | null {
+  return (store.get(STORE_KEY_CONFIG) as Partial<AppConfig>) || null;
+}
+
+export function saveStoredConfig(config: AppConfig): void {
+  store.set(STORE_KEY_CONFIG, config);
 }

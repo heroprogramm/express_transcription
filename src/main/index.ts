@@ -41,8 +41,8 @@ process.on("unhandledRejection", (reason) => {
 let appConfig: AppConfig = DEFAULT_CONFIG;
 
 // ── App lifecycle ──
-app.whenReady().then(async () => {
-  const configResult = await loadConfig();
+app.whenReady().then(() => {
+  const configResult = loadConfig();
   appConfig = configResult.config;
   registerIpcHandlers(
     () => appConfig,

@@ -25,15 +25,15 @@ export function registerIpcHandlers(
 
   ipcMain.handle(
     "save-config",
-    async (_event, fields: unknown): Promise<{ config: AppConfig; warnings: string[] }> => {
+    (_event, fields: unknown): { config: AppConfig; warnings: string[] } => {
       if (!fields || typeof fields !== "object") throw new Error("Invalid config fields");
       const f = fields as Record<string, unknown>;
       const updates: Partial<{ model: string; feed_delay_seconds: number }> = {};
       if (typeof f.model === "string") updates.model = f.model;
       if (typeof f.feed_delay_seconds === "number")
         updates.feed_delay_seconds = f.feed_delay_seconds;
-      await saveConfigFields(updates);
-      const result = await loadConfig();
+      saveConfigFields(updates);
+      const result = loadConfig();
       setConfig(result.config);
       return { config: result.config, warnings: result.warnings };
     },

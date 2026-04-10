@@ -1,5 +1,4 @@
-import { join } from "path";
-import * as fsp from "fs/promises";
+import { getStoredConfig, saveStoredConfig } from "./store";
 
 export interface AppConfig {
   soniox: { language: string; model: string; translate_to: string };
@@ -8,7 +7,7 @@ export interface AppConfig {
 
 const DEFAULT_CONFIG: AppConfig = {
   soniox: { language: "ur", model: "stt-rt-v4", translate_to: "en" },
-  output: { feed_file: "feed.txt", session_log_dir: "sessions", feed_delay_seconds: 10 },
+  output: { feed_file: "feed.txt", session_log_dir: "sessions", feed_delay_seconds: 5 },
 };
 
 function validateConfig(config: AppConfig): string[] {
@@ -42,45 +41,39 @@ export interface ConfigResult {
   warnings: string[];
 }
 
-export async function loadConfig(): Promise<ConfigResult> {
-  try {
-    const configPath = join(__dirname, "..", "..", "config", "default.json");
-    const raw = await fsp.readFile(configPath, "utf-8");
-    const parsed = JSON.parse(raw) as AppConfig;
-    const config: AppConfig = {
-      soniox: { ...DEFAULT_CONFIG.soniox, ...parsed.soniox },
-      output: { ...DEFAULT_CONFIG.output, ...parsed.output },
-    };
-
-    const errors = validateConfig(config);
-    if (errors.length > 0) {
-      console.warn(`[config] Invalid config, using defaults: ${errors.join("; ")}`);
-      return { config: DEFAULT_CONFIG, warnings: errors };
-    }
-
-    return { config, warnings: [] };
-  } catch (err) {
-    const msg = `Could not load config file, using defaults: ${err instanceof Error ? err.message : String(err)}`;
-    console.warn(`[config] ${msg}`);
-    return { config: DEFAULT_CONFIG, warnings: [msg] };
+export function loadConfig(): ConfigResult {
+  const stored = getStoredConfig();
+  if (!stored) {
+    return { config: DEFAULT_CONFIG, warnings: [] };
   }
+
+  const config: AppConfig = {
+    soniox: { ...DEFAULT_CONFIG.soniox, ...stored.soniox },
+    output: { ...DEFAULT_CONFIG.output, ...stored.output },
+  };
+
+  const errors = validateConfig(config);
+  if (errors.length > 0) {
+    console.warn(`[config] Invalid stored config, using defaults: ${errors.join("; ")}`);
+    return { config: DEFAULT_CONFIG, warnings: errors };
+  }
+
+  return { config, warnings: [] };
 }
 
-export async function saveConfigFields(
+export function saveConfigFields(
   fields: Partial<{ model: string; feed_delay_seconds: number }>,
-): Promise<void> {
-  const configPath = join(__dirname, "..", "..", "config", "default.json");
-  const raw = await fsp.readFile(configPath, "utf-8");
-  const parsed = JSON.parse(raw) as Record<string, Record<string, unknown>>;
+): void {
+  const { config } = loadConfig();
 
   if (fields.model !== undefined) {
-    parsed.soniox = { ...parsed.soniox, model: fields.model };
+    config.soniox = { ...config.soniox, model: fields.model };
   }
   if (fields.feed_delay_seconds !== undefined) {
-    parsed.output = { ...parsed.output, feed_delay_seconds: fields.feed_delay_seconds };
+    config.output = { ...config.output, feed_delay_seconds: fields.feed_delay_seconds };
   }
 
-  await fsp.writeFile(configPath, JSON.stringify(parsed, null, 2) + "\n", "utf-8");
+  saveStoredConfig(config);
 }
 
 export { DEFAULT_CONFIG };
