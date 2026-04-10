@@ -2,7 +2,7 @@
   "name": "express-text",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "Real-time speech transcription and translation desktop app",
   "author": {
     "name": "Hamza Shafique",
