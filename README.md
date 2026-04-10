@@ -1,40 +1,38 @@
 # ExpressText
 
-A cross-platform desktop application for real-time speech-to-text transcription and translation. Built for the Express 24/7 newsroom workflow, it captures live audio from a microphone, transcribes it using the [Soniox](https://soniox.com/) speech-to-text API, and provides one-way translation (e.g., Urdu to English) -- all in a single window.
+Real-time speech transcription and translation desktop app. ExpressText captures live audio from a microphone, transcribes it using the [Soniox](https://soniox.com/) speech-to-text API, and provides one-way translation (e.g., Urdu to English) -- all in a single window.
 
 ## Features
 
 - **Real-time transcription** -- streams audio from any connected microphone and displays partial and final results as they arrive (default source language: Urdu).
 - **Live translation** -- translates transcribed speech into a target language in real time (default target: English).
 - **Split-pane UI** -- side-by-side view with the original transcript on the left and the translated output on the right, using virtual scrolling for large sessions.
-- **Performance monitoring overlay** -- toggle with `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS) to view CPU usage, FPS, memory, event loop lag, and IPC round-trip time.
-- **Session logging** -- every session is saved to a timestamped log file for archival.
 - **Feed file output** -- writes the latest translated line to a text file (`feed.txt`) using atomic writes, consumable by external tools (e.g., OBS, broadcast graphics).
+- **Session logging** -- every session is saved to a timestamped log file for archival.
 - **Microphone selection** -- choose from any available audio input device with live device-change detection.
-- **Dark and light themes** -- toggle between themes with smooth transitions; preference is persisted across sessions.
+- **Dark and light themes** -- toggle between themes; preference is persisted across sessions.
+- **Performance monitoring overlay** -- toggle with `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS) to view CPU usage, FPS, memory, event loop lag, and IPC round-trip time.
 - **Secure API key storage** -- the Soniox API key is stored locally using `electron-store` (or read from the `SONIOX_API_KEY` environment variable).
 - **Single instance enforcement** -- prevents multiple instances of the app from running simultaneously.
 - **Renderer crash recovery** -- the app automatically recovers from renderer process crashes.
-- **IPC batching** -- translation log writes are batched at 200ms intervals for efficiency.
-- **Production optimizations** -- V8 code caching enabled, source maps stripped, context isolation on, Node integration disabled in the renderer.
 
 ## Tech Stack
 
-| Layer            | Technology                                                    |
-| ---------------- | ------------------------------------------------------------- |
-| Desktop          | [Electron](https://www.electronjs.org/) 41                   |
-| Tooling          | [electron-vite](https://electron-vite.org/) 5                |
-| UI Framework     | [SolidJS](https://www.solidjs.com/) 1.9                      |
-| Styling          | [Tailwind CSS](https://tailwindcss.com/) 4                   |
-| Language         | [TypeScript](https://www.typescriptlang.org/) 6              |
-| Speech-to-Text   | [Soniox Web SDK](https://soniox.com/)                       |
-| Persistence      | [electron-store](https://github.com/sindresorhus/electron-store) |
-| Packaging        | [electron-builder](https://www.electron.build/)              |
-| Package Manager  | [Bun](https://bun.sh/)                                       |
-| Linting          | [oxlint](https://oxc-project.github.io/)                     |
-| Formatting       | [oxfmt](https://oxc-project.github.io/)                      |
-| Git Hooks        | [Lefthook](https://github.com/evilmartians/lefthook)         |
-| CI/CD            | GitHub Actions (cross-platform build and release)             |
+| Layer           | Technology                                                                    |
+| --------------- | ----------------------------------------------------------------------------- |
+| Desktop         | [Electron](https://www.electronjs.org/) 41                                   |
+| Tooling         | [electron-vite](https://electron-vite.org/) 5                                |
+| UI Framework    | [SolidJS](https://www.solidjs.com/) 1.9                                      |
+| Styling         | [Tailwind CSS](https://tailwindcss.com/) 4                                   |
+| Language        | [TypeScript](https://www.typescriptlang.org/) 6                              |
+| Speech-to-Text  | [Soniox Web SDK](https://soniox.com/)                                        |
+| Persistence     | [electron-store](https://github.com/sindresorhus/electron-store)             |
+| Packaging       | [electron-builder](https://www.electron.build/)                              |
+| Package Manager | [Bun](https://bun.sh/)                                                       |
+| Linting         | [oxlint](https://oxc-project.github.io/)                                     |
+| Formatting      | [oxfmt](https://oxc-project.github.io/)                                      |
+| Git Hooks       | [Lefthook](https://github.com/evilmartians/lefthook)                         |
+| CI/CD           | GitHub Actions (cross-platform build and release)                             |
 
 ## Getting Started
 
@@ -81,41 +79,28 @@ This compiles the app and runs electron-builder, producing platform-specific ins
 
 ## Scripts
 
-| Command            | Description                                       |
-| ------------------ | ------------------------------------------------- |
-| `bun run dev`      | Start the app in development mode with hot-reload |
-| `bun run build`    | Compile main, preload, and renderer to `out/`     |
-| `bun run preview`  | Preview the production build locally              |
-| `bun run dist`     | Build and package the app with electron-builder   |
-| `bun run lint`     | Lint source files with oxlint                     |
-| `bun run fmt`      | Format source files with oxfmt                    |
-| `bun run fmt:check`| Check formatting without writing changes          |
+| Command             | Description                                       |
+| ------------------- | ------------------------------------------------- |
+| `bun run dev`       | Start the app in development mode with hot-reload |
+| `bun run build`     | Compile main, preload, and renderer to `out/`     |
+| `bun run preview`   | Preview the production build locally              |
+| `bun run dist`      | Build and package the app with electron-builder   |
+| `bun run lint`      | Lint source files with oxlint                     |
+| `bun run fmt`       | Format source files with oxfmt                    |
+| `bun run fmt:check` | Check formatting without writing changes          |
 
 ## Configuration
 
-Application settings are loaded from `config/default.json`:
+Settings are managed via `electron-store` with sensible defaults. Configurable values:
 
-```json
-{
-  "soniox": {
-    "language": "ur",
-    "model": "stt-rt-v4",
-    "translate_to": "en"
-  },
-  "output": {
-    "feed_file": "feed.txt",
-    "session_log_dir": "sessions"
-  }
-}
-```
-
-| Key                      | Description                                               |
-| ------------------------ | --------------------------------------------------------- |
-| `soniox.language`        | Source language code (e.g., `ur` for Urdu)                |
-| `soniox.model`           | Soniox model identifier                                   |
-| `soniox.translate_to`    | Target translation language code (e.g., `en` for English) |
-| `output.feed_file`       | Name of the rolling feed file written to the app data dir |
-| `output.session_log_dir` | Subdirectory (under app data) where session logs are stored |
+| Key                          | Default      | Description                                                 |
+| ---------------------------- | ------------ | ----------------------------------------------------------- |
+| `soniox.language`            | `ur`         | Source language code (e.g., `ur` for Urdu)                  |
+| `soniox.model`               | `stt-rt-v4`  | Soniox model identifier                                     |
+| `soniox.translate_to`        | `en`         | Target translation language code (e.g., `en` for English)   |
+| `output.feed_file`           | `feed.txt`   | Name of the rolling feed file written to the app data dir   |
+| `output.session_log_dir`     | `sessions`   | Subdirectory (under app data) where session logs are stored |
+| `output.feed_delay_seconds`  | `5`          | Delay in seconds before writing to the feed file            |
 
 Output files are written to the Electron `userData` directory:
 
@@ -158,12 +143,18 @@ src/
         types.ts        # Shared TypeScript types
       styles/
         app.css         # Global styles
-config/
-  default.json          # App configuration
 electron.vite.config.ts # electron-vite configuration
 package.json
 ```
 
+## CI/CD
+
+The project uses GitHub Actions for automated builds and releases. Pushing a version tag (e.g., `v0.1.8`) triggers a cross-platform build on macOS, Windows, and Linux, uploads the artifacts, and creates a GitHub Release with the packaged installers.
+
+## Author
+
+**Hamza Shafique** -- [GitHub](https://github.com/hamza-56)
+
 ## License
 
-Private -- all rights reserved.
+Copyright (c) 2026-present Hamza Shafique. All rights reserved. See [LICENSE](LICENSE) for details.
