@@ -1,5 +1,5 @@
 import { Sun, Moon } from "lucide-solid";
-import Button from "./Button";
+import Button from "@/components/Button";
 
 export default function ThemeToggle() {
   function toggle() {

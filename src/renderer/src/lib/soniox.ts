@@ -8,9 +8,9 @@ import {
   type RealtimeToken,
   type RecordingState,
 } from "@soniox/client";
-import type { AppConfig } from "./types";
-import { getApiKey, logTranslationsBatch } from "./ipc";
-import { reportError } from "./errors";
+import type { AppConfig } from "@/lib/types";
+import { getApiKey, logTranslationsBatch } from "@/lib/ipc";
+import { reportError } from "@/lib/errors";
 
 export interface SonioxCallbacks {
   onTranscript: (timestamp: string, text: string, isPartial: boolean) => void;

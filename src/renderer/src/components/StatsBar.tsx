@@ -11,9 +11,7 @@ function Stat(props: { label: string; live: boolean; children: any }) {
   return (
     <div
       class="flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all duration-300"
-      style={{
-        background: "var(--bg-surface)",
-      }}
+      classList={{ "bg-surface": true }}
     >
       <span class="text-[10px] font-semibold text-tx-4 tracking-wider uppercase">
         {props.label}

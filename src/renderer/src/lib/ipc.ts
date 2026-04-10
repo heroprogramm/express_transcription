@@ -1,4 +1,4 @@
-import type { AppConfig, PerfSnapshot } from "./types";
+import type { AppConfig, PerfSnapshot } from "@/lib/types";
 
 declare global {
   interface Window {
@@ -19,6 +19,7 @@ declare global {
       perfStop: () => Promise<void>;
       perfPing: () => Promise<number>;
       onPerfSnapshot: (cb: (snapshot: PerfSnapshot) => void) => () => void;
+      copyToClipboard: (text: string) => void;
       onOpenSettings: (cb: () => void) => () => void;
     };
   }
@@ -88,6 +89,10 @@ export async function perfPing(): Promise<number> {
 
 export function onPerfSnapshot(cb: (snapshot: PerfSnapshot) => void): () => void {
   return getApi().onPerfSnapshot(cb);
+}
+
+export function copyToClipboard(text: string): void {
+  getApi().copyToClipboard(text);
 }
 
 export function onOpenSettings(cb: () => void): () => void {

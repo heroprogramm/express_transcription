@@ -1,6 +1,6 @@
 import { createSignal, onMount, onCleanup, type Accessor } from "solid-js";
 import { Play, Square, ChevronDown, Trash2 } from "lucide-solid";
-import Button from "./Button";
+import Button from "@/components/Button";
 
 interface Props {
   running: Accessor<boolean>;
@@ -35,7 +35,7 @@ export default function Controls(props: Props) {
         </label>
         <div class="relative inline-flex items-center">
           <select
-            class="appearance-none bg-surface text-tx border border-border rounded-md px-2.5 py-[5px] pr-8 text-[13px] font-ui font-semibold cursor-pointer outline-none min-w-[130px] transition-all hover:bg-hover hover:border-border-lit focus:border-border-focus focus:shadow-[0_0_0_3px_rgba(255,255,255,0.04)] disabled:opacity-30 disabled:cursor-not-allowed"
+            class="appearance-none bg-surface text-tx border border-border rounded-md px-2.5 py-[5px] pr-8 text-[13px] font-ui font-semibold cursor-pointer outline-none min-w-[130px] transition-all hover:bg-hover hover:border-border-lit focus:border-border-focus focus:shadow-[0_0_0_3px_var(--border)] disabled:opacity-30 disabled:cursor-not-allowed"
             disabled={props.running()}
             value={selectedMic()}
             onChange={(e) => setSelectedMic(e.currentTarget.value)}

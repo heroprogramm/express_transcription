@@ -35,6 +35,19 @@ export function createWindow(): void {
 
   mainWindow.on("ready-to-show", () => mainWindow?.show());
 
+  if (!is.dev) {
+    mainWindow.webContents.on("before-input-event", (_event, input) => {
+      if (
+        input.key === "F12" ||
+        (input.control && input.shift && input.key === "I") ||
+        (input.meta && input.shift && input.key === "I") ||
+        (input.meta && input.alt && input.key === "I")
+      ) {
+        _event.preventDefault();
+      }
+    });
+  }
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     try {
       const parsed = new URL(details.url);

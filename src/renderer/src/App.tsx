@@ -1,6 +1,6 @@
 import { createSignal, createMemo, onMount, onCleanup, Show, batch, lazy } from "solid-js";
 import { Settings } from "lucide-solid";
-import type { TranscriptEntry, TranslationEntry, AppConfig } from "./lib/types";
+import type { TranscriptEntry, TranslationEntry, AppConfig } from "@/lib/types";
 import {
   hasApiKey,
   getConfig,
@@ -8,29 +8,29 @@ import {
   stopSession,
   ensureMicAccess,
   onOpenSettings,
-} from "./lib/ipc";
+} from "@/lib/ipc";
 import {
   startTranscription,
   stopTranscription,
   cancelTranscription,
   getWordCount,
   queueLogTranslation,
-} from "./lib/soniox";
-import { createPerfMonitor } from "./lib/perf";
-import StatsBar from "./components/StatsBar";
-import Controls from "./components/Controls";
-import Button from "./components/Button";
-import ThemeToggle from "./components/ThemeToggle";
-import { SpeechPane, TranslationPane } from "./components/TranscriptPane";
-import OutputPane from "./components/OutputPane";
-import ResizeHandle from "./components/ResizeHandle";
-import ToastContainer from "./components/Toast";
-import { reportError, capturePromise } from "./lib/errors";
-import logoDarkSrc from "./assets/logo-dark.png";
-import logoLightSrc from "./assets/logo.png";
+} from "@/lib/soniox";
+import { createPerfMonitor } from "@/lib/perf";
+import StatsBar from "@/components/StatsBar";
+import Controls from "@/components/Controls";
+import Button from "@/components/Button";
+import ThemeToggle from "@/components/ThemeToggle";
+import { SpeechPane, TranslationPane } from "@/components/TranscriptPane";
+import OutputPane from "@/components/OutputPane";
+import ResizeHandle from "@/components/ResizeHandle";
+import ToastContainer from "@/components/Toast";
+import { reportError, capturePromise } from "@/lib/errors";
+import logoDarkSrc from "@/assets/logo-dark.png";
+import logoLightSrc from "@/assets/logo.png";
 
-const SettingsModal = lazy(() => import("./components/SettingsModal"));
-const PerfOverlay = lazy(() => import("./components/PerfOverlay"));
+const SettingsModal = lazy(() => import("@/components/SettingsModal"));
+const PerfOverlay = lazy(() => import("@/components/PerfOverlay"));
 
 const MAX_ENTRIES = 500;
 
@@ -52,7 +52,7 @@ export default function App() {
   const [sttCount, setSttCount] = createSignal(0);
 
   const [hSplit, setHSplit] = createSignal(50);
-  const [vSplit, setVSplit] = createSignal(50);
+  const [vSplit, setVSplit] = createSignal(60);
 
   let mainRef: HTMLElement | undefined;
   let containerRef: HTMLDivElement | undefined;

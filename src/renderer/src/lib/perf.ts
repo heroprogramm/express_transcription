@@ -1,6 +1,6 @@
 import { createSignal, onCleanup } from "solid-js";
-import type { PerfSnapshot } from "./types";
-import { perfStart, perfStop, perfPing, onPerfSnapshot } from "./ipc";
+import type { PerfSnapshot } from "@/lib/types";
+import { perfStart, perfStop, perfPing, onPerfSnapshot } from "@/lib/ipc";
 
 export function createPerfMonitor() {
   const [enabled, setEnabled] = createSignal(false);

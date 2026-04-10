@@ -20,6 +20,11 @@ export default defineConfig({
   },
   renderer: {
     root: "src/renderer",
+    resolve: {
+      alias: {
+        "@": resolve(__dirname, "src/renderer/src"),
+      },
+    },
     build: {
       sourcemap: false,
       minify: "esbuild",

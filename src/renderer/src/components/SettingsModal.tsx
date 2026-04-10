@@ -1,9 +1,9 @@
 import { createSignal } from "solid-js";
 import { Settings as SettingsIcon, X, Save } from "lucide-solid";
-import type { AppConfig } from "../lib/types";
-import { saveApiKey, saveConfig } from "../lib/ipc";
-import { reportError } from "../lib/errors";
-import Button from "./Button";
+import type { AppConfig } from "@/lib/types";
+import { saveApiKey, saveConfig } from "@/lib/ipc";
+import { reportError } from "@/lib/errors";
+import Button from "@/components/Button";
 
 interface Props {
   config: AppConfig | null;
@@ -64,19 +64,19 @@ export default function SettingsModal(props: Props) {
 
   return (
     <div
-      class="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm flex items-center justify-center"
+      class="fixed inset-0 z-[1000] bg-bg/80 backdrop-blur-sm flex items-center justify-center"
       onClick={(e) => {
         if (e.target === e.currentTarget) props.onClose();
       }}
     >
-      <div class="animate-modal bg-raised border border-border rounded-xl p-7 w-[400px] max-w-[90vw] shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+      <div class="animate-modal bg-raised border border-border rounded-md p-7 w-[400px] max-w-[90vw] shadow-[0_20px_60px_var(--bg)]">
         <div class="flex items-center gap-3 mb-5">
-          <div class="w-9 h-9 rounded-lg bg-surface flex items-center justify-center shrink-0">
+          <div class="w-9 h-9 rounded-md bg-surface flex items-center justify-center shrink-0">
             <SettingsIcon size={18} class="text-tx-3" />
           </div>
           <div>
             <h2 class="text-base font-bold text-tx leading-tight">Settings</h2>
-            <p class="text-[12px] text-tx-3 mt-0.5">Configure API and transcription</p>
+            <p class="text-[12px] text-tx-3 mt-0.5">Manage your preferences</p>
           </div>
         </div>
 
@@ -88,11 +88,11 @@ export default function SettingsModal(props: Props) {
             <input
               type="text"
               placeholder="stt-rt-v4"
-              class="bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-lg outline-none transition-all placeholder:text-tx-4"
+              class="bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
+              ref={(el) => requestAnimationFrame(() => el.focus())}
               value={model()}
               onInput={(e) => setModel(e.currentTarget.value)}
               onKeyDown={handleKeyDown}
-              autofocus
             />
           </div>
 
@@ -103,7 +103,7 @@ export default function SettingsModal(props: Props) {
             <input
               type="password"
               placeholder="sk-... (leave empty to keep current)"
-              class="bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-lg outline-none transition-all placeholder:text-tx-4"
+              class="bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
               value={key()}
               onInput={(e) => setKey(e.currentTarget.value)}
               onKeyDown={handleKeyDown}
@@ -118,7 +118,7 @@ export default function SettingsModal(props: Props) {
               type="text"
               inputmode="numeric"
               placeholder="10"
-              class="bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-lg outline-none transition-all placeholder:text-tx-4"
+              class="bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
               value={feedDelay()}
               onInput={(e) => setFeedDelay(e.currentTarget.value)}
               onKeyDown={handleKeyDown}

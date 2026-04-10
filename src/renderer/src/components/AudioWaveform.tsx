@@ -1,5 +1,5 @@
 import { createSignal, onCleanup, createEffect, type Accessor } from "solid-js";
-import { startAudioLevel, stopAudioLevel } from "../lib/audio-level";
+import { startAudioLevel, stopAudioLevel } from "@/lib/audio-level";
 
 const BAR_COUNT = 20;
 

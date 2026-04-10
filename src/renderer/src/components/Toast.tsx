@@ -44,7 +44,7 @@ export default function ToastContainer() {
       <For each={toasts()}>
         {(toast) => (
           <div
-            class={`toast-item flex items-start gap-3 px-4 py-3 rounded-lg border shadow-lg backdrop-blur-sm cursor-pointer font-ui text-[13px] leading-snug ${
+            class={`toast-item flex items-start gap-3 px-4 py-3 rounded-md border shadow-lg backdrop-blur-sm cursor-pointer font-ui text-[13px] leading-snug ${
               toast.dismissing ? "toast-out" : "toast-in"
             } ${
               toast.type === "error"

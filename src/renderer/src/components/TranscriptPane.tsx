@@ -7,8 +7,8 @@ import {
   Show,
   type Accessor,
 } from "solid-js";
-import type { TranscriptEntry, TranslationEntry } from "../lib/types";
-import AudioWaveform from "./AudioWaveform";
+import type { TranscriptEntry, TranslationEntry } from "@/lib/types";
+import AudioWaveform from "@/components/AudioWaveform";
 
 const OVERSCAN = 5;
 
@@ -85,12 +85,10 @@ function SpeechEmpty() {
       <div class="flex items-end gap-[4px] h-10">
         {[0.5, 0.8, 0.4, 1, 0.6, 0.9, 0.3, 0.7].map((h, i) => (
           <div
-            class="waveform-bar-enhanced w-[5px] rounded-full"
+            class="waveform-bar-enhanced w-[5px] rounded-full bg-tx-3 opacity-30"
             style={{
               height: `${h * 100}%`,
               "animation-delay": `${i * 0.25}s`,
-              background: "var(--text-3)",
-              opacity: 0.3,
             }}
           />
         ))}
@@ -140,7 +138,7 @@ export function SpeechPane(props: SpeechPaneProps) {
 
   return (
     <section
-      class={`surface-raised flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-xl overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
+      class={`surface-raised flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-md overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
     >
       <div class="flex justify-between items-center px-4 py-2.5 border-b border-border shrink-0">
         <div class="flex items-center gap-2.5">
@@ -259,7 +257,7 @@ function TranslationEntryRow(props: {
     <div
       class="animate-entry text-base font-medium leading-relaxed flex items-center border-l-2 pl-2"
       classList={{
-        "border-l-st-pending text-st-pending cursor-pointer hover:bg-white/[0.03]": isPending(),
+        "border-l-st-pending text-st-pending cursor-pointer hover:bg-hover": isPending(),
         "border-l-st-editing text-st-editing": isEditing(),
         "border-l-st-confirmed text-st-confirmed": isConfirmed(),
         "border-l-st-sent text-st-sent": isSent(),
@@ -276,7 +274,7 @@ function TranslationEntryRow(props: {
           <div class="flex items-center gap-1.5 flex-1 min-w-0">
             <input
               ref={(el) => requestAnimationFrame(() => el.focus())}
-              class="flex-1 min-w-0 bg-transparent border border-border-lit rounded-lg px-1.5 py-0.5 text-base text-tx outline-none focus:border-border-focus"
+              class="flex-1 min-w-0 bg-transparent border border-border-lit rounded-md px-1.5 py-0.5 text-base text-tx outline-none focus:border-border-focus"
               value={editText()}
               onInput={(e) => {
                 setEditText(e.currentTarget.value);
@@ -319,10 +317,10 @@ function TranslationEntryRow(props: {
         </span>
       </Show>
       <Show when={isSent()}>
-        <span class="text-tx-3 text-[9px] ml-auto pl-2 shrink-0">&#10003;</span>
+        <span class="text-tx-3 text-[12px] ml-auto pl-2 shrink-0">&#10003;</span>
       </Show>
       <Show when={isPending()}>
-        <span class="text-[9px] font-mono text-tx-3 ml-auto pl-2 shrink-0 tabular-nums">
+        <span class="text-[12px] font-mono text-tx-3 ml-auto pl-2 shrink-0 tabular-nums">
           {remaining()}s
         </span>
       </Show>
@@ -338,7 +336,7 @@ export function TranslationPane(props: TransPaneProps) {
 
   return (
     <section
-      class={`surface-raised flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-xl overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
+      class={`surface-raised flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-md overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
     >
       <div class="flex justify-between items-center px-4 py-2.5 border-b border-border shrink-0">
         <div class="flex items-center gap-2">

@@ -1,4 +1,4 @@
-import { showToast } from "../components/Toast";
+import { showToast } from "@/components/Toast";
 
 export type ErrorCategory = "mic" | "api-key" | "session" | "config" | "network" | "unknown";
 

@@ -8,7 +8,8 @@ import {
   type Accessor,
 } from "solid-js";
 import { ClipboardCopy, Check } from "lucide-solid";
-import type { TranslationEntry } from "../lib/types";
+import { copyToClipboard as writeClipboard } from "@/lib/ipc";
+import type { TranslationEntry } from "@/lib/types";
 
 const ITEM_HEIGHT = 32;
 const OVERSCAN = 5;
@@ -93,10 +94,9 @@ export default function OutputPane(props: OutputPaneProps) {
     const text = sentEntries()
       .map((e) => `[${e.timestamp}] ${e.text}`)
       .join("\n");
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    writeClipboard(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   return (
