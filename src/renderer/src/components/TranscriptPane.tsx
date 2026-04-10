@@ -167,10 +167,10 @@ export function SpeechPane(props: SpeechPaneProps) {
                   const marker = entry.isPartial ? "\u2026" : "\u25B6";
                   return (
                     <div
-                      class="flex items-center border-l-2 border-l-transparent pl-2"
+                      class="flex items-center border-l-2 pl-2"
                       classList={{
-                        "border-l-steel/30": !entry.isPartial,
-                        "border-l-steel/10": entry.isPartial,
+                        "border-l-st-sent": !entry.isPartial,
+                        "border-l-st-pending": entry.isPartial,
                       }}
                       style={{ height: `${vl.itemHeight}px`, contain: "content" }}
                     >
@@ -178,7 +178,7 @@ export function SpeechPane(props: SpeechPaneProps) {
                         {entry.timestamp} {marker}
                       </span>
                       <span
-                        class={`font-urdu text-lg leading-[2] ${entry.isPartial ? "text-steel opacity-70 light:opacity-85" : "text-tx"}`}
+                        class={`font-urdu text-lg leading-[2] ${entry.isPartial ? "text-st-pending" : "text-st-sent"}`}
                       >
                         {entry.text}
                       </span>
