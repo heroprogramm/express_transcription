@@ -60,6 +60,10 @@
   --color-tx-2: var(--text-2);
   --color-tx-3: var(--text-3);
   --color-tx-4: var(--text-4);
+  --color-st-pending: var(--status-pending);
+  --color-st-editing: var(--status-editing);
+  --color-st-confirmed: var(--status-confirmed);
+  --color-st-sent: var(--status-sent);
 }
 
 /* ── Dark Theme (default) ─────────────────────────────────────── */
@@ -90,6 +94,10 @@
   --text-2: #a1a8be;
   --text-3: #7b8399;
   --text-4: #4e5672;
+  --status-pending: #6ea0d4;
+  --status-editing: #82b4e8;
+  --status-confirmed: #5a9e78;
+  --status-sent: #3d7a5a;
 }
 
 /* ── Light Theme ──────────────────────────────────────────────── */
@@ -120,6 +128,10 @@
   --text-2: #4a4f63;
   --text-3: #7b8096;
   --text-4: #a8adc0;
+  --status-pending: #2e6ca8;
+  --status-editing: #1a5c94;
+  --status-confirmed: #2a7a50;
+  --status-sent: #6aaa88;
 }
 
 /* ── Base ─────────────────────────────────────────────────────── */
