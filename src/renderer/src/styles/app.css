@@ -94,10 +94,10 @@
   --text-2: #a1a8be;
   --text-3: #7b8399;
   --text-4: #4e5672;
-  --status-pending: #6ea0d4;
-  --status-editing: #82b4e8;
-  --status-confirmed: #5a9e78;
-  --status-sent: #3d7a5a;
+  --status-pending: #7db4e0;
+  --status-editing: #96c8f0;
+  --status-confirmed: #7ec49a;
+  --status-sent: #a0d4b8;
 }
 
 /* ── Light Theme ──────────────────────────────────────────────── */
