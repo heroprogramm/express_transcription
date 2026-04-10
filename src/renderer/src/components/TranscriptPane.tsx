@@ -261,12 +261,12 @@ function TranslationEntryRow(props: {
 
   return (
     <div
-      class="animate-entry text-sm leading-relaxed text-tx flex items-center border-l-2 pl-2"
+      class="animate-entry text-sm leading-relaxed flex items-center border-l-2 pl-2"
       classList={{
-        "border-l-border-lit cursor-pointer hover:bg-white/[0.03]": isPending(),
-        "border-l-border-focus": isEditing(),
-        "border-l-border-lit": isConfirmed(),
-        "border-l-border-lit opacity-60": isSent(),
+        "border-l-steel/40 text-tx cursor-pointer hover:bg-white/[0.03]": isPending(),
+        "border-l-border-focus text-tx": isEditing(),
+        "border-l-border-lit text-tx-3": isConfirmed(),
+        "border-l-border-lit text-tx-4": isSent(),
       }}
       style={{ height: `${props.itemHeight}px`, contain: "content" }}
       onClick={() => isPending() && props.onStartEdit(props.entry.id)}
