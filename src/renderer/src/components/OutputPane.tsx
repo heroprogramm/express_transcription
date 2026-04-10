@@ -1,97 +1,25 @@
-import {
-  createEffect,
-  createMemo,
-  createSignal,
-  onCleanup,
-  For,
-  Show,
-  type Accessor,
-} from "solid-js";
+import { createMemo, createSignal, For, Show, type Accessor } from "solid-js";
 import { ClipboardCopy, Check } from "lucide-solid";
 import { copyToClipboard as writeClipboard } from "@/lib/ipc";
 import type { TranslationEntry } from "@/lib/types";
+import { useVirtualList } from "@/lib/virtual-list";
 
 const ITEM_HEIGHT = 32;
-const OVERSCAN = 5;
-
-function useVirtualList(
-  entries: Accessor<TranslationEntry[]>,
-  containerRef: () => HTMLDivElement | undefined,
-) {
-  const [scrollTop, setScrollTop] = createSignal(0);
-  const [viewHeight, setViewHeight] = createSignal(200);
-  const [autoScroll, setAutoScroll] = createSignal(true);
-  let scrollRafId: number | null = null;
-  let autoScrollRafId: number | null = null;
-
-  function onScroll(e: Event) {
-    const el = e.currentTarget as HTMLDivElement;
-    if (scrollRafId) cancelAnimationFrame(scrollRafId);
-    scrollRafId = requestAnimationFrame(() => {
-      scrollRafId = null;
-      setScrollTop(el.scrollTop);
-      setViewHeight(el.clientHeight);
-      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < ITEM_HEIGHT * 2;
-      setAutoScroll(atBottom);
-    });
-  }
-
-  const entryCount = createMemo(() => entries().length);
-
-  createEffect(() => {
-    void entryCount();
-    if (autoScroll()) {
-      if (autoScrollRafId) cancelAnimationFrame(autoScrollRafId);
-      autoScrollRafId = requestAnimationFrame(() => {
-        autoScrollRafId = null;
-        const el = containerRef();
-        if (el) el.scrollTop = el.scrollHeight;
-      });
-    }
-  });
-
-  onCleanup(() => {
-    if (scrollRafId) cancelAnimationFrame(scrollRafId);
-    if (autoScrollRafId) cancelAnimationFrame(autoScrollRafId);
-  });
-
-  const totalHeight = createMemo(() => entries().length * ITEM_HEIGHT);
-
-  const visibleRange = createMemo(() => {
-    const start = Math.max(0, Math.floor(scrollTop() / ITEM_HEIGHT) - OVERSCAN);
-    const end = Math.min(
-      entries().length,
-      Math.ceil((scrollTop() + viewHeight()) / ITEM_HEIGHT) + OVERSCAN,
-    );
-    return { start, end };
-  });
-
-  const visibleItems = createMemo(() => {
-    const { start, end } = visibleRange();
-    return entries().slice(start, end);
-  });
-
-  const offsetY = createMemo(() => visibleRange().start * ITEM_HEIGHT);
-
-  return { totalHeight, visibleItems, offsetY, onScroll };
-}
 
 interface OutputPaneProps {
   entries: Accessor<TranslationEntry[]>;
+  wordCount: Accessor<number>;
 }
 
 export default function OutputPane(props: OutputPaneProps) {
   let container: HTMLDivElement | undefined;
-  const sentEntries = createMemo(() => props.entries().filter((e) => e.status === "sent"));
-  const count = createMemo(() => sentEntries().length);
-  const wordCount = createMemo(() =>
-    sentEntries().reduce((sum, e) => sum + e.text.split(/\s+/).filter(Boolean).length, 0),
-  );
-  const vl = useVirtualList(sentEntries, () => container);
+  const count = createMemo(() => props.entries().length);
+  const vl = useVirtualList(props.entries, () => container, ITEM_HEIGHT);
   const [copied, setCopied] = createSignal(false);
 
   function copyToClipboard() {
-    const text = sentEntries()
+    const text = props
+      .entries()
       .map((e) => `[${e.timestamp}] ${e.text}`)
       .join("\n");
     writeClipboard(text);
@@ -106,7 +34,7 @@ export default function OutputPane(props: OutputPaneProps) {
           <span class="text-[11px] font-bold text-tx-2 tracking-wider uppercase">Final Output</span>
           <Show when={count() > 0}>
             <span class="text-[10px] text-tx-4 font-mono tabular-nums">
-              {count()} lines &middot; {wordCount()} words
+              {count()} lines &middot; {props.wordCount()} words
             </span>
           </Show>
         </div>

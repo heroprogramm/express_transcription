@@ -6,6 +6,10 @@ let rafId: number | null = null;
 let barsCallback: ((bars: number[]) => void) | null = null;
 let barCount = 20;
 let smoothed: number[] = [];
+// Double-buffer: write into outputBuf each frame, swap reference to trigger SolidJS reactivity
+let outputBufA: number[] = [];
+let outputBufB: number[] = [];
+let useA = true;
 
 const SMOOTHING = 0.25;
 const DECAY = 0.85;
@@ -32,7 +36,13 @@ function tick(): void {
     smoothed[i] = target > prev ? prev + (target - prev) * SMOOTHING : prev * DECAY;
   }
 
-  barsCallback([...smoothed]);
+  // Copy into the inactive buffer then swap — avoids allocating a new array each frame
+  const buf = useA ? outputBufA : outputBufB;
+  for (let i = 0; i < barCount; i++) {
+    buf[i] = smoothed[i];
+  }
+  useA = !useA;
+  barsCallback(buf);
   rafId = requestAnimationFrame(tick);
 }
 
@@ -44,6 +54,9 @@ export async function startAudioLevel(
   stopAudioLevel();
   barCount = count;
   smoothed = Array.from({ length: count }, () => 0);
+  outputBufA = Array.from({ length: count }, () => 0);
+  outputBufB = Array.from({ length: count }, () => 0);
+  useA = true;
 
   const constraints: MediaStreamConstraints = {
     audio: deviceId ? { deviceId: { exact: deviceId } } : true,
@@ -69,6 +82,8 @@ export function stopAudioLevel(): void {
   }
   barsCallback = null;
   smoothed = [];
+  outputBufA = [];
+  outputBufB = [];
   if (sourceNode) {
     sourceNode.disconnect();
     sourceNode.mediaStream.getTracks().forEach((t) => t.stop());

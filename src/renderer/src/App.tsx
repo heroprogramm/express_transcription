@@ -1,6 +1,6 @@
-import { createSignal, createMemo, onMount, onCleanup, Show, batch, lazy } from "solid-js";
+import { createSignal, createMemo, onMount, onCleanup, Show, lazy } from "solid-js";
 import { Settings } from "lucide-solid";
-import type { TranscriptEntry, TranslationEntry, AppConfig } from "@/lib/types";
+import type { AppConfig } from "@/lib/types";
 import {
   hasApiKey,
   getConfig,
@@ -9,14 +9,9 @@ import {
   ensureMicAccess,
   onOpenSettings,
 } from "@/lib/ipc";
-import {
-  startTranscription,
-  stopTranscription,
-  cancelTranscription,
-  getWordCount,
-  queueLogTranslation,
-} from "@/lib/soniox";
+import { startTranscription, stopTranscription, cancelTranscription } from "@/lib/soniox";
 import { createPerfMonitor } from "@/lib/perf";
+import { createEntryManager } from "@/lib/entry-manager";
 import StatsBar from "@/components/StatsBar";
 import Controls from "@/components/Controls";
 import Button from "@/components/Button";
@@ -32,8 +27,6 @@ import logoLightSrc from "@/assets/logo.png";
 const SettingsModal = lazy(() => import("@/components/SettingsModal"));
 const PerfOverlay = lazy(() => import("@/components/PerfOverlay"));
 
-const MAX_ENTRIES = 500;
-
 export default function App() {
   const [running, setRunning] = createSignal(false);
   const [showSettings, setShowSettings] = createSignal(false);
@@ -42,20 +35,24 @@ export default function App() {
 
   const [status, setStatus] = createSignal<"standby" | "loading" | "live">("standby");
   const [statusText, setStatusText] = createSignal("Standby");
-
-  const [latency, setLatency] = createSignal("\u2014");
-  const [words, setWords] = createSignal(0);
   const [uptime, setUptime] = createSignal("00:00:00");
-
-  const [sttEntries, setSttEntries] = createSignal<TranscriptEntry[]>([]);
-  const [transEntries, setTransEntries] = createSignal<TranslationEntry[]>([]);
-  const [sttCount, setSttCount] = createSignal(0);
 
   const [hSplit, setHSplit] = createSignal(50);
   const [vSplit, setVSplit] = createSignal(60);
 
   let mainRef: HTMLElement | undefined;
   let containerRef: HTMLDivElement | undefined;
+  let uptimeInterval: ReturnType<typeof setInterval> | undefined;
+  let startTime = 0;
+
+  function feedDelayMs(): number {
+    return (config()?.output.feed_delay_seconds ?? 10) * 1000;
+  }
+
+  const entries = createEntryManager(feedDelayMs);
+  const perf = createPerfMonitor();
+
+  // ── Resize handlers ──
 
   function onHResize(delta: number) {
     if (!mainRef) return;
@@ -69,100 +66,7 @@ export default function App() {
     setVSplit((prev) => Math.max(30, Math.min(85, prev + (delta / height) * 100)));
   }
 
-  const perf = createPerfMonitor();
-
-  let entryId = 0;
-  let uptimeInterval: ReturnType<typeof setInterval> | undefined;
-  let startTime = 0;
-
-  const entryTimers = new Map<number, ReturnType<typeof setTimeout>>();
-  const editingText = new Map<number, string>();
-  let nextWriteIndex = 0;
-
-  function feedDelayMs(): number {
-    return (config()?.output.feed_delay_seconds ?? 10) * 1000;
-  }
-
-  function drainConfirmedQueue(): void {
-    const entries = transEntries();
-    const toSend: number[] = [];
-    while (nextWriteIndex < entries.length && entries[nextWriteIndex].status === "confirmed") {
-      const e = entries[nextWriteIndex];
-      queueLogTranslation(e.timestamp, e.text);
-      toSend.push(e.id);
-      nextWriteIndex++;
-    }
-    if (toSend.length > 0) {
-      const ids = new Set(toSend);
-      setTransEntries((prev) =>
-        prev.map((e) => (ids.has(e.id) ? { ...e, status: "sent" as const } : e)),
-      );
-    }
-  }
-
-  function updateEntryStatus(
-    id: number,
-    status: "pending" | "editing" | "confirmed" | "sent",
-    text?: string,
-  ): void {
-    setTransEntries((prev) =>
-      prev.map((e) =>
-        e.id === id ? { ...e, status, ...(text !== undefined ? { text } : {}) } : e,
-      ),
-    );
-  }
-
-  function confirmEntry(id: number): void {
-    entryTimers.delete(id);
-    updateEntryStatus(id, "confirmed");
-    drainConfirmedQueue();
-  }
-
-  function startEditEntry(id: number): void {
-    // Auto-save any currently editing entry first
-    const current = transEntries().find((e) => e.status === "editing");
-    if (current) {
-      saveEditEntry(current.id, editingText.get(current.id) ?? current.text);
-    }
-
-    const timer = entryTimers.get(id);
-    if (timer) {
-      clearTimeout(timer);
-      entryTimers.delete(id);
-    }
-    updateEntryStatus(id, "editing");
-  }
-
-  function saveEditEntry(id: number, text: string): void {
-    editingText.delete(id);
-    updateEntryStatus(id, "confirmed", text);
-    entryTimers.delete(id);
-    drainConfirmedQueue();
-  }
-
-  function cancelEditEntry(id: number): void {
-    editingText.delete(id);
-    updateEntryStatus(id, "pending");
-    const timer = setTimeout(() => confirmEntry(id), feedDelayMs());
-    entryTimers.set(id, timer);
-  }
-
-  function handleEditChange(id: number, text: string): void {
-    editingText.set(id, text);
-  }
-
-  function flushPendingEntries(): void {
-    for (const [, timer] of entryTimers) clearTimeout(timer);
-    entryTimers.clear();
-    setTransEntries((prev) =>
-      prev.map((e) =>
-        e.status === "pending" || e.status === "editing"
-          ? { ...e, status: "confirmed" as const }
-          : e,
-      ),
-    );
-    drainConfirmedQueue();
-  }
+  // ── Keyboard ──
 
   function onKeyDown(e: KeyboardEvent): void {
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "P") {
@@ -179,6 +83,8 @@ export default function App() {
       }
     }
   }
+
+  // ── Lifecycle ──
 
   onMount(async () => {
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "dark";
@@ -201,10 +107,10 @@ export default function App() {
     cleanupSettingsListener();
     document.removeEventListener("keydown", onKeyDown);
     if (uptimeInterval) clearInterval(uptimeInterval);
-    for (const [, timer] of entryTimers) clearTimeout(timer);
-    entryTimers.clear();
     cancelTranscription();
   });
+
+  // ── Uptime ──
 
   function updateUptime() {
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
@@ -214,19 +120,7 @@ export default function App() {
     setUptime(`${hrs}:${mins}:${secs}`);
   }
 
-  function pushSttEntry(entry: TranscriptEntry) {
-    setSttEntries((prev) => {
-      if (prev.length >= MAX_ENTRIES) prev.shift();
-      return [...prev, entry];
-    });
-  }
-
-  function pushTransEntry(entry: TranslationEntry) {
-    setTransEntries((prev) => {
-      if (prev.length >= MAX_ENTRIES) prev.shift();
-      return [...prev, entry];
-    });
-  }
+  // ── Session control ──
 
   async function handleStart(micDeviceId: string) {
     if (running()) return;
@@ -255,27 +149,8 @@ export default function App() {
       await startTranscription(
         cfg,
         {
-          onTranscript(timestamp, text, isPartial) {
-            if (!isPartial && !text.trim()) return;
-            pushSttEntry({ id: entryId++, timestamp, text, isPartial });
-            if (!isPartial) setSttCount((c) => c + 1);
-          },
-          onTranslation(timestamp, text, latencyMs) {
-            const thisId = entryId++;
-            batch(() => {
-              pushTransEntry({
-                id: thisId,
-                timestamp,
-                text,
-                status: "pending",
-                createdAt: Date.now(),
-              });
-              setWords(getWordCount());
-              setLatency(`${(Math.abs(latencyMs) / 1000).toFixed(1)}s`);
-            });
-            const timer = setTimeout(() => confirmEntry(thisId), feedDelayMs());
-            entryTimers.set(thisId, timer);
-          },
+          onTranscript: entries.pushStt,
+          onTranslation: entries.pushTranslation,
           onError(message, isApiKeyError) {
             reportError("network", message);
             handleStopped();
@@ -285,15 +160,20 @@ export default function App() {
           },
           onStateChange(state) {
             if (state === "started") {
-              startTime = Date.now();
+              if (!uptimeInterval) {
+                startTime = Date.now();
+                uptimeInterval = setInterval(updateUptime, 1000);
+              }
               setStatus("live");
               setStatusText("On Air");
-              uptimeInterval = setInterval(updateUptime, 1000);
             } else if (state === "stopped") {
               handleStopped();
             } else if (state === "loading") {
               setStatus("loading");
               setStatusText("Loading\u2026");
+            } else if (state === "reconnecting") {
+              setStatus("loading");
+              setStatusText("Reconnecting\u2026");
             }
           },
         },
@@ -309,7 +189,7 @@ export default function App() {
   }
 
   function handleStop() {
-    flushPendingEntries();
+    entries.flushPending();
     stopTranscription();
     capturePromise("session", stopSession());
     handleStopped();
@@ -326,18 +206,10 @@ export default function App() {
   }
 
   function handleClear() {
-    for (const [, timer] of entryTimers) clearTimeout(timer);
-    entryTimers.clear();
-    nextWriteIndex = 0;
-    batch(() => {
-      setSttEntries([]);
-      setTransEntries([]);
-      setSttCount(0);
-      setWords(0);
-      setLatency("\u2014");
-    });
-    entryId = 0;
+    entries.clear();
   }
+
+  // ── Render ──
 
   const BADGE_CLASS = {
     standby: "badge-idle",
@@ -364,7 +236,12 @@ export default function App() {
 
           <div class="w-px h-6 bg-border mx-1" />
 
-          <StatsBar latency={latency} words={words} uptime={uptime} live={running} />
+          <StatsBar
+            latency={entries.latency}
+            words={entries.words}
+            uptime={uptime}
+            live={running}
+          />
         </div>
 
         <div class="flex items-center gap-3">
@@ -407,8 +284,8 @@ export default function App() {
         >
           <div style={{ flex: String(hSplit()) }} class="min-w-0 flex">
             <SpeechPane
-              entries={sttEntries}
-              finalCount={sttCount}
+              entries={entries.sttEntries}
+              finalCount={entries.sttCount}
               live={running}
               micDeviceId={activeMicId}
             />
@@ -418,13 +295,13 @@ export default function App() {
 
           <div style={{ flex: String(100 - hSplit()) }} class="min-w-0 flex">
             <TranslationPane
-              entries={transEntries}
+              entries={entries.transEntries}
               live={running}
               feedDelayMs={feedDelayMs}
-              onStartEdit={startEditEntry}
-              onSaveEdit={saveEditEntry}
-              onCancelEdit={cancelEditEntry}
-              onEditChange={handleEditChange}
+              onStartEdit={entries.startEdit}
+              onSaveEdit={entries.saveEdit}
+              onCancelEdit={entries.cancelEdit}
+              onEditChange={entries.onEditChange}
             />
           </div>
         </main>
@@ -432,7 +309,7 @@ export default function App() {
         <ResizeHandle direction="vertical" onResize={onVResize} />
 
         <div style={{ flex: String(100 - vSplit()) }} class="min-h-0 flex flex-col">
-          <OutputPane entries={transEntries} />
+          <OutputPane entries={entries.sentEntries} wordCount={entries.words} />
         </div>
       </div>
 
@@ -455,8 +332,8 @@ export default function App() {
           mainMemory={perf.mainMemory}
           rendererMemory={perf.rendererMemory}
           eventLoopLag={perf.eventLoopLag}
-          latency={latency}
-          words={words}
+          latency={entries.latency}
+          words={entries.words}
           uptime={uptime}
           onClose={perf.toggle}
         />

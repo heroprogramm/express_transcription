@@ -3,6 +3,8 @@ import {
   BrowserPermissionResolver,
   MicrophoneSource,
   AuthError,
+  ConnectionError,
+  NetworkError,
   type Recording,
   type RealtimeResult,
   type RealtimeToken,
@@ -16,13 +18,23 @@ export interface SonioxCallbacks {
   onTranscript: (timestamp: string, text: string, isPartial: boolean) => void;
   onTranslation: (timestamp: string, text: string, latencyMs: number) => void;
   onError: (message: string, isApiKeyError: boolean) => void;
-  onStateChange: (state: "started" | "stopped" | "loading") => void;
+  onStateChange: (state: "started" | "stopped" | "loading" | "reconnecting") => void;
 }
 
 let client: SonioxClient | null = null;
 let recording: Recording | null = null;
 let startTime = 0;
 let wordCount = 0;
+
+// ── Reconnection state ──
+const MAX_RETRIES = 5;
+const BASE_DELAY_MS = 1000;
+let retryCount = 0;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+let activeConfig: AppConfig | null = null;
+let activeCallbacks: SonioxCallbacks | null = null;
+let activeMicDeviceId: string | undefined;
+let cancelled = false;
 
 // ── IPC batching ──
 let logQueue: { ts: string; text: string }[] = [];
@@ -84,22 +96,48 @@ export function getWordCount(): number {
   return wordCount;
 }
 
-export async function startTranscription(
+function isTransientError(err: Error): boolean {
+  return err instanceof ConnectionError || err instanceof NetworkError;
+}
+
+function retryDelayMs(): number {
+  return Math.min(BASE_DELAY_MS * 2 ** retryCount, 16000);
+}
+
+function attemptReconnect(): void {
+  if (cancelled || !activeConfig || !activeCallbacks) return;
+  if (retryCount >= MAX_RETRIES) {
+    activeCallbacks.onError(`Connection lost after ${MAX_RETRIES} reconnection attempts`, false);
+    activeCallbacks.onStateChange("stopped");
+    resetRetryState();
+    return;
+  }
+
+  const delay = retryDelayMs();
+  retryCount++;
+  activeCallbacks.onStateChange("reconnecting");
+
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    if (cancelled || !activeConfig || !activeCallbacks) return;
+    connectRecording(activeConfig, activeCallbacks, activeMicDeviceId);
+  }, delay);
+}
+
+function resetRetryState(): void {
+  retryCount = 0;
+  if (retryTimer) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
+  }
+}
+
+function connectRecording(
   config: AppConfig,
   callbacks: SonioxCallbacks,
   micDeviceId?: string,
-): Promise<void> {
-  callbacks.onStateChange("loading");
-  wordCount = 0;
-
-  client = new SonioxClient({
-    api_key: async () => {
-      const key = await getApiKey();
-      if (!key) throw new Error("No Soniox API key configured");
-      return key;
-    },
-    permissions: new BrowserPermissionResolver(),
-  });
+): void {
+  if (!client) return;
 
   const source = new MicrophoneSource(
     micDeviceId ? { constraints: { deviceId: { exact: micDeviceId } } } : undefined,
@@ -124,8 +162,17 @@ export async function startTranscription(
   }
 
   function handleError(err: Error): void {
+    if (cancelled) return;
+
+    if (isTransientError(err) && retryCount < MAX_RETRIES) {
+      attemptReconnect();
+      return;
+    }
+
     const isApiKeyError = err instanceof AuthError || /no soniox api key/i.test(err.message);
     callbacks.onError(err.message, isApiKeyError);
+    callbacks.onStateChange("stopped");
+    resetRetryState();
   }
 
   recording = client.realtime.record({
@@ -141,12 +188,46 @@ export async function startTranscription(
   });
 
   recording.on("connected", () => {
-    startTime = Date.now();
+    if (retryCount > 0) {
+      retryCount = 0;
+    } else {
+      startTime = Date.now();
+    }
     callbacks.onStateChange("started");
   });
   recording.on("result", handleResult);
-  recording.on("finished", () => callbacks.onStateChange("stopped"));
+  recording.on("finished", () => {
+    if (!cancelled && retryCount === 0) {
+      callbacks.onStateChange("stopped");
+    }
+  });
   recording.on("error", handleError);
+}
+
+export async function startTranscription(
+  config: AppConfig,
+  callbacks: SonioxCallbacks,
+  micDeviceId?: string,
+): Promise<void> {
+  callbacks.onStateChange("loading");
+  wordCount = 0;
+  cancelled = false;
+  resetRetryState();
+
+  activeConfig = config;
+  activeCallbacks = callbacks;
+  activeMicDeviceId = micDeviceId;
+
+  client = new SonioxClient({
+    api_key: async () => {
+      const key = await getApiKey();
+      if (!key) throw new Error("No Soniox API key configured");
+      return key;
+    },
+    permissions: new BrowserPermissionResolver(),
+  });
+
+  connectRecording(config, callbacks, micDeviceId);
 }
 
 function cleanup(): void {
@@ -155,9 +236,14 @@ function cleanup(): void {
     logFlushTimer = null;
   }
   flushLogQueue();
+  resetRetryState();
+  activeConfig = null;
+  activeCallbacks = null;
+  activeMicDeviceId = undefined;
 }
 
 export function stopTranscription(): void {
+  cancelled = true;
   cleanup();
   if (recording) {
     recording.stop().catch(() => {});
@@ -167,6 +253,7 @@ export function stopTranscription(): void {
 }
 
 export function cancelTranscription(): void {
+  cancelled = true;
   cleanup();
   if (recording) {
     recording.cancel();

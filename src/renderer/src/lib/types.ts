@@ -18,11 +18,20 @@ export interface TranscriptEntry {
   isPartial: boolean;
 }
 
+export const EntryStatus = {
+  Pending: "pending",
+  Editing: "editing",
+  Confirmed: "confirmed",
+  Sent: "sent",
+} as const;
+
+export type EntryStatus = (typeof EntryStatus)[keyof typeof EntryStatus];
+
 export interface TranslationEntry {
   id: number;
   timestamp: string;
   text: string;
-  status: "pending" | "editing" | "confirmed" | "sent";
+  status: EntryStatus;
   createdAt: number;
 }
 

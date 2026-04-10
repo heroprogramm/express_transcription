@@ -1,12 +1,7 @@
 import { app, dialog, Menu, shell, session, nativeImage, nativeTheme } from "electron";
 import { join } from "path";
-import { readFileSync } from "fs";
+import { readFile } from "fs/promises";
 import { loadConfig, DEFAULT_CONFIG, type AppConfig } from "./config";
-
-const pkg = JSON.parse(readFileSync(join(__dirname, "..", "..", "package.json"), "utf-8")) as {
-  author?: { name?: string; email?: string };
-  homepage?: string;
-};
 
 function getAppIcon(): Electron.NativeImage {
   const theme = nativeTheme.shouldUseDarkColors ? "-dark" : "";
@@ -61,110 +56,118 @@ app.whenReady().then(async () => {
     callback(permission === "media");
   });
 
-  const isMac = process.platform === "darwin";
-  const template: Electron.MenuItemConstructorOptions[] = [
-    ...(isMac
-      ? [
-          {
-            label: app.name,
-            submenu: [
-              {
-                label: `About ${app.name}`,
-                click: () => {
-                  dialog.showMessageBox({
-                    icon: getAppIcon(),
-                    type: "info",
-                    title: `About ${app.name}`,
-                    message: `${app.name} v${app.getVersion()}`,
-                    detail: `Real-time speech transcription and translation.\n\nBy ${pkg.author?.name ?? ""}${pkg.author?.email ? `\n${pkg.author.email}` : ""}${pkg.homepage ? `\n${pkg.homepage}` : ""}`,
-                  });
-                },
-              },
-              { type: "separator" as const },
-              {
-                label: "Settings\u2026",
-                accelerator: "CmdOrCtrl+,",
-                click: () => {
-                  getMainWindow()?.webContents.send("open-settings");
-                },
-              },
-              { type: "separator" as const },
-              { role: "hide" as const },
-              { role: "hideOthers" as const },
-              { role: "unhide" as const },
-              { type: "separator" as const },
-              { role: "quit" as const },
-            ],
-          },
-        ]
-      : []),
-    {
-      label: "Edit",
-      submenu: [
-        { role: "undo" },
-        { role: "redo" },
-        { type: "separator" },
-        { role: "cut" },
-        { role: "copy" },
-        { role: "paste" },
-        { role: "selectAll" },
-      ],
-    },
-    {
-      label: "View",
-      submenu: [
-        { role: "reload" },
-        { role: "forceReload" },
-        { role: "toggleDevTools" },
-        { type: "separator" },
-        { role: "resetZoom" },
-        { role: "zoomIn" },
-        { role: "zoomOut" },
-        { type: "separator" },
-        { role: "togglefullscreen" },
-      ],
-    },
-    {
-      label: "Help",
-      submenu: [
-        {
-          label: "Settings\u2026",
-          accelerator: "CmdOrCtrl+,",
-          click: () => {
-            getMainWindow()?.webContents.send("open-settings");
-          },
-        },
-        { type: "separator" },
-        {
-          label: "Send Feedback",
-          click: () => {
-            shell.openExternal(`mailto:${pkg.author?.email ?? ""}?subject=ExpressText%20Feedback`);
-          },
-        },
-        ...(!isMac
-          ? [
-              { type: "separator" as const },
-              {
-                label: "About ExpressText",
-                click: () => {
-                  dialog.showMessageBox({
-                    icon: getAppIcon(),
-                    type: "info",
-                    title: "About ExpressText",
-                    message: `ExpressText v${app.getVersion()}`,
-                    detail: `Real-time speech transcription and translation.\n\nBy ${pkg.author?.name ?? ""}${pkg.author?.email ? `\n${pkg.author.email}` : ""}${pkg.homepage ? `\n${pkg.homepage}` : ""}`,
-                  });
-                },
-              },
-            ]
-          : []),
-      ],
-    },
-  ];
-
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
-
   createWindow();
+
+  // Defer menu building so it doesn't block window creation
+  setImmediate(async () => {
+    const pkg = JSON.parse(
+      await readFile(join(__dirname, "..", "..", "package.json"), "utf-8"),
+    ) as { author?: { name?: string; email?: string }; homepage?: string };
+    const isMac = process.platform === "darwin";
+    const template: Electron.MenuItemConstructorOptions[] = [
+      ...(isMac
+        ? [
+            {
+              label: app.name,
+              submenu: [
+                {
+                  label: `About ${app.name}`,
+                  click: () => {
+                    dialog.showMessageBox({
+                      icon: getAppIcon(),
+                      type: "info",
+                      title: `About ${app.name}`,
+                      message: `${app.name} v${app.getVersion()}`,
+                      detail: `Real-time speech transcription and translation.\n\nBy ${pkg.author?.name ?? ""}${pkg.author?.email ? `\n${pkg.author.email}` : ""}${pkg.homepage ? `\n${pkg.homepage}` : ""}`,
+                    });
+                  },
+                },
+                { type: "separator" as const },
+                {
+                  label: "Settings\u2026",
+                  accelerator: "CmdOrCtrl+,",
+                  click: () => {
+                    getMainWindow()?.webContents.send("open-settings");
+                  },
+                },
+                { type: "separator" as const },
+                { role: "hide" as const },
+                { role: "hideOthers" as const },
+                { role: "unhide" as const },
+                { type: "separator" as const },
+                { role: "quit" as const },
+              ],
+            },
+          ]
+        : []),
+      {
+        label: "Edit",
+        submenu: [
+          { role: "undo" },
+          { role: "redo" },
+          { type: "separator" },
+          { role: "cut" },
+          { role: "copy" },
+          { role: "paste" },
+          { role: "selectAll" },
+        ],
+      },
+      {
+        label: "View",
+        submenu: [
+          { role: "reload" },
+          { role: "forceReload" },
+          { role: "toggleDevTools" },
+          { type: "separator" },
+          { role: "resetZoom" },
+          { role: "zoomIn" },
+          { role: "zoomOut" },
+          { type: "separator" },
+          { role: "togglefullscreen" },
+        ],
+      },
+      {
+        label: "Help",
+        submenu: [
+          {
+            label: "Settings\u2026",
+            accelerator: "CmdOrCtrl+,",
+            click: () => {
+              getMainWindow()?.webContents.send("open-settings");
+            },
+          },
+          { type: "separator" },
+          {
+            label: "Send Feedback",
+            click: () => {
+              shell.openExternal(
+                `mailto:${pkg.author?.email ?? ""}?subject=ExpressText%20Feedback`,
+              );
+            },
+          },
+          ...(!isMac
+            ? [
+                { type: "separator" as const },
+                {
+                  label: "About ExpressText",
+                  click: () => {
+                    dialog.showMessageBox({
+                      icon: getAppIcon(),
+                      type: "info",
+                      title: "About ExpressText",
+                      message: `ExpressText v${app.getVersion()}`,
+                      detail: `Real-time speech transcription and translation.\n\nBy ${pkg.author?.name ?? ""}${pkg.author?.email ? `\n${pkg.author.email}` : ""}${pkg.homepage ? `\n${pkg.homepage}` : ""}`,
+                    });
+                  },
+                },
+              ]
+            : []),
+        ],
+      },
+    ];
+
+    Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  });
 });
 
 let shuttingDown = false;
