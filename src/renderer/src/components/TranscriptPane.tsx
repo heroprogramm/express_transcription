@@ -257,7 +257,7 @@ function TranslationEntryRow(props: {
 
   return (
     <div
-      class="animate-entry text-base leading-relaxed flex items-center border-l-2 pl-2"
+      class="animate-entry text-base font-medium leading-relaxed flex items-center border-l-2 pl-2"
       classList={{
         "border-l-st-pending text-st-pending cursor-pointer hover:bg-white/[0.03]": isPending(),
         "border-l-st-editing text-st-editing": isEditing(),
