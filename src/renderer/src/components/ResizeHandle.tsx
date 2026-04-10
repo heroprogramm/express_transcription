@@ -48,10 +48,10 @@ export default function ResizeHandle(props: ResizeHandleProps) {
       onPointerDown={onPointerDown}
     >
       <div
-        class="rounded-full bg-border transition-all group-hover:bg-tx-4"
+        class="rounded-full bg-border-lit transition-all group-hover:bg-tx-4"
         classList={{
-          "w-[3px] h-6": isHorizontal(),
-          "h-[3px] w-6": !isHorizontal(),
+          "w-[3px] h-8": isHorizontal(),
+          "h-[3px] w-8": !isHorizontal(),
           "!bg-tx-3": dragging(),
         }}
       />

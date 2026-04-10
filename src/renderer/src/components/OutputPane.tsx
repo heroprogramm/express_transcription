@@ -82,17 +82,41 @@ export default function OutputPane(props: OutputPaneProps) {
   let container: HTMLDivElement | undefined;
   const sentEntries = createMemo(() => props.entries().filter((e) => e.status === "sent"));
   const count = createMemo(() => sentEntries().length);
+  const wordCount = createMemo(() =>
+    sentEntries().reduce((sum, e) => sum + e.text.split(/\s+/).filter(Boolean).length, 0),
+  );
   const vl = useVirtualList(sentEntries, () => container);
+  const [copied, setCopied] = createSignal(false);
+
+  function copyToClipboard() {
+    const text = sentEntries()
+      .map((e) => `[${e.timestamp}] ${e.text}`)
+      .join("\n");
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   return (
     <div class="border-t border-border bg-[var(--bg-raised)] flex flex-col min-h-0 flex-1">
-      <div class="flex items-center justify-between px-3 py-1.5 border-b border-border shrink-0">
+      <div class="flex items-center justify-between px-3 py-2 border-b border-border shrink-0">
         <div class="flex items-center gap-2">
-          <span class="text-[11px] font-bold text-tx-3 tracking-wider uppercase">Final Output</span>
+          <span class="text-[11px] font-bold text-tx-2 tracking-wider uppercase">Final Output</span>
           <Show when={count() > 0}>
-            <span class="text-[10px] text-tx-4 font-mono tabular-nums">{count()} lines</span>
+            <span class="text-[10px] text-tx-4 font-mono tabular-nums">
+              {count()} lines &middot; {wordCount()} words
+            </span>
           </Show>
         </div>
+        <Show when={count() > 0}>
+          <button
+            class="text-[10px] font-ui font-semibold text-tx-3 hover:text-tx-2 cursor-pointer transition-colors"
+            onClick={copyToClipboard}
+          >
+            {copied() ? "Copied!" : "Copy"}
+          </button>
+        </Show>
       </div>
       <div
         ref={container}
@@ -135,7 +159,7 @@ export default function OutputPane(props: OutputPaneProps) {
                     class="flex items-center border-l-2 border-l-border-lit pl-2"
                     style={{ height: `${ITEM_HEIGHT}px`, contain: "content" }}
                   >
-                    <span class="text-[9px] font-mono text-tx-3 mr-2 tabular-nums shrink-0">
+                    <span class="text-[11px] font-mono text-tx-3 mr-2 tabular-nums shrink-0">
                       {entry.timestamp}
                     </span>
                     <span class="text-base text-tx-2 truncate">{entry.text}</span>

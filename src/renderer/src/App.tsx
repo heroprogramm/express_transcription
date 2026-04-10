@@ -168,6 +168,15 @@ export default function App() {
       e.preventDefault();
       perf.toggle();
     }
+    const tag = (e.target as HTMLElement)?.tagName;
+    if (e.key === " " && tag !== "INPUT" && tag !== "TEXTAREA" && tag !== "SELECT") {
+      e.preventDefault();
+      if (running()) {
+        handleStop();
+      } else {
+        handleStart(activeMicId());
+      }
+    }
   }
 
   onMount(async () => {
