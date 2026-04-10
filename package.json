@@ -1,6 +1,7 @@
 {
   "name": "ExpressText",
   "private": true,
+  "license": "SEE LICENSE IN LICENSE",
   "version": "0.1.7",
   "description": "Real-time speech transcription and translation desktop app",
   "author": {
