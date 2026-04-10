@@ -1,4 +1,5 @@
 import { createSignal, onMount, onCleanup, type Accessor } from "solid-js";
+import { Play, Square, ChevronDown, Trash2 } from "lucide-solid";
 import Button from "./Button";
 
 interface Props {
@@ -44,19 +45,7 @@ export default function Controls(props: Props) {
               <option value={mic.deviceId}>{mic.label || `Microphone ${i + 1}`}</option>
             ))}
           </select>
-          <svg
-            class="absolute right-2 w-3.5 h-3.5 text-tx-4 pointer-events-none"
-            viewBox="0 0 16 16"
-            fill="none"
-          >
-            <path
-              d="M4 6l4 4 4-4"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
+          <ChevronDown class="absolute right-2 w-3.5 h-3.5 text-tx-4 pointer-events-none" />
         </div>
       </div>
 
@@ -66,9 +55,7 @@ export default function Controls(props: Props) {
           disabled={props.running()}
           onClick={() => props.onStart(selectedMic())}
         >
-          <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
-            <polygon points="4,2 14,8 4,14" fill="currentColor" />
-          </svg>
+          <Play size={12} fill="currentColor" />
           Start
         </Button>
 
@@ -77,13 +64,12 @@ export default function Controls(props: Props) {
           disabled={!props.running()}
           onClick={props.onStop}
         >
-          <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
-            <rect x="3" y="3" width="10" height="10" rx="1.5" fill="currentColor" />
-          </svg>
+          <Square size={12} fill="currentColor" />
           Stop
         </Button>
 
         <Button variant="ghost" onClick={props.onClear}>
+          <Trash2 size={12} />
           Clear
         </Button>
       </div>
