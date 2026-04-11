@@ -44,4 +44,3 @@ jobs:
         run: bunx electron-builder --${{ matrix.platform }} --publish onTagOrDraft
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
