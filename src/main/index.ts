@@ -1,4 +1,4 @@
-import { app, dialog, Menu, shell, session, nativeImage, nativeTheme } from "electron";
+import { app, dialog, ipcMain, Menu, shell, session, nativeImage, nativeTheme } from "electron";
 import { join } from "path";
 import { readFile } from "fs/promises";
 import { loadConfig, DEFAULT_CONFIG, type AppConfig } from "./config";
@@ -12,6 +12,7 @@ import { registerIpcHandlers } from "./ipc";
 import { stopSession } from "./session";
 import { stopMetricsCollection } from "./metrics";
 import { log, LogLevel } from "./logger";
+import { initAutoUpdater, checkForUpdatesManual, quitAndInstall } from "./updater";
 
 // ── App identity ──
 app.setName("ExpressText");
@@ -57,6 +58,8 @@ app.whenReady().then(() => {
   });
 
   createWindow();
+  initAutoUpdater();
+  ipcMain.on("restart-for-update", () => quitAndInstall());
 
   // Defer menu building so it doesn't block window creation
   setImmediate(async () => {
@@ -89,6 +92,10 @@ app.whenReady().then(() => {
                   click: () => {
                     getMainWindow()?.webContents.send("open-settings");
                   },
+                },
+                {
+                  label: "Check for Updates\u2026",
+                  click: () => checkForUpdatesManual(),
                 },
                 { type: "separator" as const },
                 { role: "hide" as const },
@@ -135,6 +142,10 @@ app.whenReady().then(() => {
             click: () => {
               getMainWindow()?.webContents.send("open-settings");
             },
+          },
+          {
+            label: "Check for Updates\u2026",
+            click: () => checkForUpdatesManual(),
           },
           { type: "separator" },
           {

@@ -6,18 +6,23 @@ interface ToastItem {
   message: string;
   type: "error" | "info";
   dismissing?: boolean;
+  action?: { label: string; onClick: () => void };
 }
 
 let nextId = 0;
 const [toasts, setToasts] = createSignal<ToastItem[]>([]);
 const timers = new Map<number, ReturnType<typeof setTimeout>>();
 
-/** Display a toast notification. Automatically dismisses after 6 seconds. */
-export function showToast(message: string, type: "error" | "info" = "error") {
+/** Display a toast notification. Automatically dismisses after 6 s (or 30 s if an action is present). */
+export function showToast(
+  message: string,
+  type: "error" | "info" = "error",
+  action?: { label: string; onClick: () => void },
+) {
   const id = nextId++;
-  setToasts((prev) => [...prev, { id, message, type }]);
+  setToasts((prev) => [...prev, { id, message, type, action }]);
 
-  const timer = setTimeout(() => dismiss(id), 6000);
+  const timer = setTimeout(() => dismiss(id), action ? 30000 : 6000);
   timers.set(id, timer);
 }
 
@@ -68,6 +73,17 @@ export default function ToastContainer() {
               {toast.type === "error" ? <CircleX size={16} /> : <CircleAlert size={16} />}
             </div>
             <span class="flex-1 break-words">{toast.message}</span>
+            {toast.action && (
+              <button
+                class="shrink-0 ml-1 px-2 py-0.5 rounded text-[12px] font-semibold bg-white/15 hover:bg-white/25 transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toast.action!.onClick();
+                }}
+              >
+                {toast.action.label}
+              </button>
+            )}
           </div>
         )}
       </For>

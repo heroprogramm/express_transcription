@@ -8,6 +8,8 @@ import {
   stopSession,
   ensureMicAccess,
   onOpenSettings,
+  onUpdateStatus,
+  restartForUpdate,
 } from "@/lib/ipc";
 import { startTranscription, stopTranscription, cancelTranscription } from "@/lib/soniox";
 import { createPerfMonitor } from "@/lib/perf";
@@ -19,7 +21,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { SpeechPane, TranslationPane } from "@/components/TranscriptPane";
 import OutputPane from "@/components/OutputPane";
 import ResizeHandle from "@/components/ResizeHandle";
-import ToastContainer from "@/components/Toast";
+import ToastContainer, { showToast } from "@/components/Toast";
 import { reportError, capturePromise } from "@/lib/errors";
 import logoDarkSrc from "@/assets/logo-dark.png";
 import logoLightSrc from "@/assets/logo.png";
@@ -110,8 +112,24 @@ export default function App() {
 
   const cleanupSettingsListener = onOpenSettings(() => setShowSettings(true));
 
+  const cleanupUpdateListener = onUpdateStatus((status, version) => {
+    if (status === "downloading") {
+      showToast(`Downloading update${version ? ` v${version}` : ""}\u2026`, "info");
+    } else if (status === "ready") {
+      showToast(`Update${version ? ` v${version}` : ""} ready \u2014 restart to apply`, "info", {
+        label: "Restart",
+        onClick: () => restartForUpdate(),
+      });
+    } else if (status === "up-to-date") {
+      showToast("You\u2019re on the latest version", "info");
+    } else if (status === "error") {
+      showToast("Update check failed", "error");
+    }
+  });
+
   onCleanup(() => {
     cleanupSettingsListener();
+    cleanupUpdateListener();
     document.removeEventListener("keydown", onKeyDown);
     if (uptimeInterval) clearInterval(uptimeInterval);
     cancelTranscription();

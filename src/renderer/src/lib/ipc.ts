@@ -21,6 +21,8 @@ declare global {
       onPerfSnapshot: (cb: (snapshot: PerfSnapshot) => void) => () => void;
       copyToClipboard: (text: string) => void;
       onOpenSettings: (cb: () => void) => () => void;
+      onUpdateStatus: (cb: (status: string, version?: string) => void) => () => void;
+      restartForUpdate: () => void;
     };
   }
 }
@@ -113,4 +115,14 @@ export function copyToClipboard(text: string): void {
 /** Subscribe to the "open settings" event from the app menu. Returns an unsubscribe function. */
 export function onOpenSettings(cb: () => void): () => void {
   return getApi().onOpenSettings(cb);
+}
+
+/** Subscribe to auto-update status events. Returns an unsubscribe function. */
+export function onUpdateStatus(cb: (status: string, version?: string) => void): () => void {
+  return getApi().onUpdateStatus(cb);
+}
+
+/** Quit the app and install the downloaded update. */
+export function restartForUpdate(): void {
+  getApi().restartForUpdate();
 }

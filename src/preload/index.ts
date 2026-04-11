@@ -59,4 +59,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.on("open-settings", handler);
     return () => ipcRenderer.removeListener("open-settings", handler);
   },
+  onUpdateStatus: (cb: (status: string, version?: string) => void): (() => void) => {
+    const handler = (_event: IpcRendererEvent, status: string, version?: string) =>
+      cb(status, version);
+    ipcRenderer.on("update-status", handler);
+    return () => ipcRenderer.removeListener("update-status", handler);
+  },
+  restartForUpdate: (): void => {
+    ipcRenderer.send("restart-for-update");
+  },
 });

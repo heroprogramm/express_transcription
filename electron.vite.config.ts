@@ -5,6 +5,9 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   main: {
+    define: {
+      __GH_TOKEN__: JSON.stringify(process.env.GH_TOKEN ?? ""),
+    },
     build: {
       sourcemap: false,
       minify: "esbuild",
