@@ -84,7 +84,8 @@
       "provider": "github",
       "owner": "hamza-56",
       "repo": "express-text",
-      "private": true
+      "private": true,
+      "releaseType": "release"
     }
   }
 }
