@@ -85,7 +85,8 @@
       "owner": "hamza-56",
       "repo": "express-text",
       "private": true,
-      "releaseType": "release"
+      "releaseType": "release",
+      "vPrefixedTagName": true
     }
   }
 }
