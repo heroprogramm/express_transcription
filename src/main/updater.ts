@@ -1,4 +1,5 @@
-import { autoUpdater } from "electron-updater";
+import pkg from "electron-updater";
+const { autoUpdater } = pkg;
 import { is } from "@electron-toolkit/utils";
 import { getMainWindow } from "./window";
 import { log, LogLevel } from "./logger";
