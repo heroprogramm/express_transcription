@@ -243,9 +243,9 @@ body.theme-transitioning h2 {
 
 /* ── Status badge states ──────────────────────────────────────── */
 .badge-idle {
-  border-color: var(--border-lit);
-  background: var(--bg-surface);
-  color: var(--text-3);
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-4);
 }
 .badge-idle .status-dot {
   background: var(--text-4);

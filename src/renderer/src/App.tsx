@@ -243,7 +243,7 @@ export default function App() {
 
   return (
     <>
-      <header class="stagger-1 flex items-center justify-between h-[60px] px-5 bg-raised border-b border-border shrink-0 relative z-10 surface-raised-sm">
+      <header class="stagger-1 flex items-center justify-between h-[60px] px-5 bg-raised shrink-0 relative z-10">
         <div class="flex items-center gap-3">
           <img
             src={logoDarkSrc}

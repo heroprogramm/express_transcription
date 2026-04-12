@@ -26,13 +26,22 @@ function deriveQuality(latencyStr: string): Quality {
   return "poor";
 }
 
-function Stat(props: { label: string; value: Accessor<string | number> }) {
+function Stat(props: {
+  label: string;
+  value: Accessor<string | number>;
+  active: Accessor<boolean>;
+}) {
   return (
-    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface">
+    <div class="flex items-center gap-1.5 px-3 py-1 rounded-md bg-surface">
       <span class="text-[10px] font-semibold text-tx-4 tracking-wider uppercase select-none">
         {props.label}
       </span>
-      <span class="text-[12px] font-bold tabular-nums text-tx">{props.value()}</span>
+      <span
+        class="text-[12px] font-bold tabular-nums"
+        classList={{ "text-tx": props.active(), "text-tx-4": !props.active() }}
+      >
+        {props.value()}
+      </span>
     </div>
   );
 }
@@ -43,11 +52,11 @@ export default function StatsBar(props: Props) {
   const cfg = createMemo(() => QUALITY_CONFIG[quality()]);
 
   return (
-    <div class="flex items-center gap-2">
-      <Stat label="Latency" value={props.latency} />
-      <Stat label="Lines" value={() => props.lines()} />
-      <Stat label="Uptime" value={props.uptime} />
-      <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface">
+    <div class="flex items-center gap-2.5">
+      <Stat label="Latency" value={props.latency} active={props.live} />
+      <Stat label="Lines" value={() => props.lines()} active={props.live} />
+      <Stat label="Uptime" value={props.uptime} active={props.live} />
+      <div class="flex items-center gap-1.5 px-3 py-1 rounded-md bg-surface">
         <span class="text-[10px] font-semibold text-tx-4 tracking-wider uppercase select-none">
           Signal
         </span>

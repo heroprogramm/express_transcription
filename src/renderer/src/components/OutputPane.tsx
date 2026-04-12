@@ -33,7 +33,7 @@ export default function OutputPane(props: OutputPaneProps) {
     <div class="surface-raised bg-raised border border-border rounded-md flex flex-col min-h-0 flex-1 overflow-hidden">
       <div class="flex items-center justify-between px-4 py-2.5 border-b border-border shrink-0">
         <div class="flex items-center gap-2">
-          <span class="text-[11px] font-bold text-tx-2 tracking-wider uppercase">Final Output</span>
+          <span class="text-[13px] font-semibold text-tx-2 tracking-wide">Final Output</span>
           <Show when={count() > 0}>
             <span class="text-[10px] text-tx-3 font-mono tabular-nums bg-hover border border-border-lit rounded-full px-2 py-0.5">
               {count()} lines
@@ -73,6 +73,9 @@ export default function OutputPane(props: OutputPaneProps) {
           when={count() > 0}
           fallback={
             <div class="flex flex-col items-center justify-center h-full -mt-4 gap-3">
+              <span class="flex items-center justify-center w-5 h-5 rounded-full border border-border text-[10px] font-bold text-tx-4">
+                3
+              </span>
               <div class="empty-state-icon">
                 <svg
                   width="24"
@@ -88,10 +91,10 @@ export default function OutputPane(props: OutputPaneProps) {
                 </svg>
               </div>
               <div class="text-center">
-                <p class="font-ui text-[13px] font-medium text-tx-3">
+                <p class="font-ui text-[14px] font-medium text-tx-3">
                   Confirmed translations will appear here
                 </p>
-                <p class="font-ui text-[11px] text-tx-4 mt-1">
+                <p class="font-ui text-[12px] text-tx-4 mt-1.5">
                   Entries are sent after the edit window expires
                 </p>
               </div>

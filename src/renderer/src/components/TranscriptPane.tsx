@@ -18,6 +18,9 @@ const TRANS_ITEM_HEIGHT = 48;
 function SpeechEmpty() {
   return (
     <div class="flex flex-col items-center justify-center h-full -mt-12 gap-4">
+      <span class="flex items-center justify-center w-5 h-5 rounded-full border border-border text-[10px] font-bold text-tx-4">
+        1
+      </span>
       <div class="empty-state-icon">
         <div class="flex items-center gap-[3px] h-6">
           {[0.3, 0.5, 0.8, 1, 0.8, 0.5, 0.3].map((h, i) => (
@@ -33,8 +36,14 @@ function SpeechEmpty() {
         </div>
       </div>
       <div class="text-center">
-        <p class="font-ui text-[13px] font-medium text-tx-3">Waiting for audio input</p>
-        <p class="font-ui text-[11px] text-tx-4 mt-1">Press Start to begin transcription</p>
+        <p class="font-ui text-[14px] font-medium text-tx-3">Waiting for audio input</p>
+        <p class="font-ui text-[12px] text-tx-4 mt-1.5">
+          Press{" "}
+          <kbd class="inline-block px-1.5 py-0.5 rounded bg-surface border border-border text-tx-3 font-semibold text-[11px]">
+            Start
+          </kbd>{" "}
+          to begin transcription
+        </p>
       </div>
     </div>
   );
@@ -43,6 +52,9 @@ function SpeechEmpty() {
 function TranslationEmpty() {
   return (
     <div class="flex flex-col items-center justify-center h-full -mt-12 gap-4">
+      <span class="flex items-center justify-center w-5 h-5 rounded-full border border-border text-[10px] font-bold text-tx-4">
+        2
+      </span>
       <div class="empty-state-icon">
         <svg
           class="animate-[spin_10s_linear_infinite]"
@@ -59,8 +71,8 @@ function TranslationEmpty() {
         </svg>
       </div>
       <div class="text-center">
-        <p class="font-ui text-[13px] font-medium text-tx-3">Translations will appear here</p>
-        <p class="font-ui text-[11px] text-tx-4 mt-1">Speech is translated in real time</p>
+        <p class="font-ui text-[14px] font-medium text-tx-3">Translations will appear here</p>
+        <p class="font-ui text-[12px] text-tx-4 mt-1.5">Speech is translated in real time</p>
       </div>
     </div>
   );
@@ -84,7 +96,7 @@ export function SpeechPane(props: SpeechPaneProps) {
     >
       <div class="flex justify-between items-center px-4 py-2.5 border-b border-border shrink-0">
         <div class="flex items-center gap-2.5">
-          <h2 class="text-[12px] font-bold text-tx-2 tracking-wider uppercase">Speech</h2>
+          <h2 class="text-[13px] font-semibold text-tx-2 tracking-wide">Speech</h2>
           <Show when={props.live()}>
             <AudioWaveform active={props.live} micDeviceId={props.micDeviceId} />
           </Show>
@@ -299,7 +311,7 @@ export function TranslationPane(props: TransPaneProps) {
     >
       <div class="flex justify-between items-center px-4 py-2.5 border-b border-border shrink-0">
         <div class="flex items-center gap-2">
-          <h2 class="text-[12px] font-bold text-tx-2 tracking-wider uppercase">Translation</h2>
+          <h2 class="text-[13px] font-semibold text-tx-2 tracking-wide">Translation</h2>
         </div>
       </div>
       <div

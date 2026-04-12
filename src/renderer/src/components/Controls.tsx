@@ -34,7 +34,7 @@ export default function Controls(props: Props) {
   });
 
   return (
-    <div class="flex items-center justify-between h-13 px-5 bg-inset border-b border-border shrink-0 surface-inset controls-bar">
+    <div class="flex items-center justify-between h-13 px-5 bg-raised border-b border-border shrink-0 controls-bar">
       <div class="flex items-center gap-2.5">
         <label
           for="mic-select"
@@ -80,7 +80,7 @@ export default function Controls(props: Props) {
           Stop
         </Button>
 
-        <Button variant="ghost" onClick={props.onClear}>
+        <Button variant="ghost" onClick={props.onClear} class="!text-tx-2">
           <Trash2 size={12} />
           Clear
         </Button>
