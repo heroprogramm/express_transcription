@@ -2,10 +2,10 @@ import { createEffect, onCleanup, type Accessor } from "solid-js";
 import { startAudioLevel, stopAudioLevel, getLevel } from "@/lib/audio-level";
 
 const BAR_COUNT = 28;
-const BAR_WIDTH = 2.5;
+const BAR_WIDTH = 3;
 const BAR_GAP = 1.5;
-const MIN_BAR_H = 2;
-const HEIGHT = 16;
+const MIN_BAR_H = 3;
+const HEIGHT = 22;
 const TOTAL_W = BAR_COUNT * (BAR_WIDTH + BAR_GAP);
 const PUSH_INTERVAL = 80;
 
@@ -34,6 +34,7 @@ export default function AudioWaveform(props: Props) {
     const midY = (HEIGHT * dpr) / 2;
     const maxBarH = HEIGHT - 2;
 
+    const fadeBars = 6;
     for (let i = 0; i < BAR_COUNT; i++) {
       const level = ring[(head + i) % BAR_COUNT];
       const barH = Math.max(MIN_BAR_H, level * maxBarH) * dpr;
@@ -41,10 +42,12 @@ export default function AudioWaveform(props: Props) {
       const y = midY - barH / 2;
       const w = BAR_WIDTH * dpr;
 
+      ctx.globalAlpha = i < fadeBars ? (i + 1) / fadeBars : 1;
       ctx.beginPath();
       ctx.roundRect(x, y, w, barH, w / 2);
       ctx.fill();
     }
+    ctx.globalAlpha = 1;
   }
 
   function tick() {
@@ -63,7 +66,7 @@ export default function AudioWaveform(props: Props) {
       if (!ctx) return;
 
       ctx.fillStyle =
-        getComputedStyle(document.documentElement).getPropertyValue("--text-3").trim() || "#888";
+        getComputedStyle(document.documentElement).getPropertyValue("--blue").trim() || "#50a0d0";
 
       ring.fill(0);
       head = 0;

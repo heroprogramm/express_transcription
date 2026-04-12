@@ -41,7 +41,7 @@ function dismiss(id: number) {
 const TOAST_STYLES = {
   error:
     "toast-error bg-red-soft/15 border-red/25 text-red light:bg-red-soft/10 light:border-red-soft/30 light:text-red-soft",
-  info: "toast-info bg-steel-soft/15 border-steel/25 text-steel light:bg-steel-soft/10 light:border-steel-soft/30 light:text-steel-soft",
+  info: "toast-info bg-violet-soft/15 border-violet/25 text-violet light:bg-violet-soft/10 light:border-violet-soft/30 light:text-violet-soft",
 } as const;
 
 /** Fixed-position container that renders active toast notifications. */

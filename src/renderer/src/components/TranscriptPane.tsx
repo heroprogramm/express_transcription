@@ -26,7 +26,7 @@ function SpeechEmpty() {
               style={{
                 height: `${h * 100}%`,
                 "animation-delay": `${i * 0.25}s`,
-                background: "#50a0d0",
+                background: "var(--blue)",
               }}
             />
           ))}
@@ -78,7 +78,6 @@ interface SpeechPaneProps {
 export function SpeechPane(props: SpeechPaneProps) {
   let container: HTMLDivElement | undefined;
   const vl = useVirtualList(props.entries, () => container, STT_ITEM_HEIGHT);
-
   return (
     <section
       class={`surface-raised flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-md overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
@@ -90,9 +89,11 @@ export function SpeechPane(props: SpeechPaneProps) {
             <AudioWaveform active={props.live} micDeviceId={props.micDeviceId} />
           </Show>
         </div>
-        <span class="text-[11px] text-tx-4 font-mono tabular-nums">
-          <Show when={props.finalCount() > 0}>{props.finalCount()} lines</Show>
-        </span>
+        <Show when={props.finalCount() > 0}>
+          <span class="text-[10px] text-tx-4 font-mono tabular-nums bg-surface border border-border rounded-full px-2 py-0.5">
+            {props.finalCount()} lines
+          </span>
+        </Show>
       </div>
       <div
         ref={container}
@@ -109,11 +110,11 @@ export function SpeechPane(props: SpeechPaneProps) {
                   <div
                     data-index={vItem.index}
                     ref={vl.virtualizer.measureElement}
-                    class="flex items-center gap-2 py-1.5 absolute top-0 left-0 w-full"
+                    class="flex items-center gap-3.5 py-1.5 absolute top-0 left-0 w-full"
                     style={{ transform: `translateY(${vItem.start}px)` }}
                   >
                     <span
-                      class={`text-[9px] font-medium font-mono tracking-wide tabular-nums shrink-0 ${entry().isPartial ? "text-st-pending" : "text-tx-4 opacity-60"}`}
+                      class={`text-[9px] font-medium font-mono tracking-wide tabular-nums shrink-0 ${entry().isPartial ? "text-[var(--blue)] opacity-50" : "text-[var(--blue)]"}`}
                     >
                       {entry().timestamp}
                     </span>
@@ -203,8 +204,8 @@ function TranslationEntryRow(props: {
       classList={{
         "border-l-st-pending text-st-pending cursor-pointer hover:bg-hover": isPending(),
         "editing-row border-l-st-editing text-st-editing z-10": isEditing(),
-        "border-l-border-lit text-st-confirmed": isConfirmed(),
-        "border-l-border text-st-sent": isSent(),
+        "border-l-border-lit text-st-confirmed opacity-70": isConfirmed(),
+        "border-l-border text-st-sent opacity-40": isSent(),
       }}
       onClick={() => isPending() && props.onStartEdit(props.entry.id)}
       onKeyDown={(e: KeyboardEvent) => {
@@ -269,10 +270,10 @@ function TranslationEntryRow(props: {
         </span>
       </Show>
       <Show when={isSent()}>
-        <span class="text-tx-3 text-[12px] ml-auto pl-2 shrink-0">&#10003;</span>
+        <span class="text-green text-[12px] ml-2 shrink-0">&#10003;</span>
       </Show>
       <Show when={isPending()}>
-        <span class="text-[12px] font-mono text-tx-3 ml-auto pl-2 shrink-0 tabular-nums">
+        <span class="text-[10px] font-mono ml-auto pl-2 shrink-0 tabular-nums bg-violet-soft/20 text-st-pending border border-violet/20 rounded-full px-2 py-0.5">
           {remaining()}s
         </span>
       </Show>
@@ -298,9 +299,11 @@ export function TranslationPane(props: TransPaneProps) {
         <div class="flex items-center gap-2">
           <h2 class="text-[12px] font-bold text-tx-2 tracking-wider uppercase">Translation</h2>
         </div>
-        <span class="text-[11px] text-tx-4 font-mono tabular-nums">
-          <Show when={count() > 0}>{count()} lines</Show>
-        </span>
+        <Show when={count() > 0}>
+          <span class="text-[10px] text-tx-4 font-mono tabular-nums bg-surface border border-border rounded-full px-2 py-0.5">
+            {count()} lines
+          </span>
+        </Show>
       </div>
       <div
         ref={container}
@@ -318,7 +321,7 @@ export function TranslationPane(props: TransPaneProps) {
                   <div
                     data-index={vItem.index}
                     ref={vl.virtualizer.measureElement}
-                    class="absolute top-0 left-0 w-full"
+                    class="absolute top-0 left-0 w-full transition-transform duration-300 ease-out"
                     style={{
                       transform: `translateY(${vItem.start}px)`,
                       "z-index": entry().status === EntryStatus.Editing ? 10 : undefined,

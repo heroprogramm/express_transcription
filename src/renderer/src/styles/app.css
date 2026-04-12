@@ -48,8 +48,6 @@
   --color-border: var(--border);
   --color-border-lit: var(--border-lit);
   --color-border-focus: var(--border-focus);
-  --color-steel: var(--steel);
-  --color-steel-soft: var(--steel-soft);
   --color-violet: var(--violet);
   --color-violet-soft: var(--violet-soft);
   --color-green: var(--green);
@@ -75,11 +73,8 @@
   --bg-inset: #070910;
   --border: #1a1f2e;
   --border-lit: #252b3d;
-  --border-focus: #3a4260;
-  --steel: #7088a8;
-  --steel-soft: #5a7090;
-  --steel-glow: rgba(112, 136, 168, 0.1);
-  --steel-faint: rgba(112, 136, 168, 0.04);
+  --border-focus: #5a3d8a;
+  --blue: #50a0d0;
   --violet: #5a3d8a;
   --violet-soft: #4a3270;
   --violet-glow: rgba(90, 61, 138, 0.1);
@@ -94,8 +89,8 @@
   --text-2: #a1a8be;
   --text-3: #7b8399;
   --text-4: #4e5672;
-  --status-pending: #c8dff0;
-  --status-editing: #e0eeff;
+  --status-pending: #c4b5e0;
+  --status-editing: #d6c8f0;
   --status-confirmed: #9db8c0;
   --status-sent: #6a7a82;
 }
@@ -109,11 +104,8 @@
   --bg-inset: #e8e9ee;
   --border: #d4d6dc;
   --border-lit: #c0c3cc;
-  --border-focus: #9da3b4;
-  --steel: #506880;
-  --steel-soft: #405570;
-  --steel-glow: rgba(80, 104, 128, 0.1);
-  --steel-faint: rgba(80, 104, 128, 0.04);
+  --border-focus: #4a3270;
+  --blue: #3a8ab8;
   --violet: #4a3270;
   --violet-soft: #3a2558;
   --violet-glow: rgba(74, 50, 112, 0.1);
@@ -128,8 +120,8 @@
   --text-2: #4a4f63;
   --text-3: #7b8096;
   --text-4: #a8adc0;
-  --status-pending: #2b7ac2;
-  --status-editing: #1a65a8;
+  --status-pending: #6b4d9e;
+  --status-editing: #5a3d8a;
   --status-confirmed: #4a5568;
   --status-sent: #a0aab4;
 }
@@ -214,7 +206,7 @@ body.theme-transitioning h2 {
   color: var(--red);
 }
 .toast-info .toast-icon {
-  color: var(--steel);
+  color: var(--violet);
 }
 .toast-error {
   border-left-width: 3px;
@@ -222,7 +214,7 @@ body.theme-transitioning h2 {
 }
 .toast-info {
   border-left-width: 3px;
-  border-left-color: var(--steel);
+  border-left-color: var(--violet);
 }
 
 /* ── App mount stagger ────────────────────────────────────────── */
@@ -269,12 +261,12 @@ body.theme-transitioning h2 {
   animation: pulse 1.5s ease-in-out infinite;
 }
 .badge-loading {
-  border-color: var(--steel-soft);
-  background: var(--steel-faint);
-  color: var(--steel);
+  border-color: var(--violet-soft);
+  background: var(--violet-faint);
+  color: var(--violet);
 }
 .badge-loading .status-dot {
-  background: var(--steel);
+  background: var(--violet);
   animation: pulse 0.8s ease-in-out infinite;
 }
 
@@ -315,7 +307,7 @@ body.theme-transitioning h2 {
 @keyframes entryIn {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -323,7 +315,7 @@ body.theme-transitioning h2 {
   }
 }
 @utility animate-entry {
-  animation: entryIn 0.2s ease-out;
+  animation: entryIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
 }
 @keyframes fadeIn {
@@ -383,10 +375,10 @@ body.theme-transitioning h2 {
     box-shadow 0.15s ease;
 }
 .editing-input:focus {
-  border-color: var(--steel);
+  border-color: var(--violet);
   box-shadow:
     inset 0 1px 2px rgba(0, 0, 0, 0.1),
-    0 0 0 2px var(--steel-glow);
+    0 0 0 2px var(--violet-glow);
 }
 .editing-btn {
   cursor: pointer;

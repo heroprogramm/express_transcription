@@ -31,8 +31,8 @@ export default function OutputPane(props: OutputPaneProps) {
   }
 
   return (
-    <div class="border-t border-border bg-[var(--bg-raised)] flex flex-col min-h-0 flex-1">
-      <div class="flex items-center justify-between px-3 py-2 border-b border-border shrink-0">
+    <div class="border-t-2 border-border-lit bg-[var(--bg-raised)] flex flex-col min-h-0 flex-1">
+      <div class="flex items-center justify-between px-3 py-2.5 border-b border-border shrink-0 bg-[var(--bg-surface)]">
         <div class="flex items-center gap-2">
           <span class="text-[11px] font-bold text-tx-2 tracking-wider uppercase">Final Output</span>
           <Show when={count() > 0}>
@@ -110,10 +110,10 @@ export default function OutputPane(props: OutputPaneProps) {
                   <div
                     data-index={vItem.index}
                     ref={vl.virtualizer.measureElement}
-                    class="flex items-center pl-2 py-0.5 min-h-7 absolute top-0 left-0 w-full"
+                    class={`flex items-center pl-3.5 py-0.5 min-h-7 absolute top-0 left-0 w-full ${vItem.index % 2 === 1 ? "bg-[var(--bg-surface)]/40" : ""}`}
                     style={{ transform: `translateY(${vItem.start}px)` }}
                   >
-                    <span class="text-[10px] font-mono text-tx-4 mr-2 tabular-nums shrink-0">
+                    <span class="text-[10px] font-mono text-tx-4 mr-3 tabular-nums shrink-0">
                       {entry().timestamp}
                     </span>
                     <span class="text-sm text-tx-2">{entry().text}</span>

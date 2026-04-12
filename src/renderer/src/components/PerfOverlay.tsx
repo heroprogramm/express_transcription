@@ -7,7 +7,7 @@ function formatMB(bytes: number): string {
 
 function statusColor(value: number, warn: number, crit: number): string {
   if (value >= crit) return "text-red";
-  if (value >= warn) return "text-steel";
+  if (value >= warn) return "text-violet";
   return "text-violet";
 }
 
