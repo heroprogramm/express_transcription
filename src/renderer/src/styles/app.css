@@ -261,12 +261,12 @@ body.theme-transitioning h2 {
   animation: pulse 1.5s ease-in-out infinite;
 }
 .badge-loading {
-  border-color: var(--violet-soft);
-  background: var(--violet-faint);
-  color: var(--violet);
+  border-color: var(--blue);
+  background: rgba(80, 160, 208, 0.08);
+  color: var(--blue);
 }
 .badge-loading .status-dot {
-  background: var(--violet);
+  background: var(--blue);
   animation: pulse 0.8s ease-in-out infinite;
 }
 

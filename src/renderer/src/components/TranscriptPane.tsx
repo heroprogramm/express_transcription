@@ -195,12 +195,12 @@ function TranslationEntryRow(props: {
 
   return (
     <div
-      class="animate-entry text-base font-medium leading-relaxed flex items-center border-l-2 pl-2 transition-all duration-200 relative py-1.5"
+      class={`${props.isNew ? "animate-entry" : ""} text-base font-medium leading-relaxed flex items-center border-l-2 pl-2 transition-all duration-200 relative py-1.5`}
       classList={{
         "border-l-st-pending text-st-pending cursor-pointer hover:bg-hover": isPending(),
         "editing-row border-l-st-editing text-st-editing z-10": isEditing(),
-        "border-l-border-lit text-st-confirmed opacity-70": isConfirmed(),
-        "border-l-border text-st-sent opacity-40": isSent(),
+        "border-l-border-lit text-st-confirmed": isConfirmed(),
+        "border-l-border text-st-sent": isSent(),
       }}
       onClick={() => isPending() && props.onStartEdit(props.entry.id)}
       onKeyDown={(e: KeyboardEvent) => {
@@ -282,10 +282,7 @@ function TranslationEntryRow(props: {
  */
 export function TranslationPane(props: TransPaneProps) {
   let container: HTMLDivElement | undefined;
-  const count = createMemo(() => props.entries().length);
   const vl = useVirtualList(props.entries, () => container, TRANS_ITEM_HEIGHT);
-  let lastSeenId = -1;
-
   return (
     <section
       class={`surface-raised flex-1 flex flex-col min-w-0 bg-raised border border-border rounded-md overflow-hidden relative transition-all duration-500 ${props.live() ? "is-live" : ""}`}
@@ -305,37 +302,26 @@ export function TranslationPane(props: TransPaneProps) {
             <For each={vl.virtualizer.getVirtualItems()}>
               {(vItem) => {
                 const entry = createMemo(() => props.entries()[vItem.index]);
-                let seenId = -1;
 
                 return (
                   <div
                     data-index={vItem.index}
                     ref={vl.virtualizer.measureElement}
-                    class="absolute top-0 left-0 w-full transition-transform duration-300 ease-out"
+                    class="absolute top-0 left-0 w-full"
                     style={{
                       transform: `translateY(${vItem.start}px)`,
                       "z-index": entry().status === EntryStatus.Editing ? 10 : undefined,
                     }}
                   >
-                    {(() => {
-                      const e = entry();
-                      const isNew = e.id > seenId || e.id > lastSeenId;
-                      if (isNew) {
-                        seenId = e.id;
-                        lastSeenId = Math.max(lastSeenId, e.id);
-                      }
-                      return (
-                        <TranslationEntryRow
-                          entry={e}
-                          isNew={isNew}
-                          feedDelayMs={props.feedDelayMs}
-                          onStartEdit={props.onStartEdit}
-                          onSaveEdit={props.onSaveEdit}
-                          onCancelEdit={props.onCancelEdit}
-                          onEditChange={props.onEditChange}
-                        />
-                      );
-                    })()}
+                    <TranslationEntryRow
+                      entry={entry()}
+                      isNew={Date.now() - entry().createdAt < 1000}
+                      feedDelayMs={props.feedDelayMs}
+                      onStartEdit={props.onStartEdit}
+                      onSaveEdit={props.onSaveEdit}
+                      onCancelEdit={props.onCancelEdit}
+                      onEditChange={props.onEditChange}
+                    />
                   </div>
                 );
               }}

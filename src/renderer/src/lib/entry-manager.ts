@@ -152,6 +152,7 @@ export function createEntryManager(feedDelayMs: () => number) {
   function flushPending(): void {
     for (const [, timer] of entryTimers) clearTimeout(timer);
     entryTimers.clear();
+    setLatency("\u2014");
     setTransEntries((prev) =>
       prev.map((e) =>
         e.status === EntryStatus.Pending || e.status === EntryStatus.Editing
