@@ -30,8 +30,8 @@ export default function OutputPane(props: OutputPaneProps) {
   }
 
   return (
-    <div class="border-t-2 border-border-lit bg-[var(--bg-raised)] flex flex-col min-h-0 flex-1">
-      <div class="flex items-center justify-between px-3 py-2.5 border-b border-border shrink-0 bg-[var(--bg-surface)]">
+    <div class="surface-raised bg-raised border border-border rounded-md flex flex-col min-h-0 flex-1 overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-2.5 border-b border-border shrink-0">
         <div class="flex items-center gap-2">
           <span class="text-[11px] font-bold text-tx-2 tracking-wider uppercase">Final Output</span>
           <Show when={count() > 0}>
