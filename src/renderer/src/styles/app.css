@@ -351,8 +351,8 @@ body.theme-transitioning h2 {
 .editing-row {
   background: var(--bg-raised);
   border-radius: 8px;
-  margin: 2px 0;
-  padding: 6px 10px;
+  margin: 0;
+  padding: 4px 10px;
   border: 1px solid var(--border-lit);
   box-shadow:
     0 1px 4px rgba(0, 0, 0, 0.15),

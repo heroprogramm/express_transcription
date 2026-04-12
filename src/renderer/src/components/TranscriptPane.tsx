@@ -183,10 +183,13 @@ function TranslationEntryRow(props: {
     if (countdownInterval) clearInterval(countdownInterval);
   });
 
+  let cancelled = false;
+
   function handleKeyDown(e: KeyboardEvent): void {
     if (e.key === "Enter") {
       props.onSaveEdit(props.entry.id, editText());
     } else if (e.key === "Escape") {
+      cancelled = true;
       props.onCancelEdit(props.entry.id);
     }
   }
@@ -199,8 +202,8 @@ function TranslationEntryRow(props: {
       classList={{
         "border-l-st-pending text-st-pending cursor-pointer hover:bg-hover": isPending(),
         "editing-row border-l-st-editing text-st-editing z-10": isEditing(),
-        "border-l-border-lit text-st-confirmed": isConfirmed(),
-        "border-l-border text-st-sent": isSent(),
+        "border-l-border-lit text-tx": isConfirmed(),
+        "border-l-border text-tx": isSent(),
       }}
       onClick={() => isPending() && props.onStartEdit(props.entry.id)}
       onKeyDown={(e: KeyboardEvent) => {
@@ -228,7 +231,9 @@ function TranslationEntryRow(props: {
                 props.onEditChange(props.entry.id, e.currentTarget.value);
               }}
               onKeyDown={handleKeyDown}
-              onFocusOut={() => props.onSaveEdit(props.entry.id, editText())}
+              onFocusOut={() => {
+                if (!cancelled) props.onSaveEdit(props.entry.id, editText());
+              }}
             />
             <button
               class="editing-btn editing-btn-save shrink-0 w-7 h-7 flex items-center justify-center"
@@ -242,6 +247,9 @@ function TranslationEntryRow(props: {
             </button>
             <button
               class="editing-btn editing-btn-cancel shrink-0 w-7 h-7 flex items-center justify-center"
+              onMouseDown={() => {
+                cancelled = true;
+              }}
               onClick={(e) => {
                 e.stopPropagation();
                 props.onCancelEdit(props.entry.id);
@@ -264,7 +272,7 @@ function TranslationEntryRow(props: {
           {props.entry.text}
         </span>
       </Show>
-      <Show when={isSent()}>
+      <Show when={isConfirmed() || isSent()}>
         <span class="text-green text-[12px] ml-2 shrink-0">&#10003;</span>
       </Show>
       <Show when={isPending()}>
