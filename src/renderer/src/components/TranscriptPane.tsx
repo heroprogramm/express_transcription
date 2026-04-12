@@ -221,10 +221,10 @@ function TranslationEntryRow(props: {
       <Show
         when={!isEditing()}
         fallback={
-          <div class="flex items-center gap-2 flex-1 min-w-0">
+          <div class="flex items-center gap-1.5 flex-1 min-w-0">
             <input
               ref={(el) => requestAnimationFrame(() => el.focus())}
-              class="editing-input flex-1 min-w-0 bg-surface border border-border-lit rounded-md px-2 py-1 text-base text-tx outline-none focus:border-border-focus"
+              class="editing-input flex-1 min-w-0 bg-surface border border-border-lit rounded-md px-2.5 py-1 text-tx outline-none"
               value={editText()}
               onInput={(e) => {
                 setEditText(e.currentTarget.value);
@@ -234,24 +234,24 @@ function TranslationEntryRow(props: {
               onFocusOut={() => props.onSaveEdit(props.entry.id, editText())}
             />
             <button
-              class="editing-btn editing-btn-save shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+              class="editing-btn editing-btn-save shrink-0 w-7 h-7 flex items-center justify-center"
               onClick={(e) => {
                 e.stopPropagation();
                 props.onSaveEdit(props.entry.id, editText());
               }}
               title="Save (Enter)"
             >
-              <Check size={12} />
+              <Check size={14} />
             </button>
             <button
-              class="editing-btn editing-btn-cancel shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+              class="editing-btn editing-btn-cancel shrink-0 w-7 h-7 flex items-center justify-center"
               onClick={(e) => {
                 e.stopPropagation();
                 props.onCancelEdit(props.entry.id);
               }}
               title="Cancel (Esc)"
             >
-              <X size={12} />
+              <X size={14} />
             </button>
           </div>
         }
