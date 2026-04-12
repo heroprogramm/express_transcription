@@ -1,4 +1,4 @@
-import { clipboard, contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
 
 interface AppConfig {
   soniox: { language: string; model: string; translate_to: string };
@@ -53,7 +53,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.on("perf:snapshot", handler);
     return () => ipcRenderer.removeListener("perf:snapshot", handler);
   },
-  copyToClipboard: (text: string): void => clipboard.writeText(text),
+  copyToClipboard: (text: string): void => {
+    ipcRenderer.invoke("clipboard:write", text);
+  },
   onOpenSettings: (cb: () => void): (() => void) => {
     const handler = () => cb();
     ipcRenderer.on("open-settings", handler);

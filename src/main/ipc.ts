@@ -1,4 +1,4 @@
-import { ipcMain, systemPreferences, shell } from "electron";
+import { clipboard, ipcMain, systemPreferences, shell } from "electron";
 import { type AppConfig, saveConfigFields } from "./config";
 import { getApiKey, saveApiKey, hasApiKey } from "./store";
 import { startSession, stopSession, logTranslation } from "./session";
@@ -98,4 +98,9 @@ export function registerIpcHandlers(
   });
 
   ipcMain.handle("perf:ping", () => Date.now());
+
+  ipcMain.handle("clipboard:write", (_event, text: unknown) => {
+    if (typeof text !== "string") return;
+    clipboard.writeText(text);
+  });
 }
