@@ -89,11 +89,6 @@ export function SpeechPane(props: SpeechPaneProps) {
             <AudioWaveform active={props.live} micDeviceId={props.micDeviceId} />
           </Show>
         </div>
-        <Show when={props.finalCount() > 0}>
-          <span class="text-[10px] text-tx-4 font-mono tabular-nums bg-surface border border-border rounded-full px-2 py-0.5">
-            {props.finalCount()} lines
-          </span>
-        </Show>
       </div>
       <div
         ref={container}
@@ -299,11 +294,6 @@ export function TranslationPane(props: TransPaneProps) {
         <div class="flex items-center gap-2">
           <h2 class="text-[12px] font-bold text-tx-2 tracking-wider uppercase">Translation</h2>
         </div>
-        <Show when={count() > 0}>
-          <span class="text-[10px] text-tx-4 font-mono tabular-nums bg-surface border border-border rounded-full px-2 py-0.5">
-            {count()} lines
-          </span>
-        </Show>
       </div>
       <div
         ref={container}

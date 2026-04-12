@@ -36,8 +36,8 @@ export default function OutputPane(props: OutputPaneProps) {
         <div class="flex items-center gap-2">
           <span class="text-[11px] font-bold text-tx-2 tracking-wider uppercase">Final Output</span>
           <Show when={count() > 0}>
-            <span class="text-[10px] text-tx-4 font-mono tabular-nums">
-              {count()} lines &middot; {props.wordCount()} words
+            <span class="text-[10px] text-tx-3 font-mono tabular-nums bg-hover border border-border-lit rounded-full px-2 py-0.5">
+              {count()} lines
             </span>
           </Show>
         </div>
