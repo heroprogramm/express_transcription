@@ -291,20 +291,6 @@ body.theme-transitioning h2 {
   animation: pendingFill linear forwards;
 }
 
-/* ── Waveform animation for empty STT state ──────────────────── */
-@keyframes wave {
-  0%,
-  100% {
-    transform: scaleY(0.3);
-  }
-  50% {
-    transform: scaleY(1);
-  }
-}
-.waveform-bar {
-  animation: wave 1.2s ease-in-out infinite;
-}
-
 /* ── Animations ───────────────────────────────────────────────── */
 @keyframes idlePulse {
   0%,
@@ -598,12 +584,5 @@ body.theme-transitioning h2 {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-  .grain {
-    display: none;
-  }
-  .ambient-orb {
-    display: none;
-    filter: none;
   }
 }

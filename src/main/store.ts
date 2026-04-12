@@ -18,7 +18,7 @@ export function getApiKey(): string | null {
 
 /** Encrypts and stores the Soniox API key via the OS keychain. Throws on empty or oversized keys. */
 export function saveApiKey(key: string): void {
-  if (!key || typeof key !== "string" || key.trim().length === 0) {
+  if (!key?.trim()) {
     throw new Error("API key cannot be empty");
   }
   if (key.length > 512) {

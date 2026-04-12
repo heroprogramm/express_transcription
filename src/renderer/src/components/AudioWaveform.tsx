@@ -1,7 +1,13 @@
-import { createSignal, onCleanup, createEffect, type Accessor } from "solid-js";
-import { startAudioLevel, stopAudioLevel } from "@/lib/audio-level";
+import { createEffect, onCleanup, type Accessor } from "solid-js";
+import { startAudioLevel, stopAudioLevel, getLevel } from "@/lib/audio-level";
 
-const BAR_COUNT = 20;
+const BAR_COUNT = 28;
+const BAR_WIDTH = 2.5;
+const BAR_GAP = 1.5;
+const MIN_BAR_H = 2;
+const HEIGHT = 16;
+const TOTAL_W = BAR_COUNT * (BAR_WIDTH + BAR_GAP);
+const PUSH_INTERVAL = 80;
 
 /** Props for the {@link AudioWaveform} component. */
 interface Props {
@@ -9,26 +15,84 @@ interface Props {
   micDeviceId: Accessor<string>;
 }
 
-/** Real-time microphone audio level visualizer rendered as vertical bars. */
+/** Scrolling WhatsApp-style waveform — new levels push in from the right. */
 export default function AudioWaveform(props: Props) {
-  const [bars, setBars] = createSignal<number[]>(Array.from({ length: BAR_COUNT }, () => 0));
+  let canvas!: HTMLCanvasElement;
+  let ctx: CanvasRenderingContext2D | null = null;
+  let pushTimer: ReturnType<typeof setInterval> | null = null;
+
+  // Ring buffer
+  const ring = new Float32Array(BAR_COUNT);
+  let head = 0;
+
+  function draw() {
+    if (!ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const midY = (HEIGHT * dpr) / 2;
+    const maxBarH = HEIGHT - 2;
+
+    for (let i = 0; i < BAR_COUNT; i++) {
+      const level = ring[(head + i) % BAR_COUNT];
+      const barH = Math.max(MIN_BAR_H, level * maxBarH) * dpr;
+      const x = i * (BAR_WIDTH + BAR_GAP) * dpr;
+      const y = midY - barH / 2;
+      const w = BAR_WIDTH * dpr;
+
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, barH, w / 2);
+      ctx.fill();
+    }
+  }
+
+  function tick() {
+    ring[head] = getLevel();
+    head = (head + 1) % BAR_COUNT;
+    draw();
+  }
 
   createEffect(() => {
     if (props.active()) {
-      startAudioLevel(props.micDeviceId() || undefined, BAR_COUNT, setBars).catch(() => {});
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = TOTAL_W * dpr;
+      canvas.height = HEIGHT * dpr;
+
+      ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      ctx.fillStyle =
+        getComputedStyle(document.documentElement).getPropertyValue("--text-3").trim() || "#888";
+
+      ring.fill(0);
+      head = 0;
+
+      startAudioLevel(props.micDeviceId() || undefined).catch(() => {});
+      pushTimer = setInterval(tick, PUSH_INTERVAL);
     } else {
-      stopAudioLevel();
-      setBars(Array.from({ length: BAR_COUNT }, () => 0));
+      cleanup();
+      ring.fill(0);
+      head = 0;
+      draw();
     }
   });
 
-  onCleanup(() => stopAudioLevel());
+  function cleanup() {
+    if (pushTimer !== null) {
+      clearInterval(pushTimer);
+      pushTimer = null;
+    }
+    stopAudioLevel();
+  }
+
+  onCleanup(cleanup);
 
   return (
-    <div class="flex items-center gap-[1.5px] h-4" aria-hidden="true">
-      {bars().map((level) => (
-        <div class="w-[2px] rounded-full bg-tx-3" style={{ height: `${level * 100}%` }} />
-      ))}
-    </div>
+    <canvas
+      ref={canvas}
+      style={{ width: `${TOTAL_W}px`, height: `${HEIGHT}px` }}
+      aria-hidden="true"
+    />
   );
 }

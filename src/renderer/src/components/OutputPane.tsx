@@ -99,7 +99,10 @@ export default function OutputPane(props: OutputPaneProps) {
             </div>
           }
         >
-          <div style={{ height: `${vl.virtualizer.getTotalSize()}px`, position: "relative" }}>
+          <div
+            class="border-l-2 border-l-border-lit ml-0"
+            style={{ height: `${vl.virtualizer.getTotalSize()}px`, position: "relative" }}
+          >
             <For each={vl.virtualizer.getVirtualItems()}>
               {(vItem) => {
                 const entry = createMemo(() => props.entries()[vItem.index]);
@@ -107,7 +110,7 @@ export default function OutputPane(props: OutputPaneProps) {
                   <div
                     data-index={vItem.index}
                     ref={vl.virtualizer.measureElement}
-                    class="flex items-center border-l-2 border-l-border-lit pl-2 py-0.5 min-h-7 absolute top-0 left-0 w-full"
+                    class="flex items-center pl-2 py-0.5 min-h-7 absolute top-0 left-0 w-full"
                     style={{ transform: `translateY(${vItem.start}px)` }}
                   >
                     <span class="text-[10px] font-mono text-tx-4 mr-2 tabular-nums shrink-0">

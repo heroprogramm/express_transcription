@@ -1,5 +1,5 @@
 import { ipcMain, systemPreferences, shell } from "electron";
-import { type AppConfig, saveConfigFields, loadConfig } from "./config";
+import { type AppConfig, saveConfigFields } from "./config";
 import { getApiKey, saveApiKey, hasApiKey } from "./store";
 import { startSession, stopSession, logTranslation } from "./session";
 import { startMetricsCollection, stopMetricsCollection } from "./metrics";
@@ -38,10 +38,9 @@ export function registerIpcHandlers(
       if (typeof f.model === "string") updates.model = f.model;
       if (typeof f.feed_delay_seconds === "number")
         updates.feed_delay_seconds = f.feed_delay_seconds;
-      saveConfigFields(updates);
-      const result = loadConfig();
+      const result = saveConfigFields(updates);
       setConfig(result.config);
-      return { config: result.config, warnings: result.warnings };
+      return result;
     },
   );
 

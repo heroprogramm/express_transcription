@@ -64,10 +64,10 @@ export function loadConfig(): ConfigResult {
   return { config, warnings: [] };
 }
 
-/** Merges partial config updates (model, feed delay) into the current config and persists. */
+/** Merges partial config updates (model, feed delay) into the current config, persists, and returns the result. */
 export function saveConfigFields(
   fields: Partial<{ model: string; feed_delay_seconds: number }>,
-): void {
+): ConfigResult {
   const { config } = loadConfig();
 
   if (fields.model !== undefined) {
@@ -78,6 +78,7 @@ export function saveConfigFields(
   }
 
   saveStoredConfig(config);
+  return { config, warnings: [] };
 }
 
 /** Default configuration values used when no stored config exists or validation fails. */

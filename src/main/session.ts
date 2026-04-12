@@ -23,7 +23,7 @@ async function flushFeed(): Promise<void> {
   feedBuffer = [];
   const tmp = `${feedPath}.tmp`;
   try {
-    await fsp.writeFile(tmp, snapshot[snapshot.length - 1]);
+    await fsp.writeFile(tmp, snapshot.join(""));
   } catch (err) {
     log(LogLevel.Error, "session:feed-write-failed", {
       message: err instanceof Error ? err.message : String(err),

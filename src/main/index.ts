@@ -67,6 +67,7 @@ app.whenReady().then(() => {
       await readFile(join(__dirname, "..", "..", "package.json"), "utf-8"),
     ) as { author?: { name?: string; email?: string }; homepage?: string };
     const isMac = process.platform === "darwin";
+    const aboutDetail = `Real-time speech transcription and translation.\n\nBy ${pkg.author?.name ?? ""}${pkg.author?.email ? `\n${pkg.author.email}` : ""}${pkg.homepage ? `\n${pkg.homepage}` : ""}`;
     const template: Electron.MenuItemConstructorOptions[] = [
       ...(isMac
         ? [
@@ -81,7 +82,7 @@ app.whenReady().then(() => {
                       type: "info",
                       title: `About ${app.name}`,
                       message: `${app.name} v${app.getVersion()}`,
-                      detail: `Real-time speech transcription and translation.\n\nBy ${pkg.author?.name ?? ""}${pkg.author?.email ? `\n${pkg.author.email}` : ""}${pkg.homepage ? `\n${pkg.homepage}` : ""}`,
+                      detail: aboutDetail,
                     });
                   },
                 },
@@ -167,7 +168,7 @@ app.whenReady().then(() => {
                       type: "info",
                       title: "About ExpressText",
                       message: `ExpressText v${app.getVersion()}`,
-                      detail: `Real-time speech transcription and translation.\n\nBy ${pkg.author?.name ?? ""}${pkg.author?.email ? `\n${pkg.author.email}` : ""}${pkg.homepage ? `\n${pkg.homepage}` : ""}`,
+                      detail: aboutDetail,
                     });
                   },
                 },
