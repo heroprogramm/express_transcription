@@ -1,9 +1,9 @@
-import { createEffect, createMemo, createSignal, type Accessor } from "solid-js";
+import { createMemo, type Accessor } from "solid-js";
 
 /** Props for the {@link StatsBar} component. */
 interface Props {
   latency: Accessor<string>;
-  words: Accessor<number>;
+  lines: Accessor<number>;
   uptime: Accessor<string>;
   live: Accessor<boolean>;
 }
@@ -26,35 +26,13 @@ function deriveQuality(latencyStr: string): Quality {
   return "poor";
 }
 
-function Stat(props: { label: string; value: Accessor<string | number>; live: boolean }) {
-  const [flash, setFlash] = createSignal(false);
-  let initial = true;
-
-  createEffect(() => {
-    props.value();
-    if (initial) {
-      initial = false;
-      return;
-    }
-    if (!props.live) return;
-    setFlash(true);
-    setTimeout(() => setFlash(false), 400);
-  });
-
+function Stat(props: { label: string; value: Accessor<string | number> }) {
   return (
-    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all duration-300 bg-surface">
+    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface">
       <span class="text-[10px] font-semibold text-tx-4 tracking-wider uppercase select-none">
         {props.label}
       </span>
-      <span
-        class="text-[12px] font-bold tabular-nums transition-colors duration-300"
-        classList={{
-          "text-tx": !flash(),
-          "text-violet": flash(),
-        }}
-      >
-        {props.value()}
-      </span>
+      <span class="text-[12px] font-bold tabular-nums text-tx">{props.value()}</span>
     </div>
   );
 }
@@ -66,9 +44,9 @@ export default function StatsBar(props: Props) {
 
   return (
     <div class="flex items-center gap-2">
-      <Stat label="Latency" value={props.latency} live={props.live()} />
-      <Stat label="Words" value={() => props.words()} live={props.live()} />
-      <Stat label="Uptime" value={props.uptime} live={props.live()} />
+      <Stat label="Latency" value={props.latency} />
+      <Stat label="Lines" value={() => props.lines()} />
+      <Stat label="Uptime" value={props.uptime} />
       <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface">
         <span class="text-[10px] font-semibold text-tx-4 tracking-wider uppercase select-none">
           Signal

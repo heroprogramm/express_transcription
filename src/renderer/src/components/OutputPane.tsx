@@ -10,7 +10,6 @@ const ITEM_HEIGHT = 32;
 /** Props for the {@link OutputPane} component. */
 interface OutputPaneProps {
   entries: Accessor<TranslationEntry[]>;
-  wordCount: Accessor<number>;
 }
 
 /** Virtualized read-only pane showing confirmed translations sent to the output feed. */

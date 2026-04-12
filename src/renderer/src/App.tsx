@@ -262,7 +262,7 @@ export default function App() {
 
           <StatsBar
             latency={entries.latency}
-            words={entries.words}
+            lines={() => entries.sentEntries().length}
             uptime={uptime}
             live={running}
           />
@@ -333,7 +333,7 @@ export default function App() {
         <ResizeHandle direction="vertical" onResize={onVResize} />
 
         <div style={{ flex: String(100 - vSplit()) }} class="min-h-0 flex flex-col">
-          <OutputPane entries={entries.sentEntries} wordCount={entries.words} />
+          <OutputPane entries={entries.sentEntries} />
         </div>
       </div>
 
