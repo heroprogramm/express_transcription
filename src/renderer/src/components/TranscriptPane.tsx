@@ -187,8 +187,10 @@ function TranslationEntryRow(props: {
 
   function handleKeyDown(e: KeyboardEvent): void {
     if (e.key === "Enter") {
+      e.stopPropagation();
       props.onSaveEdit(props.entry.id, editText());
     } else if (e.key === "Escape") {
+      e.stopPropagation();
       cancelled = true;
       props.onCancelEdit(props.entry.id);
     }
