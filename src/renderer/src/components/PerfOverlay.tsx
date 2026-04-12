@@ -8,7 +8,7 @@ function formatMB(bytes: number): string {
 function statusColor(value: number, warn: number, crit: number): string {
   if (value >= crit) return "text-red";
   if (value >= warn) return "text-steel";
-  return "text-burgundy";
+  return "text-violet";
 }
 
 function Metric(props: { label: string; value: string; colorClass?: string }) {
@@ -91,7 +91,7 @@ export default function PerfOverlay(props: Props) {
         <Metric
           label="Audio"
           value={audio().active ? "OK" : audio().state}
-          colorClass={audio().active ? "text-burgundy" : "text-red"}
+          colorClass={audio().active ? "text-violet" : "text-red"}
         />
 
         <Metric label="Latency" value={props.latency()} />

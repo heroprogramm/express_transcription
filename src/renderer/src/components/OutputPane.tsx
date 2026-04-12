@@ -80,12 +80,12 @@ export default function OutputPane(props: OutputPaneProps) {
                   height="24"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="var(--text-3)"
+                  stroke="#50b880"
                   stroke-width="1"
                 >
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                   <polyline points="14 2 14 8 20 8" />
-                  <path class="checkmark-draw" d="M9 15l2 2 4-4" />
+                  <path class="checkmark-loop" d="M9 15l2 2 4-4" />
                 </svg>
               </div>
               <div class="text-center">

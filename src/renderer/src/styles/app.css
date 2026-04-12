@@ -50,8 +50,8 @@
   --color-border-focus: var(--border-focus);
   --color-steel: var(--steel);
   --color-steel-soft: var(--steel-soft);
-  --color-burgundy: var(--burgundy);
-  --color-burgundy-soft: var(--burgundy-soft);
+  --color-violet: var(--violet);
+  --color-violet-soft: var(--violet-soft);
   --color-green: var(--green);
   --color-green-soft: var(--green-soft);
   --color-red: var(--red);
@@ -80,10 +80,10 @@
   --steel-soft: #5a7090;
   --steel-glow: rgba(112, 136, 168, 0.1);
   --steel-faint: rgba(112, 136, 168, 0.04);
-  --burgundy: #a63028;
-  --burgundy-soft: #8a2720;
-  --burgundy-glow: rgba(166, 48, 40, 0.1);
-  --burgundy-faint: rgba(166, 48, 40, 0.04);
+  --violet: #5a3d8a;
+  --violet-soft: #4a3270;
+  --violet-glow: rgba(90, 61, 138, 0.1);
+  --violet-faint: rgba(90, 61, 138, 0.04);
   --green: #2d8a5e;
   --green-soft: #247048;
   --green-glow: rgba(45, 138, 94, 0.12);
@@ -114,10 +114,10 @@
   --steel-soft: #405570;
   --steel-glow: rgba(80, 104, 128, 0.1);
   --steel-faint: rgba(80, 104, 128, 0.04);
-  --burgundy: #8a2720;
-  --burgundy-soft: #701e18;
-  --burgundy-glow: rgba(138, 39, 32, 0.1);
-  --burgundy-faint: rgba(138, 39, 32, 0.04);
+  --violet: #4a3270;
+  --violet-soft: #3a2558;
+  --violet-glow: rgba(74, 50, 112, 0.1);
+  --violet-faint: rgba(74, 50, 112, 0.04);
   --green: #247048;
   --green-soft: #1d5c3b;
   --green-glow: rgba(36, 112, 72, 0.12);
@@ -136,7 +136,7 @@
 
 /* ── Base ─────────────────────────────────────────────────────── */
 ::selection {
-  background: color-mix(in srgb, var(--burgundy) 20%, transparent);
+  background: color-mix(in srgb, var(--violet) 20%, transparent);
   color: var(--text);
 }
 
@@ -479,6 +479,21 @@ body.theme-transitioning h2 {
   stroke-dasharray: 10;
   animation: drawCheck 0.4s ease-out 0.3s both;
 }
+@keyframes checkLoop {
+  0%,
+  70%,
+  100% {
+    stroke-dashoffset: 10;
+  }
+  40%,
+  60% {
+    stroke-dashoffset: 0;
+  }
+}
+.checkmark-loop {
+  stroke-dasharray: 10;
+  animation: checkLoop 2.5s ease-in-out infinite;
+}
 
 /* ── Keyboard Hints ─────────────────────────────────────────── */
 .kbd {
@@ -533,8 +548,8 @@ body.theme-transitioning h2 {
   }
 }
 .waveform-bar-enhanced {
-  animation: waveEnhanced 2s ease-in-out infinite;
-  transform-origin: bottom;
+  animation: waveEnhanced 2.5s ease-in-out infinite;
+  transform-origin: center;
 }
 
 /* ── Toast Notifications ─────────────────────────────────────── */

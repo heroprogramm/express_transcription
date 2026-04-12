@@ -19,13 +19,14 @@ function SpeechEmpty() {
   return (
     <div class="flex flex-col items-center justify-center h-full -mt-12 gap-4">
       <div class="empty-state-icon">
-        <div class="flex items-end gap-[3px] h-6">
-          {[0.5, 0.8, 0.4, 1, 0.6, 0.9, 0.3].map((h, i) => (
+        <div class="flex items-center gap-[3px] h-6">
+          {[0.3, 0.5, 0.8, 1, 0.8, 0.5, 0.3].map((h, i) => (
             <div
-              class="waveform-bar-enhanced w-[3px] rounded-full bg-tx-3"
+              class="waveform-bar-enhanced w-[3px] rounded-full"
               style={{
                 height: `${h * 100}%`,
                 "animation-delay": `${i * 0.25}s`,
+                background: "#50a0d0",
               }}
             />
           ))}
@@ -44,12 +45,12 @@ function TranslationEmpty() {
     <div class="flex flex-col items-center justify-center h-full -mt-12 gap-4">
       <div class="empty-state-icon">
         <svg
-          class="animate-[spin_20s_linear_infinite]"
+          class="animate-[spin_10s_linear_infinite]"
           width="28"
           height="28"
           viewBox="0 0 24 24"
           fill="none"
-          stroke="var(--burgundy)"
+          stroke="var(--violet)"
           stroke-width="1"
         >
           <circle cx="12" cy="12" r="10" />

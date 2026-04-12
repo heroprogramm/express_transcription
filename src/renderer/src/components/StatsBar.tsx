@@ -50,7 +50,7 @@ function Stat(props: { label: string; value: Accessor<string | number>; live: bo
         class="text-[12px] font-bold tabular-nums transition-colors duration-300"
         classList={{
           "text-tx": !flash(),
-          "text-burgundy": flash(),
+          "text-violet": flash(),
         }}
       >
         {props.value()}
