@@ -67,7 +67,7 @@ app.whenReady().then(() => {
       await readFile(join(__dirname, "..", "..", "package.json"), "utf-8"),
     ) as { author?: { name?: string; email?: string }; homepage?: string };
     const isMac = process.platform === "darwin";
-    const aboutDetail = `Real-time speech transcription and translation.\n\nBy ${pkg.author?.name ?? ""}${pkg.author?.email ? `\n${pkg.author.email}` : ""}${pkg.homepage ? `\n${pkg.homepage}` : ""}`;
+    const aboutDetail = `AI-powered real-time speech transcription and translation.\n\nBy ${pkg.author?.name ?? ""}${pkg.author?.email ? `\n${pkg.author.email}` : ""}${pkg.homepage ? `\n${pkg.homepage}` : ""}`;
     const template: Electron.MenuItemConstructorOptions[] = [
       ...(isMac
         ? [

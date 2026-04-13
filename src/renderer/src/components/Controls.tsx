@@ -34,7 +34,7 @@ export default function Controls(props: Props) {
   });
 
   return (
-    <div class="flex items-center justify-between h-13 px-5 bg-raised border-b border-border shrink-0 controls-bar">
+    <div class="flex items-center justify-between h-13 px-3 pt-3 shrink-0">
       <div class="flex items-center gap-2.5">
         <label
           for="mic-select"

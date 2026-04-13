@@ -291,16 +291,13 @@ export default function App() {
         </div>
       </header>
 
-      <div class="stagger-2">
+      <div ref={containerRef} class="stagger-2 flex flex-col flex-1 min-h-0 bg-bg">
         <Controls
           running={running}
           onStart={handleStart}
           onStop={handleStop}
           onClear={entries.clear}
         />
-      </div>
-
-      <div ref={containerRef} class="stagger-3 flex flex-col flex-1 min-h-0 bg-bg">
         <main
           ref={mainRef}
           class="flex min-h-0 overflow-hidden pt-3 px-3 gap-0"

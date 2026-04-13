@@ -28,13 +28,13 @@ function SpeechEmpty() {
         </div>
       </div>
       <div class="text-center">
-        <p class="font-ui text-[14px] font-medium text-tx-3">Waiting for audio input</p>
+        <p class="font-ui text-[14px] font-medium text-tx-3">AI-powered transcription</p>
         <p class="font-ui text-[12px] text-tx-4 mt-1.5">
           Press{" "}
           <kbd class="inline-block px-1.5 py-0.5 rounded bg-surface border border-border text-tx-3 font-semibold text-[11px]">
             Start
           </kbd>{" "}
-          to begin transcription
+          to begin
         </p>
       </div>
     </div>
