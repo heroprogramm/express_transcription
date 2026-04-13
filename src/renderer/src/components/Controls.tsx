@@ -1,5 +1,5 @@
-import { createSignal, onMount, onCleanup, type Accessor } from "solid-js";
-import { Play, Square, ChevronDown, Trash2 } from "lucide-solid";
+import { createSignal, onMount, onCleanup, Show, type Accessor } from "solid-js";
+import { Play, Square, ChevronDown, Trash2, Mic } from "lucide-solid";
 import Button from "@/components/Button";
 
 /** Props for the {@link Controls} component. */
@@ -14,6 +14,20 @@ interface Props {
 export default function Controls(props: Props) {
   const [mics, setMics] = createSignal<MediaDeviceInfo[]>([]);
   const [selectedMic, setSelectedMic] = createSignal("");
+  const [open, setOpen] = createSignal(false);
+  let dropdownRef!: HTMLDivElement;
+
+  const selectedLabel = () => {
+    const id = selectedMic();
+    if (!id) return "Default";
+    const mic = mics().find((m) => m.deviceId === id);
+    return mic?.label || "Microphone";
+  };
+
+  function select(deviceId: string) {
+    setSelectedMic(deviceId);
+    setOpen(false);
+  }
 
   async function populateMics() {
     const devices = await navigator.mediaDevices.enumerateDevices();
@@ -24,39 +38,60 @@ export default function Controls(props: Props) {
     populateMics().catch(() => {});
   }
 
+  function handleClickOutside(e: MouseEvent) {
+    if (open() && !dropdownRef.contains(e.target as Node)) {
+      setOpen(false);
+    }
+  }
+
   onMount(() => {
     populateMics().catch(() => {});
     navigator.mediaDevices.addEventListener("devicechange", handleDeviceChange);
+    document.addEventListener("mousedown", handleClickOutside);
   });
 
   onCleanup(() => {
     navigator.mediaDevices.removeEventListener("devicechange", handleDeviceChange);
+    document.removeEventListener("mousedown", handleClickOutside);
   });
 
   return (
     <div class="flex items-center justify-between h-13 px-3 pt-3 shrink-0">
-      <div class="flex items-center gap-2.5">
-        <label
-          for="mic-select"
-          class="text-[11px] font-semibold text-tx-4 tracking-wider uppercase whitespace-nowrap"
+      <div ref={dropdownRef} class="relative flex items-center gap-2.5">
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 bg-surface text-tx border border-border rounded-md pl-2.5 pr-2 py-[5px] text-[13px] font-ui font-semibold cursor-pointer outline-none min-w-[280px] transition-all hover:bg-hover hover:border-border-lit focus:border-border-focus focus:shadow-[0_0_0_3px_var(--border)] disabled:opacity-30 disabled:cursor-not-allowed"
+          disabled={props.running()}
+          onClick={() => setOpen((v) => !v)}
         >
-          Mic
-        </label>
-        <div class="relative inline-flex items-center">
-          <select
-            id="mic-select"
-            class="appearance-none bg-surface text-tx border border-border rounded-md px-2.5 py-[5px] pr-8 text-[13px] font-ui font-semibold cursor-pointer outline-none min-w-[130px] transition-all hover:bg-hover hover:border-border-lit focus:border-border-focus focus:shadow-[0_0_0_3px_var(--border)] disabled:opacity-30 disabled:cursor-not-allowed"
-            disabled={props.running()}
-            value={selectedMic()}
-            onChange={(e) => setSelectedMic(e.currentTarget.value)}
-          >
-            <option value="">Default</option>
+          <Mic size={13} class="shrink-0 text-tx-3" />
+          <span class="truncate flex-1 text-left">{selectedLabel()}</span>
+          <ChevronDown
+            size={13}
+            class={`shrink-0 text-tx-4 transition-transform ${open() ? "rotate-180" : ""}`}
+          />
+        </button>
+
+        <Show when={open()}>
+          <div class="absolute top-full left-0 mt-1 z-50 min-w-[220px] max-h-[200px] overflow-y-auto rounded-lg border border-border-lit bg-surface shadow-lg py-1">
+            <button
+              type="button"
+              class={`w-full text-left px-3 py-1.5 text-[13px] font-ui cursor-pointer transition-colors hover:bg-hover ${selectedMic() === "" ? "text-accent font-semibold" : "text-tx"}`}
+              onClick={() => select("")}
+            >
+              Default
+            </button>
             {mics().map((mic, i) => (
-              <option value={mic.deviceId}>{mic.label || `Microphone ${i + 1}`}</option>
+              <button
+                type="button"
+                class={`w-full text-left px-3 py-1.5 text-[13px] font-ui cursor-pointer transition-colors hover:bg-hover ${selectedMic() === mic.deviceId ? "text-accent font-semibold" : "text-tx"}`}
+                onClick={() => select(mic.deviceId)}
+              >
+                {mic.label || `Microphone ${i + 1}`}
+              </button>
             ))}
-          </select>
-          <ChevronDown class="absolute right-2 w-3.5 h-3.5 text-tx-4 pointer-events-none" />
-        </div>
+          </div>
+        </Show>
       </div>
 
       <div class="flex items-center gap-1.5">

@@ -127,6 +127,10 @@
 }
 
 /* ── Base ─────────────────────────────────────────────────────── */
+*:focus {
+  outline: none;
+}
+
 ::selection {
   background: color-mix(in srgb, var(--violet) 20%, transparent);
   color: var(--text);
