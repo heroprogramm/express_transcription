@@ -107,8 +107,10 @@ export function SpeechPane(props: SpeechPaneProps) {
                 const entry = createMemo(() => props.entries()[vItem.index]);
                 return (
                   <div
-                    data-index={vItem.index}
-                    ref={vl.virtualizer.measureElement}
+                    ref={(el) => {
+                      el.setAttribute("data-index", `${vItem.index}`);
+                      vl.virtualizer.measureElement(el);
+                    }}
                     class="flex items-center gap-3.5 py-1.5 absolute top-0 left-0 w-full"
                     style={{ transform: `translateY(${vItem.start}px)` }}
                   >
@@ -299,8 +301,10 @@ export function TranslationPane(props: TransPaneProps) {
 
                 return (
                   <div
-                    data-index={vItem.index}
-                    ref={vl.virtualizer.measureElement}
+                    ref={(el) => {
+                      el.setAttribute("data-index", `${vItem.index}`);
+                      vl.virtualizer.measureElement(el);
+                    }}
                     class="absolute top-0 left-0 w-full"
                     style={{
                       transform: `translateY(${vItem.start}px)`,

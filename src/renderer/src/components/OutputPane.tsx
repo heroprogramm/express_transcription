@@ -110,8 +110,10 @@ export default function OutputPane(props: OutputPaneProps) {
                 const entry = createMemo(() => props.entries()[vItem.index]);
                 return (
                   <div
-                    data-index={vItem.index}
-                    ref={vl.virtualizer.measureElement}
+                    ref={(el) => {
+                      el.setAttribute("data-index", `${vItem.index}`);
+                      vl.virtualizer.measureElement(el);
+                    }}
                     class={`flex items-center pl-3.5 py-0.5 min-h-7 absolute top-0 left-0 w-full ${vItem.index % 2 === 1 ? "bg-[var(--bg-surface)]/40" : ""}`}
                     style={{ transform: `translateY(${vItem.start}px)` }}
                   >
