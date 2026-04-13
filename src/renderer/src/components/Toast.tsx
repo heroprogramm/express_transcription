@@ -52,14 +52,18 @@ export default function ToastContainer() {
   });
 
   return (
-    <div class="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 max-w-[420px]">
+    <div
+      class="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 max-w-[420px]"
+      aria-live="assertive"
+      aria-atomic="false"
+    >
       <For each={toasts()}>
         {(toast) => (
           <div
             class={`toast-item flex items-start gap-3 px-4 py-3 rounded-md border shadow-lg backdrop-blur-sm cursor-pointer font-ui text-[13px] leading-snug ${
               toast.dismissing ? "toast-out" : "toast-in"
             } ${TOAST_STYLES[toast.type]}`}
-            role="button"
+            role="alert"
             tabIndex={0}
             onKeyDown={(e: KeyboardEvent) => {
               if (e.key === "Enter" || e.key === " ") {

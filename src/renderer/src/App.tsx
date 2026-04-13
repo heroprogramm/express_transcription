@@ -1,4 +1,4 @@
-import { createSignal, createMemo, onMount, onCleanup, Show, lazy } from "solid-js";
+import { createSignal, createMemo, onMount, onCleanup, Show, lazy, ErrorBoundary } from "solid-js";
 import { Settings } from "lucide-solid";
 import type { AppConfig } from "@/lib/types";
 import {
@@ -321,7 +321,8 @@ export default function App() {
             <TranslationPane
               entries={entries.transEntries}
               live={running}
-              feedDelayMs={feedDelayMs}
+              tick={entries.tick}
+              feedDelayMs={entries.feedDelayMs}
               onStartEdit={entries.startEdit}
               onSaveEdit={entries.saveEdit}
               onCancelEdit={entries.cancelEdit}
@@ -340,27 +341,31 @@ export default function App() {
       <ToastContainer />
 
       <Show when={showSettings()}>
-        <SettingsModal
-          config={config()}
-          onClose={() => setShowSettings(false)}
-          onSaved={(c) => setConfig(c)}
-        />
+        <ErrorBoundary fallback={() => setShowSettings(false)}>
+          <SettingsModal
+            config={config()}
+            onClose={() => setShowSettings(false)}
+            onSaved={(c) => setConfig(c)}
+          />
+        </ErrorBoundary>
       </Show>
 
       <Show when={perf.enabled()}>
-        <PerfOverlay
-          fps={perf.fps}
-          ipcRtt={perf.ipcRtt}
-          mainCpu={perf.mainCpu}
-          rendererCpu={perf.rendererCpu}
-          mainMemory={perf.mainMemory}
-          rendererMemory={perf.rendererMemory}
-          eventLoopLag={perf.eventLoopLag}
-          latency={entries.latency}
-          words={entries.words}
-          uptime={uptime}
-          onClose={perf.toggle}
-        />
+        <ErrorBoundary fallback={() => perf.toggle()}>
+          <PerfOverlay
+            fps={perf.fps}
+            ipcRtt={perf.ipcRtt}
+            mainCpu={perf.mainCpu}
+            rendererCpu={perf.rendererCpu}
+            mainMemory={perf.mainMemory}
+            rendererMemory={perf.rendererMemory}
+            eventLoopLag={perf.eventLoopLag}
+            latency={entries.latency}
+            words={entries.words}
+            uptime={uptime}
+            onClose={perf.toggle}
+          />
+        </ErrorBoundary>
       </Show>
     </>
   );

@@ -73,16 +73,29 @@ export function registerIpcHandlers(
   ipcMain.handle("stop-session", () => stopSession());
 
   ipcMain.handle("log-translation", (_event, timestamp: unknown, text: unknown) => {
-    if (typeof timestamp !== "string" || typeof text !== "string") return;
-    if (timestamp.length > 20 || text.length > 10_000) return;
+    if (typeof timestamp !== "string" || typeof text !== "string") {
+      throw new Error("log-translation: timestamp and text must be strings");
+    }
+    if (timestamp.length > 20 || text.length > 10_000) {
+      throw new Error("log-translation: timestamp max 20 chars, text max 10000 chars");
+    }
     logTranslation(timestamp, text);
   });
 
   ipcMain.handle("log-translations-batch", (_event, batch: unknown) => {
-    if (!Array.isArray(batch)) return;
+    if (!Array.isArray(batch)) {
+      throw new Error("log-translations-batch: batch must be an array");
+    }
+    const valid: { ts: string; text: string }[] = [];
     for (const item of batch) {
       if (typeof item?.ts !== "string" || typeof item?.text !== "string") continue;
       if (item.ts.length > 20 || item.text.length > 10_000) continue;
+      valid.push({ ts: item.ts, text: item.text });
+    }
+    if (valid.length === 0 && batch.length > 0) {
+      throw new Error("log-translations-batch: all items failed validation");
+    }
+    for (const item of valid) {
       logTranslation(item.ts, item.text);
     }
   });

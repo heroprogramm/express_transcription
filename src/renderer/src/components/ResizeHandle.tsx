@@ -50,6 +50,9 @@ export default function ResizeHandle(props: ResizeHandleProps) {
         "h-3 cursor-row-resize hover:bg-hover": !isHorizontal(),
         "bg-surface": dragging(),
       }}
+      role="separator"
+      aria-orientation={isHorizontal() ? "vertical" : "horizontal"}
+      aria-label={`Resize ${isHorizontal() ? "columns" : "rows"}`}
       onPointerDown={onPointerDown}
     >
       <div

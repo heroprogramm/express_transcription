@@ -1,10 +1,7 @@
 import { getStoredConfig, saveStoredConfig } from "./store";
+import type { AppConfig, ConfigResult } from "../shared/types";
 
-/** Application configuration covering Soniox STT settings and output paths. */
-export interface AppConfig {
-  soniox: { language: string; model: string; translate_to: string };
-  output: { feed_file: string; session_log_dir: string; feed_delay_seconds: number };
-}
+export type { AppConfig, ConfigResult };
 
 const DEFAULT_CONFIG: AppConfig = {
   soniox: { language: "ur", model: "stt-rt-v4", translate_to: "en" },
@@ -37,12 +34,6 @@ function validateConfig(config: AppConfig): string[] {
   return errors;
 }
 
-/** Result of loading config: the resolved config plus any validation warnings. */
-export interface ConfigResult {
-  config: AppConfig;
-  warnings: string[];
-}
-
 /** Loads config from the persistent store, falling back to defaults on missing or invalid values. */
 export function loadConfig(): ConfigResult {
   const stored = getStoredConfig();
@@ -57,6 +48,7 @@ export function loadConfig(): ConfigResult {
 
   const errors = validateConfig(config);
   if (errors.length > 0) {
+    // oxlint-disable-next-line no-console -- startup warning before logger is available
     console.warn(`[config] Invalid stored config, using defaults: ${errors.join("; ")}`);
     return { config: DEFAULT_CONFIG, warnings: errors };
   }

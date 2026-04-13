@@ -72,6 +72,9 @@ export default function SettingsModal(props: Props) {
   return (
     <div
       class="fixed inset-0 z-[1000] bg-bg/80 backdrop-blur-sm flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Settings"
       onClick={(e) => {
         if (e.target === e.currentTarget) props.onClose();
       }}

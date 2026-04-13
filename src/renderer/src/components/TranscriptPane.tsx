@@ -1,12 +1,4 @@
-import {
-  createEffect,
-  createMemo,
-  createSignal,
-  onCleanup,
-  For,
-  Show,
-  type Accessor,
-} from "solid-js";
+import { createMemo, createSignal, For, Show, type Accessor } from "solid-js";
 import { Check, X } from "lucide-solid";
 import { EntryStatus, type TranscriptEntry, type TranslationEntry } from "@/lib/types";
 import { useVirtualList } from "@/lib/virtual-list";
@@ -145,6 +137,7 @@ export function SpeechPane(props: SpeechPaneProps) {
 interface TransPaneProps {
   entries: Accessor<TranslationEntry[]>;
   live: Accessor<boolean>;
+  tick: Accessor<number>;
   feedDelayMs: () => number;
   onStartEdit: (id: number) => void;
   onSaveEdit: (id: number, text: string) => void;
@@ -155,6 +148,7 @@ interface TransPaneProps {
 function TranslationEntryRow(props: {
   entry: TranslationEntry;
   isNew: boolean;
+  tick: Accessor<number>;
   feedDelayMs: () => number;
   onStartEdit: (id: number) => void;
   onSaveEdit: (id: number, text: string) => void;
@@ -162,38 +156,16 @@ function TranslationEntryRow(props: {
   onEditChange: (id: number, text: string) => void;
 }) {
   const [editText, setEditText] = createSignal(props.entry.text);
-  const [remaining, setRemaining] = createSignal(0);
 
   const isPending = () => props.entry.status === EntryStatus.Pending;
   const isEditing = () => props.entry.status === EntryStatus.Editing;
   const isConfirmed = () => props.entry.status === EntryStatus.Confirmed;
   const isSent = () => props.entry.status === EntryStatus.Sent;
 
-  let countdownInterval: ReturnType<typeof setInterval> | undefined;
-
-  function startCountdown() {
-    updateRemaining();
-    countdownInterval = setInterval(updateRemaining, 500);
-  }
-
-  function updateRemaining() {
-    const elapsed = Date.now() - props.entry.createdAt;
-    const left = Math.max(0, Math.ceil((props.feedDelayMs() - elapsed) / 1000));
-    setRemaining(left);
-  }
-
-  createEffect(() => {
-    if (isPending()) {
-      startCountdown();
-    } else if (countdownInterval) {
-      clearInterval(countdownInterval);
-      countdownInterval = undefined;
-    }
-  });
-
-  onCleanup(() => {
-    if (countdownInterval) clearInterval(countdownInterval);
-  });
+  const remaining = () => {
+    const now = props.tick();
+    return Math.max(0, Math.ceil((props.feedDelayMs() - (now - props.entry.createdAt)) / 1000));
+  };
 
   let cancelled = false;
 
@@ -338,6 +310,7 @@ export function TranslationPane(props: TransPaneProps) {
                     <TranslationEntryRow
                       entry={entry()}
                       isNew={Date.now() - entry().createdAt < 1000}
+                      tick={props.tick}
                       feedDelayMs={props.feedDelayMs}
                       onStartEdit={props.onStartEdit}
                       onSaveEdit={props.onSaveEdit}

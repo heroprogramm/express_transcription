@@ -26,6 +26,7 @@ export function onAppError(handler: ErrorHandler): () => void {
 export function reportError(category: ErrorCategory, message: string, original?: unknown): void {
   const error: AppError = { category, message, original };
 
+  // oxlint-disable-next-line no-console -- centralized error reporter
   console.error(`[${category}]`, message, original ?? "");
 
   for (const handler of listeners) {

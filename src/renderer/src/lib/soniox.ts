@@ -22,6 +22,17 @@ export interface SonioxCallbacks {
   onStateChange: (state: "started" | "stopped" | "loading" | "reconnecting") => void;
 }
 
+// ── State machine ──
+const SonioxState = {
+  Idle: "idle",
+  Connecting: "connecting",
+  Recording: "recording",
+  Stopping: "stopping",
+} as const;
+type SonioxState = (typeof SonioxState)[keyof typeof SonioxState];
+let state: SonioxState = SonioxState.Idle;
+const isInactive = () => state === SonioxState.Idle || state === SonioxState.Stopping;
+
 let client: SonioxClient | null = null;
 let recording: Recording | null = null;
 let startTime = 0;
@@ -35,7 +46,6 @@ let retryTimer: ReturnType<typeof setTimeout> | null = null;
 let activeConfig: AppConfig | null = null;
 let activeCallbacks: SonioxCallbacks | null = null;
 let activeMicDeviceId: string | undefined;
-let cancelled = false;
 
 // ── IPC batching ──
 let logQueue: { ts: string; text: string }[] = [];
@@ -108,9 +118,10 @@ function retryDelayMs(): number {
 }
 
 function attemptReconnect(): void {
-  if (cancelled || !activeConfig || !activeCallbacks) return;
+  if (isInactive() || !activeConfig || !activeCallbacks) return;
   if (retryCount >= MAX_RETRIES) {
     activeCallbacks.onError(`Connection lost after ${MAX_RETRIES} reconnection attempts`, false);
+    state = SonioxState.Idle;
     activeCallbacks.onStateChange("stopped");
     resetRetryState();
     return;
@@ -122,7 +133,7 @@ function attemptReconnect(): void {
 
   retryTimer = setTimeout(() => {
     retryTimer = null;
-    if (cancelled || !activeConfig || !activeCallbacks) return;
+    if (isInactive() || !activeConfig || !activeCallbacks) return;
     connectRecording(activeConfig, activeCallbacks, activeMicDeviceId);
   }, delay);
 }
@@ -165,7 +176,7 @@ function connectRecording(
   }
 
   function handleError(err: Error): void {
-    if (cancelled) return;
+    if (isInactive()) return;
 
     if (isTransientError(err) && retryCount < MAX_RETRIES) {
       attemptReconnect();
@@ -174,6 +185,7 @@ function connectRecording(
 
     const isApiKeyError = err instanceof AuthError || /no soniox api key/i.test(err.message);
     callbacks.onError(err.message, isApiKeyError);
+    state = SonioxState.Idle;
     callbacks.onStateChange("stopped");
     resetRetryState();
   }
@@ -196,11 +208,13 @@ function connectRecording(
     } else {
       startTime = Date.now();
     }
+    state = SonioxState.Recording;
     callbacks.onStateChange("started");
   });
   recording.on("result", handleResult);
   recording.on("finished", () => {
-    if (!cancelled && retryCount === 0) {
+    if (state === SonioxState.Recording && retryCount === 0) {
+      state = SonioxState.Idle;
       callbacks.onStateChange("stopped");
     }
   });
@@ -216,9 +230,10 @@ export async function startTranscription(
   callbacks: SonioxCallbacks,
   micDeviceId?: string,
 ): Promise<void> {
+  if (state !== SonioxState.Idle) return;
+  state = SonioxState.Connecting;
   callbacks.onStateChange("loading");
   wordCount = 0;
-  cancelled = false;
   resetRetryState();
 
   activeConfig = config;
@@ -251,30 +266,34 @@ function cleanup(): void {
 
 /** Gracefully stop the active recording and flush pending log entries. */
 export function stopTranscription(): void {
-  cancelled = true;
+  if (state === SonioxState.Idle) return;
+  state = SonioxState.Stopping;
   cleanup();
   if (recording) {
     recording.stop().catch(() => {});
     recording = null;
   }
   client = null;
+  state = SonioxState.Idle;
 }
 
 /** Immediately cancel the active recording without waiting for final results. */
 export function cancelTranscription(): void {
-  cancelled = true;
+  if (state === SonioxState.Idle) return;
+  state = SonioxState.Stopping;
   cleanup();
   if (recording) {
     recording.cancel();
     recording = null;
   }
   client = null;
+  state = SonioxState.Idle;
 }
 
 /** Return whether the microphone is actively recording and its current state. */
 export function getAudioHealth(): { active: boolean; state: RecordingState } {
   return {
-    active: recording?.state === "recording",
+    active: state === SonioxState.Recording,
     state: recording?.state ?? "idle",
   };
 }

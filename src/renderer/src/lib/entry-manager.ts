@@ -17,6 +17,20 @@ export function createEntryManager(feedDelayMs: () => number) {
   const [latency, setLatency] = createSignal("\u2014");
   const [words, setWords] = createSignal(0);
 
+  const [tick, setTick] = createSignal(Date.now());
+  let tickTimer: ReturnType<typeof setInterval> | null = null;
+
+  function startTick(): void {
+    if (!tickTimer) tickTimer = setInterval(() => setTick(Date.now()), 500);
+  }
+
+  function stopTick(): void {
+    if (tickTimer) {
+      clearInterval(tickTimer);
+      tickTimer = null;
+    }
+  }
+
   let entryId = 0;
   let nextWriteIndex = 0;
   const entryTimers = new Map<number, ReturnType<typeof setTimeout>>();
@@ -63,6 +77,7 @@ export function createEntryManager(feedDelayMs: () => number) {
   function confirmEntry(id: number): void {
     entryTimers.delete(id);
     updateEntryStatus(id, EntryStatus.Confirmed);
+    if (entryTimers.size === 0) stopTick();
     drainConfirmedQueue();
   }
 
@@ -99,6 +114,7 @@ export function createEntryManager(feedDelayMs: () => number) {
     });
     const timer = setTimeout(() => confirmEntry(thisId), feedDelayMs());
     entryTimers.set(thisId, timer);
+    startTick();
   }
 
   function startEdit(id: number): void {
@@ -152,6 +168,7 @@ export function createEntryManager(feedDelayMs: () => number) {
   function flushPending(): void {
     for (const [, timer] of entryTimers) clearTimeout(timer);
     entryTimers.clear();
+    stopTick();
     setLatency("\u2014");
     setTransEntries((prev) =>
       prev.map((e) =>
@@ -166,6 +183,7 @@ export function createEntryManager(feedDelayMs: () => number) {
   function clear(): void {
     for (const [, timer] of entryTimers) clearTimeout(timer);
     entryTimers.clear();
+    stopTick();
     nextWriteIndex = 0;
     batch(() => {
       setSttEntries([]);
@@ -180,6 +198,7 @@ export function createEntryManager(feedDelayMs: () => number) {
   onCleanup(() => {
     for (const [, timer] of entryTimers) clearTimeout(timer);
     entryTimers.clear();
+    stopTick();
   });
 
   return {
@@ -189,6 +208,8 @@ export function createEntryManager(feedDelayMs: () => number) {
     sttCount,
     latency,
     words,
+    tick,
+    feedDelayMs,
     pushStt,
     pushTranslation,
     startEdit,

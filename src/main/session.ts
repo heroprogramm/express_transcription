@@ -41,12 +41,14 @@ async function flushFeed(): Promise<void> {
   }
 }
 
+/** Returns whether a session is currently active. */
+export function isSessionActive(): boolean {
+  return sessionFile !== null;
+}
+
 /** Opens a new timestamped session log file and sets up the feed output path. */
 export async function startSession(config: AppConfig): Promise<void> {
-  if (sessionFile) {
-    sessionFile.end();
-    sessionFile = null;
-  }
+  if (sessionFile) return;
   const dataDir = app.getPath("userData");
   const safeDirName = basename(config.output.session_log_dir);
   const sessionDir = join(dataDir, safeDirName);

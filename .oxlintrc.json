@@ -11,7 +11,7 @@
     "no-constructor-return": "error",
     "no-unassigned-vars": "off",
     "no-unused-vars": "warn",
-    "no-console": "off",
+    "no-console": "warn",
     "prefer-const": "warn",
     "default-case-last": "warn",
     "no-lonely-if": "warn",

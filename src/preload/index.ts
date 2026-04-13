@@ -1,31 +1,5 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
-
-interface AppConfig {
-  soniox: { language: string; model: string; translate_to: string };
-  output: { feed_file: string; session_log_dir: string; feed_delay_seconds: number };
-}
-
-interface ConfigResult {
-  config: AppConfig;
-  warnings: string[];
-}
-
-interface PerfSnapshot {
-  ts: number;
-  processes: Array<{
-    pid: number;
-    type: string;
-    cpu: { percentCPUUsage: number };
-    memory: { workingSetSize: number; privateBytes: number };
-  }>;
-  mainMemory: {
-    rss: number;
-    heapTotal: number;
-    heapUsed: number;
-    external: number;
-  };
-  eventLoopLagMs: number;
-}
+import type { PerfSnapshot } from "../shared/types";
 
 /** Exposes a safe, typed API surface to the renderer process via `window.electronAPI`. */
 contextBridge.exposeInMainWorld("electronAPI", {
