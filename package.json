@@ -86,7 +86,8 @@
       "repo": "express-text",
       "private": true,
       "releaseType": "release",
-      "vPrefixedTagName": true
+      "vPrefixedTagName": true,
+      "releaseNamePrefix": "v"
     }
   }
 }
