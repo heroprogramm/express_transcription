@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
-import type { PerfSnapshot } from "../shared/types";
+import type { PerfSnapshot, VizStatus, VizLogEntry } from "../shared/types";
 
 /** Exposes a safe, typed API surface to the renderer process via `window.electronAPI`. */
 contextBridge.exposeInMainWorld("electronAPI", {
@@ -43,5 +43,21 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   restartForUpdate: (): void => {
     ipcRenderer.send("restart-for-update");
+  },
+
+  // ── Viz Engine ──
+  vizLoadScene: (): Promise<void> => ipcRenderer.invoke("viz:load-scene"),
+  vizContinue: (): Promise<void> => ipcRenderer.invoke("viz:continue"),
+  vizSendText: (text: string): Promise<void> => ipcRenderer.invoke("viz:send-text", text),
+  vizToggleScroll: (start: boolean): Promise<void> =>
+    ipcRenderer.invoke("viz:toggle-scroll", start),
+  vizSetSpeed: (speed: number): Promise<void> => ipcRenderer.invoke("viz:set-speed", speed),
+  vizHardReset: (): Promise<void> => ipcRenderer.invoke("viz:hard-reset"),
+  vizGetStatus: (): Promise<VizStatus> => ipcRenderer.invoke("viz:get-status"),
+  vizGetHistory: (): Promise<VizLogEntry[]> => ipcRenderer.invoke("viz:get-history"),
+  onVizStatus: (cb: (status: VizStatus) => void): (() => void) => {
+    const handler = (_event: IpcRendererEvent, status: VizStatus) => cb(status);
+    ipcRenderer.on("viz:status", handler);
+    return () => ipcRenderer.removeListener("viz:status", handler);
   },
 });

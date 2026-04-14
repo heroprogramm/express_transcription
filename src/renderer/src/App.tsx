@@ -1,4 +1,13 @@
-import { createSignal, createMemo, onMount, onCleanup, Show, lazy, ErrorBoundary } from "solid-js";
+import {
+  createSignal,
+  createMemo,
+  createEffect,
+  onMount,
+  onCleanup,
+  Show,
+  lazy,
+  ErrorBoundary,
+} from "solid-js";
 import { Settings } from "lucide-solid";
 import type { AppConfig } from "@/lib/types";
 import {
@@ -10,6 +19,9 @@ import {
   onOpenSettings,
   onUpdateStatus,
   restartForUpdate,
+  vizSendText,
+  vizToggleScroll,
+  vizGetStatus,
 } from "@/lib/ipc";
 import { startTranscription, stopTranscription, cancelTranscription } from "@/lib/soniox";
 import { createPerfMonitor } from "@/lib/perf";
@@ -19,7 +31,7 @@ import Controls from "@/components/Controls";
 import Button from "@/components/Button";
 import ThemeToggle from "@/components/ThemeToggle";
 import { SpeechPane, TranslationPane } from "@/components/TranscriptPane";
-import OutputPane from "@/components/OutputPane";
+import VizPane from "@/components/VizPane";
 import ResizeHandle from "@/components/ResizeHandle";
 import ToastContainer, { showToast } from "@/components/Toast";
 import { reportError, capturePromise } from "@/lib/errors";
@@ -55,6 +67,20 @@ export default function App() {
   const entries = createEntryManager(feedDelayMs);
   const perf = createPerfMonitor();
 
+  // ── Viz Engine auto-send ──
+  let lastVizSentCount = 0;
+  createEffect(() => {
+    const sent = entries.sentEntries();
+    if (sent.length > lastVizSentCount) {
+      for (let i = lastVizSentCount; i < sent.length; i++) {
+        vizSendText(sent[i].text).catch((err) =>
+          reportError("viz", err instanceof Error ? err.message : String(err)),
+        );
+      }
+      lastVizSentCount = sent.length;
+    }
+  });
+
   // ── Resize handlers ──
 
   function onHResize(delta: number) {
@@ -75,6 +101,16 @@ export default function App() {
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "P") {
       e.preventDefault();
       perf.toggle();
+    }
+    // Ctrl+Space: toggle Viz scroll
+    if ((e.ctrlKey || e.metaKey) && e.code === "Space") {
+      e.preventDefault();
+      vizGetStatus()
+        .then((s) => {
+          if (s.isLoaded && s.hasData) vizToggleScroll(!s.isAnimating).catch(() => {});
+        })
+        .catch(() => {});
+      return;
     }
     const tag = (e.target as HTMLElement)?.tagName;
     if (
@@ -296,7 +332,10 @@ export default function App() {
           running={running}
           onStart={handleStart}
           onStop={handleStop}
-          onClear={entries.clear}
+          onClear={() => {
+            entries.clear();
+            lastVizSentCount = 0;
+          }}
         />
         <main
           ref={mainRef}
@@ -331,7 +370,7 @@ export default function App() {
         <ResizeHandle direction="vertical" onResize={onVResize} />
 
         <div style={{ flex: String(100 - vSplit()) }} class="min-h-0 flex flex-col">
-          <OutputPane entries={entries.sentEntries} />
+          <VizPane />
         </div>
       </div>
 

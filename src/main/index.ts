@@ -13,6 +13,7 @@ import { stopSession } from "./session";
 import { stopMetricsCollection } from "./metrics";
 import { log, LogLevel } from "./logger";
 import { initAutoUpdater, checkForUpdatesManual, quitAndInstall } from "./updater";
+import { vizInit, vizCleanup, vizUpdateConfig } from "./viz-engine";
 
 // ── App identity ──
 app.setName("ExpressText");
@@ -49,6 +50,7 @@ app.whenReady().then(() => {
     () => appConfig,
     (c) => {
       appConfig = c;
+      vizUpdateConfig(c.viz);
     },
     configResult.warnings,
   );
@@ -58,6 +60,7 @@ app.whenReady().then(() => {
   });
 
   createWindow();
+  vizInit(appConfig.viz, getMainWindow()!);
   initAutoUpdater();
   ipcMain.on("restart-for-update", () => quitAndInstall());
 
@@ -188,6 +191,7 @@ app.on("before-quit", async (event) => {
   shuttingDown = true;
   event.preventDefault();
   try {
+    vizCleanup();
     stopMetricsCollection();
     await stopSession();
     log(LogLevel.Info, "app:shutdown", { reason: "before-quit" });

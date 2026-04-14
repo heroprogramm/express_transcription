@@ -1,4 +1,4 @@
-import type { AppConfig, PerfSnapshot } from "@/lib/types";
+import type { AppConfig, PerfSnapshot, VizStatus, VizLogEntry } from "@/lib/types";
 
 declare global {
   interface Window {
@@ -23,6 +23,15 @@ declare global {
       onOpenSettings: (cb: () => void) => () => void;
       onUpdateStatus: (cb: (status: string, version?: string) => void) => () => void;
       restartForUpdate: () => void;
+      vizLoadScene: () => Promise<void>;
+      vizContinue: () => Promise<void>;
+      vizSendText: (text: string) => Promise<void>;
+      vizToggleScroll: (start: boolean) => Promise<void>;
+      vizSetSpeed: (speed: number) => Promise<void>;
+      vizHardReset: () => Promise<void>;
+      vizGetStatus: () => Promise<VizStatus>;
+      vizGetHistory: () => Promise<VizLogEntry[]>;
+      onVizStatus: (cb: (status: VizStatus) => void) => () => void;
     };
   }
 }
@@ -125,4 +134,42 @@ export function onUpdateStatus(cb: (status: string, version?: string) => void): 
 /** Quit the app and install the downloaded update. */
 export function restartForUpdate(): void {
   getApi().restartForUpdate();
+}
+
+// ── Viz Engine ──
+
+export function vizLoadScene(): Promise<void> {
+  return getApi().vizLoadScene();
+}
+
+export function vizContinue(): Promise<void> {
+  return getApi().vizContinue();
+}
+
+export function vizSendText(text: string): Promise<void> {
+  return getApi().vizSendText(text);
+}
+
+export function vizToggleScroll(start: boolean): Promise<void> {
+  return getApi().vizToggleScroll(start);
+}
+
+export function vizSetSpeed(speed: number): Promise<void> {
+  return getApi().vizSetSpeed(speed);
+}
+
+export function vizHardReset(): Promise<void> {
+  return getApi().vizHardReset();
+}
+
+export function vizGetStatus(): Promise<VizStatus> {
+  return getApi().vizGetStatus();
+}
+
+export function vizGetHistory(): Promise<VizLogEntry[]> {
+  return getApi().vizGetHistory();
+}
+
+export function onVizStatus(cb: (status: VizStatus) => void): () => void {
+  return getApi().onVizStatus(cb);
 }

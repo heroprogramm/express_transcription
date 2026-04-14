@@ -6,6 +6,12 @@ export type { AppConfig, ConfigResult };
 const DEFAULT_CONFIG: AppConfig = {
   soniox: { language: "ur", model: "stt-rt-v4", translate_to: "en" },
   output: { feed_file: "feed.txt", session_log_dir: "sessions", feed_delay_seconds: 5 },
+  viz: {
+    host: "127.0.0.1",
+    port: 6100,
+    scene_path: "EXPRESS_24_7/TRANSLATION_BB/Translation_BB",
+    scroll_speed: 0.3,
+  },
 };
 
 function validateConfig(config: AppConfig): string[] {
@@ -31,6 +37,20 @@ function validateConfig(config: AppConfig): string[] {
     errors.push("output.feed_delay_seconds must be a non-negative number");
   }
 
+  const { viz } = config;
+  if (!viz.host || typeof viz.host !== "string") {
+    errors.push("viz.host must be a non-empty string");
+  }
+  if (typeof viz.port !== "number" || viz.port < 1 || viz.port > 65535) {
+    errors.push("viz.port must be a number between 1 and 65535");
+  }
+  if (typeof viz.scene_path !== "string") {
+    errors.push("viz.scene_path must be a string");
+  }
+  if (typeof viz.scroll_speed !== "number" || viz.scroll_speed < 0.1 || viz.scroll_speed > 1.0) {
+    errors.push("viz.scroll_speed must be a number between 0.1 and 1.0");
+  }
+
   return errors;
 }
 
@@ -44,6 +64,7 @@ export function loadConfig(): ConfigResult {
   const config: AppConfig = {
     soniox: { ...DEFAULT_CONFIG.soniox, ...stored.soniox },
     output: { ...DEFAULT_CONFIG.output, ...stored.output },
+    viz: { ...DEFAULT_CONFIG.viz, ...stored.viz },
   };
 
   const errors = validateConfig(config);
@@ -56,9 +77,16 @@ export function loadConfig(): ConfigResult {
   return { config, warnings: [] };
 }
 
-/** Merges partial config updates (model, feed delay) into the current config, persists, and returns the result. */
+/** Merges partial config updates into the current config, persists, and returns the result. */
 export function saveConfigFields(
-  fields: Partial<{ model: string; feed_delay_seconds: number }>,
+  fields: Partial<{
+    model: string;
+    feed_delay_seconds: number;
+    viz_host: string;
+    viz_port: number;
+    viz_scene_path: string;
+    viz_scroll_speed: number;
+  }>,
 ): ConfigResult {
   const { config } = loadConfig();
 
@@ -67,6 +95,18 @@ export function saveConfigFields(
   }
   if (fields.feed_delay_seconds !== undefined) {
     config.output = { ...config.output, feed_delay_seconds: fields.feed_delay_seconds };
+  }
+  if (fields.viz_host !== undefined) {
+    config.viz = { ...config.viz, host: fields.viz_host };
+  }
+  if (fields.viz_port !== undefined) {
+    config.viz = { ...config.viz, port: fields.viz_port };
+  }
+  if (fields.viz_scene_path !== undefined) {
+    config.viz = { ...config.viz, scene_path: fields.viz_scene_path };
+  }
+  if (fields.viz_scroll_speed !== undefined) {
+    config.viz = { ...config.viz, scroll_speed: fields.viz_scroll_speed };
   }
 
   saveStoredConfig(config);

@@ -4,6 +4,16 @@ import { getApiKey, saveApiKey, hasApiKey } from "./store";
 import { startSession, stopSession, logTranslation } from "./session";
 import { startMetricsCollection, stopMetricsCollection } from "./metrics";
 import { getMainWindow } from "./window";
+import {
+  vizLoadScene,
+  vizContinue,
+  vizSendText,
+  vizToggleScroll,
+  vizSetSpeed,
+  vizHardReset,
+  getVizStatus,
+  getVizHistory,
+} from "./viz-engine";
 
 /**
  * Registers all IPC handlers for renderer-to-main communication.
@@ -34,10 +44,21 @@ export function registerIpcHandlers(
     (_event, fields: unknown): { config: AppConfig; warnings: string[] } => {
       if (!fields || typeof fields !== "object") throw new Error("Invalid config fields");
       const f = fields as Record<string, unknown>;
-      const updates: Partial<{ model: string; feed_delay_seconds: number }> = {};
+      const updates: Partial<{
+        model: string;
+        feed_delay_seconds: number;
+        viz_host: string;
+        viz_port: number;
+        viz_scene_path: string;
+        viz_scroll_speed: number;
+      }> = {};
       if (typeof f.model === "string") updates.model = f.model;
       if (typeof f.feed_delay_seconds === "number")
         updates.feed_delay_seconds = f.feed_delay_seconds;
+      if (typeof f.viz_host === "string") updates.viz_host = f.viz_host;
+      if (typeof f.viz_port === "number") updates.viz_port = f.viz_port;
+      if (typeof f.viz_scene_path === "string") updates.viz_scene_path = f.viz_scene_path;
+      if (typeof f.viz_scroll_speed === "number") updates.viz_scroll_speed = f.viz_scroll_speed;
       const result = saveConfigFields(updates);
       setConfig(result.config);
       return result;
@@ -116,4 +137,28 @@ export function registerIpcHandlers(
     if (typeof text !== "string") return;
     clipboard.writeText(text);
   });
+
+  // ── Viz Engine ──
+  ipcMain.handle("viz:load-scene", () => vizLoadScene());
+  ipcMain.handle("viz:continue", () => vizContinue());
+
+  ipcMain.handle("viz:send-text", (_event, text: unknown) => {
+    if (typeof text !== "string") throw new Error("viz:send-text: text must be a string");
+    if (text.length > 10_000) throw new Error("viz:send-text: text max 10000 chars");
+    return vizSendText(text);
+  });
+
+  ipcMain.handle("viz:toggle-scroll", (_event, start: unknown) => {
+    if (typeof start !== "boolean") throw new Error("viz:toggle-scroll: start must be a boolean");
+    return vizToggleScroll(start);
+  });
+
+  ipcMain.handle("viz:set-speed", (_event, speed: unknown) => {
+    if (typeof speed !== "number") throw new Error("viz:set-speed: speed must be a number");
+    vizSetSpeed(speed);
+  });
+
+  ipcMain.handle("viz:hard-reset", () => vizHardReset());
+  ipcMain.handle("viz:get-status", () => getVizStatus());
+  ipcMain.handle("viz:get-history", () => getVizHistory());
 }

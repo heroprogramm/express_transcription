@@ -4,8 +4,8 @@ import { EntryStatus, type TranscriptEntry, type TranslationEntry } from "@/lib/
 import { useVirtualList } from "@/lib/virtual-list";
 import AudioWaveform from "@/components/AudioWaveform";
 
-const STT_ITEM_HEIGHT = 48;
-const TRANS_ITEM_HEIGHT = 48;
+const STT_ITEM_HEIGHT = 56;
+const TRANS_ITEM_HEIGHT = 52;
 
 function SpeechEmpty() {
   return (
@@ -106,25 +106,29 @@ export function SpeechPane(props: SpeechPaneProps) {
               {(vItem) => {
                 const entry = createMemo(() => props.entries()[vItem.index]);
                 return (
-                  <div
-                    ref={(el) => {
-                      el.setAttribute("data-index", `${vItem.index}`);
-                      vl.virtualizer.measureElement(el);
-                    }}
-                    class="flex items-center gap-3.5 py-1.5 absolute top-0 left-0 w-full"
-                    style={{ transform: `translateY(${vItem.start}px)` }}
-                  >
-                    <span
-                      class={`text-[9px] font-medium font-mono tracking-wide tabular-nums shrink-0 ${entry().isPartial ? "text-[var(--blue)] opacity-50" : "text-[var(--blue)]"}`}
-                    >
-                      {entry().timestamp}
-                    </span>
-                    <span
-                      class={`font-urdu text-xl leading-snug ${entry().isPartial ? "text-tx-3" : "text-tx"}`}
-                    >
-                      {entry().text}
-                    </span>
-                  </div>
+                  <Show when={entry()}>
+                    {(e) => (
+                      <div
+                        ref={(el) => {
+                          el.setAttribute("data-index", `${vItem.index}`);
+                          vl.virtualizer.measureElement(el);
+                        }}
+                        class="flex items-center gap-3.5 py-1.5 absolute top-0 left-0 w-full"
+                        style={{ transform: `translateY(${vItem.start}px)` }}
+                      >
+                        <span
+                          class={`text-[9px] font-medium font-mono tracking-wide tabular-nums shrink-0 ${e().isPartial ? "text-[var(--blue)] opacity-50" : "text-[var(--blue)]"}`}
+                        >
+                          {e().timestamp}
+                        </span>
+                        <span
+                          class={`font-urdu text-2xl leading-snug ${e().isPartial ? "text-tx-3" : "text-tx"}`}
+                        >
+                          {e().text}
+                        </span>
+                      </div>
+                    )}
+                  </Show>
                 );
               }}
             </For>
@@ -186,7 +190,7 @@ function TranslationEntryRow(props: {
 
   return (
     <div
-      class={`${props.isNew ? "animate-entry" : ""} text-base font-medium leading-relaxed flex items-center border-l-2 pl-2 transition-all duration-200 relative py-1.5`}
+      class={`${props.isNew ? "animate-entry" : ""} text-lg font-medium leading-relaxed flex items-center border-l-2 pl-2 transition-all duration-200 relative py-1.5`}
       classList={{
         "border-l-st-pending text-st-pending cursor-pointer hover:bg-hover": isPending(),
         "editing-row border-l-st-editing text-st-editing z-10": isEditing(),
@@ -300,28 +304,32 @@ export function TranslationPane(props: TransPaneProps) {
                 const entry = createMemo(() => props.entries()[vItem.index]);
 
                 return (
-                  <div
-                    ref={(el) => {
-                      el.setAttribute("data-index", `${vItem.index}`);
-                      vl.virtualizer.measureElement(el);
-                    }}
-                    class="absolute top-0 left-0 w-full"
-                    style={{
-                      transform: `translateY(${vItem.start}px)`,
-                      "z-index": entry().status === EntryStatus.Editing ? 10 : undefined,
-                    }}
-                  >
-                    <TranslationEntryRow
-                      entry={entry()}
-                      isNew={Date.now() - entry().createdAt < 1000}
-                      tick={props.tick}
-                      feedDelayMs={props.feedDelayMs}
-                      onStartEdit={props.onStartEdit}
-                      onSaveEdit={props.onSaveEdit}
-                      onCancelEdit={props.onCancelEdit}
-                      onEditChange={props.onEditChange}
-                    />
-                  </div>
+                  <Show when={entry()}>
+                    {(e) => (
+                      <div
+                        ref={(el) => {
+                          el.setAttribute("data-index", `${vItem.index}`);
+                          vl.virtualizer.measureElement(el);
+                        }}
+                        class="absolute top-0 left-0 w-full"
+                        style={{
+                          transform: `translateY(${vItem.start}px)`,
+                          "z-index": e().status === EntryStatus.Editing ? 10 : undefined,
+                        }}
+                      >
+                        <TranslationEntryRow
+                          entry={e()}
+                          isNew={Date.now() - e().createdAt < 1000}
+                          tick={props.tick}
+                          feedDelayMs={props.feedDelayMs}
+                          onStartEdit={props.onStartEdit}
+                          onSaveEdit={props.onSaveEdit}
+                          onCancelEdit={props.onCancelEdit}
+                          onEditChange={props.onEditChange}
+                        />
+                      </div>
+                    )}
+                  </Show>
                 );
               }}
             </For>

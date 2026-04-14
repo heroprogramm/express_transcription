@@ -1,4 +1,5 @@
 import { createSignal } from "solid-js";
+import { createStore } from "solid-js/store";
 import { Settings as SettingsIcon, X, Save } from "lucide-solid";
 import type { AppConfig } from "@/lib/types";
 import { hasApiKey, saveApiKey, saveConfig } from "@/lib/ipc";
@@ -16,10 +17,14 @@ interface Props {
 export default function SettingsModal(props: Props) {
   const [key, setKey] = createSignal("");
   const [keyExists, setKeyExists] = createSignal(false);
-  const [model, setModel] = createSignal(props.config?.soniox.model ?? "stt-rt-v4");
-  const [feedDelay, setFeedDelay] = createSignal(
-    String(props.config?.output.feed_delay_seconds ?? 10),
-  );
+  const [fields, setFields] = createStore({
+    model: props.config?.soniox.model ?? "stt-rt-v4",
+    feedDelay: String(props.config?.output.feed_delay_seconds ?? 10),
+    vizHost: props.config?.viz.host ?? "127.0.0.1",
+    vizPort: String(props.config?.viz.port ?? 6100),
+    vizScenePath: props.config?.viz.scene_path ?? "",
+    vizScrollSpeed: String(props.config?.viz.scroll_speed ?? 0.3),
+  });
   const [error, setError] = createSignal("");
   const [saving, setSaving] = createSignal(false);
 
@@ -28,15 +33,27 @@ export default function SettingsModal(props: Props) {
     .catch(() => {});
 
   async function handleSave() {
-    const modelValue = model().trim();
+    const modelValue = fields.model.trim();
     if (!modelValue) {
       setError("Model cannot be empty");
       return;
     }
 
-    const delayNum = Number(feedDelay());
-    if (!feedDelay().trim() || Number.isNaN(delayNum) || delayNum < 0) {
+    const delayNum = Number(fields.feedDelay);
+    if (!fields.feedDelay.trim() || Number.isNaN(delayNum) || delayNum < 0) {
       setError("Feed delay must be a non-negative number");
+      return;
+    }
+
+    const portNum = Number(fields.vizPort);
+    if (!fields.vizPort.trim() || Number.isNaN(portNum) || portNum < 1 || portNum > 65535) {
+      setError("Viz port must be a number between 1 and 65535");
+      return;
+    }
+
+    const speedNum = Number(fields.vizScrollSpeed);
+    if (Number.isNaN(speedNum) || speedNum < 0.1 || speedNum > 1.0) {
+      setError("Viz scroll speed must be between 0.1 and 1.0");
       return;
     }
 
@@ -51,6 +68,10 @@ export default function SettingsModal(props: Props) {
       const result = await saveConfig({
         model: modelValue,
         feed_delay_seconds: delayNum,
+        viz_host: fields.vizHost.trim(),
+        viz_port: portNum,
+        viz_scene_path: fields.vizScenePath.trim(),
+        viz_scroll_speed: speedNum,
       });
 
       props.onSaved(result.config);
@@ -79,7 +100,7 @@ export default function SettingsModal(props: Props) {
         if (e.target === e.currentTarget) props.onClose();
       }}
     >
-      <div class="animate-modal bg-raised border border-border rounded-md p-7 w-[400px] max-w-[90vw] shadow-[0_20px_60px_var(--bg)]">
+      <div class="animate-modal bg-raised border border-border rounded-md p-7 w-[560px] max-w-[90vw] shadow-[0_20px_60px_var(--bg)]">
         <div class="flex items-center gap-3 mb-5">
           <div class="w-9 h-9 rounded-md bg-surface flex items-center justify-center shrink-0">
             <SettingsIcon size={18} class="text-tx-3" />
@@ -103,8 +124,8 @@ export default function SettingsModal(props: Props) {
                 placeholder="stt-rt-v4"
                 class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
                 ref={(el) => requestAnimationFrame(() => el.focus())}
-                value={model()}
-                onInput={(e) => setModel(e.currentTarget.value)}
+                value={fields.model}
+                onInput={(e) => setFields("model", e.currentTarget.value)}
                 onKeyDown={handleKeyDown}
               />
             </div>
@@ -141,13 +162,77 @@ export default function SettingsModal(props: Props) {
               inputmode="numeric"
               placeholder="10"
               class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
-              value={feedDelay()}
-              onInput={(e) => setFeedDelay(e.currentTarget.value)}
+              value={fields.feedDelay}
+              onInput={(e) => setFields("feedDelay", e.currentTarget.value)}
               onKeyDown={handleKeyDown}
             />
             <p class="text-[10px] text-tx-4 mt-1">
               Time to edit translations before they are sent to feed
             </p>
+          </div>
+        </div>
+
+        {/* ── Viz Engine section ── */}
+        <div class="border-t border-border pt-5 mt-5">
+          <h3 class="text-[10px] font-bold text-tx-4 tracking-widest uppercase mb-3">Viz Engine</h3>
+          <div class="flex flex-col gap-4">
+            <div class="flex gap-3">
+              <div class="flex-1">
+                <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                  Host
+                </label>
+                <input
+                  type="text"
+                  placeholder="127.0.0.1"
+                  class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
+                  value={fields.vizHost}
+                  onInput={(e) => setFields("vizHost", e.currentTarget.value)}
+                  onKeyDown={handleKeyDown}
+                />
+              </div>
+              <div class="w-24">
+                <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                  Port
+                </label>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  placeholder="6100"
+                  class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
+                  value={fields.vizPort}
+                  onInput={(e) => setFields("vizPort", e.currentTarget.value)}
+                  onKeyDown={handleKeyDown}
+                />
+              </div>
+            </div>
+            <div>
+              <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                Scene Path
+              </label>
+              <input
+                type="text"
+                placeholder="EXPRESS_24_7/TRANSLATION_BB/Translation_BB"
+                class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
+                value={fields.vizScenePath}
+                onInput={(e) => setFields("vizScenePath", e.currentTarget.value)}
+                onKeyDown={handleKeyDown}
+              />
+            </div>
+            <div>
+              <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                Default Scroll Speed
+              </label>
+              <input
+                type="text"
+                inputmode="decimal"
+                placeholder="0.3"
+                class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
+                value={fields.vizScrollSpeed}
+                onInput={(e) => setFields("vizScrollSpeed", e.currentTarget.value)}
+                onKeyDown={handleKeyDown}
+              />
+              <p class="text-[10px] text-tx-4 mt-1">Scroll velocity per frame (0.1 – 1.0)</p>
+            </div>
           </div>
         </div>
 

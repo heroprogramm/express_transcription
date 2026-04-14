@@ -1,4 +1,10 @@
-export type { AppConfig, ConfigResult, PerfSnapshot } from "../../../shared/types";
+export type {
+  AppConfig,
+  ConfigResult,
+  PerfSnapshot,
+  VizStatus,
+  VizLogEntry,
+} from "../../../shared/types";
 
 /** A single speech-to-text transcript entry from Soniox. */
 export interface TranscriptEntry {
