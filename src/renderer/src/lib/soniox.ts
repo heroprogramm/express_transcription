@@ -171,9 +171,9 @@ function connectRecording(
     if (translated) {
       if (isFinal) {
         wordCount += translated.split(/\s+/).filter(Boolean).length;
+        const latencyMs = elapsed - result.total_audio_proc_ms;
+        callbacks.onTranslation(ts, translated, latencyMs);
       }
-      const latencyMs = elapsed - result.total_audio_proc_ms;
-      callbacks.onTranslation(ts, translated, latencyMs);
     }
   }
 

@@ -39,8 +39,8 @@ function timeStr(): string {
 }
 
 function addLog(msg: string, type: VizLogEntry["type"] = "info"): void {
-  history.unshift({ time: timeStr(), msg, type });
-  if (history.length > MAX_HISTORY) history.pop();
+  history.push({ time: timeStr(), msg, type });
+  if (history.length > MAX_HISTORY) history.shift();
 }
 
 function pushStatus(): void {
@@ -360,10 +360,6 @@ export function getVizStatus(): VizStatus {
     currentIdx,
     yPos,
     scrollSpeed,
+    history,
   };
-}
-
-/** Return the action history log. */
-export function getVizHistory(): VizLogEntry[] {
-  return history;
 }

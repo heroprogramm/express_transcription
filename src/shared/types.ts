@@ -14,6 +14,7 @@ export interface VizStatus {
   currentIdx: number;
   yPos: number;
   scrollSpeed: number;
+  history: VizLogEntry[];
 }
 
 /** A single entry in the Viz Engine action/event history log. */

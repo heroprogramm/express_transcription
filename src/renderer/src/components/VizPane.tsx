@@ -1,6 +1,7 @@
 import { createSignal, onMount, onCleanup, For, Show } from "solid-js";
 import { Play, Square, RotateCcw, MonitorPlay, Layers } from "lucide-solid";
-import type { VizStatus, VizLogEntry } from "@/lib/types";
+import type { VizStatus } from "@/lib/types";
+import { useAutoScroll } from "@/lib/use-auto-scroll";
 import { showToast } from "@/components/Toast";
 import Button from "@/components/Button";
 import {
@@ -10,7 +11,6 @@ import {
   vizSetSpeed,
   vizHardReset,
   vizGetStatus,
-  vizGetHistory,
   onVizStatus,
 } from "@/lib/ipc";
 
@@ -22,36 +22,28 @@ const DEFAULT_STATUS: VizStatus = {
   currentIdx: 1,
   yPos: 0,
   scrollSpeed: 0.3,
+  history: [],
 };
 
 /** Viz Engine control panel — replaces the old read-only OutputPane. */
 export default function VizPane() {
   const [status, setStatus] = createSignal<VizStatus>(DEFAULT_STATUS);
-  const [history, setHistory] = createSignal<VizLogEntry[]>([]);
   const [busy, setBusy] = createSignal(false);
 
-  let historyInterval: ReturnType<typeof setInterval> | undefined;
+  const history = () => status().history;
+
+  let historyContainer: HTMLDivElement | undefined;
+  const { onScroll } = useAutoScroll(
+    () => historyContainer,
+    () => history().length,
+  );
 
   onMount(() => {
     const unsub = onVizStatus(setStatus);
-
     vizGetStatus()
       .then(setStatus)
       .catch(() => {});
-    vizGetHistory()
-      .then(setHistory)
-      .catch(() => {});
-
-    historyInterval = setInterval(() => {
-      vizGetHistory()
-        .then(setHistory)
-        .catch(() => {});
-    }, 1000);
-
-    onCleanup(() => {
-      unsub();
-      if (historyInterval) clearInterval(historyInterval);
-    });
+    onCleanup(unsub);
   });
 
   function toastError(action: string, err: unknown) {
@@ -203,7 +195,11 @@ export default function VizPane() {
       </div>
 
       {/* History log */}
-      <div class="flex-1 overflow-y-auto px-3 py-2 transcript-scroll">
+      <div
+        ref={historyContainer}
+        onScroll={onScroll}
+        class="flex-1 overflow-y-auto px-3 py-2 transcript-scroll"
+      >
         <Show
           when={history().length > 0}
           fallback={

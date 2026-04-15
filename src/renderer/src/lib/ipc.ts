@@ -1,4 +1,4 @@
-import type { AppConfig, PerfSnapshot, VizStatus, VizLogEntry } from "@/lib/types";
+import type { AppConfig, PerfSnapshot, VizStatus } from "@/lib/types";
 
 declare global {
   interface Window {
@@ -30,7 +30,6 @@ declare global {
       vizSetSpeed: (speed: number) => Promise<void>;
       vizHardReset: () => Promise<void>;
       vizGetStatus: () => Promise<VizStatus>;
-      vizGetHistory: () => Promise<VizLogEntry[]>;
       onVizStatus: (cb: (status: VizStatus) => void) => () => void;
     };
   }
@@ -164,10 +163,6 @@ export function vizHardReset(): Promise<void> {
 
 export function vizGetStatus(): Promise<VizStatus> {
   return getApi().vizGetStatus();
-}
-
-export function vizGetHistory(): Promise<VizLogEntry[]> {
-  return getApi().vizGetHistory();
 }
 
 export function onVizStatus(cb: (status: VizStatus) => void): () => void {

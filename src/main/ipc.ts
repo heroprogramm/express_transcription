@@ -12,7 +12,6 @@ import {
   vizSetSpeed,
   vizHardReset,
   getVizStatus,
-  getVizHistory,
 } from "./viz-engine";
 
 /**
@@ -160,5 +159,4 @@ export function registerIpcHandlers(
 
   ipcMain.handle("viz:hard-reset", () => vizHardReset());
   ipcMain.handle("viz:get-status", () => getVizStatus());
-  ipcMain.handle("viz:get-history", () => getVizHistory());
 }
