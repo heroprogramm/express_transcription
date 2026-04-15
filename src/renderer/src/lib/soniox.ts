@@ -7,7 +7,6 @@ import {
   NetworkError,
   type Recording,
   type RealtimeResult,
-  type RealtimeToken,
   type RecordingState,
 } from "@soniox/client";
 import type { AppConfig } from "@/lib/types";
@@ -37,6 +36,10 @@ let client: SonioxClient | null = null;
 let recording: Recording | null = null;
 let startTime = 0;
 let wordCount = 0;
+
+// ── Token accumulation (finals are returned once, non-finals replace each result) ──
+let finalOriginalParts: string[] = [];
+let finalTranslatedParts: string[] = [];
 
 // ── Reconnection state ──
 const MAX_RETRIES = 5;
@@ -78,30 +81,9 @@ function formatTimestamp(ms: number): string {
   return `${hours}:${mins}:${secs}`;
 }
 
-function parseTokens(tokens: RealtimeToken[]): {
-  original: string;
-  translated: string | null;
-  isFinal: boolean;
-} {
-  const originalParts: string[] = [];
-  const translatedParts: string[] = [];
-  let isFinal = false;
-
-  for (const t of tokens) {
-    if (t.is_final) isFinal = true;
-    if (t.text === "<end>") continue;
-    if (t.translation_status === "translation") {
-      translatedParts.push(t.text);
-    } else {
-      originalParts.push(t.text);
-    }
-  }
-
-  return {
-    original: originalParts.join(""),
-    translated: translatedParts.length > 0 ? translatedParts.join("") : null,
-    isFinal,
-  };
+function resetTokenAccumulators(): void {
+  finalOriginalParts = [];
+  finalTranslatedParts = [];
 }
 
 /** Return the cumulative number of translated words since the session started. */
@@ -162,18 +144,42 @@ function connectRecording(
   function handleResult(result: RealtimeResult): void {
     const elapsed = Date.now() - startTime;
     const ts = formatTimestamp(elapsed);
-    const { original, translated, isFinal } = parseTokens(result.tokens);
 
-    if (original) {
-      callbacks.onTranscript(ts, original, !isFinal);
+    // Accumulate finals, collect current non-finals (reset each result).
+    const nonFinalOriginal: string[] = [];
+    const nonFinalTranslated: string[] = [];
+
+    for (const t of result.tokens) {
+      if (t.is_final) {
+        if (t.translation_status === "translation") {
+          finalTranslatedParts.push(t.text);
+        } else {
+          finalOriginalParts.push(t.text);
+        }
+      } else if (t.translation_status === "translation") {
+        nonFinalTranslated.push(t.text);
+      } else {
+        nonFinalOriginal.push(t.text);
+      }
     }
 
-    if (translated) {
-      if (isFinal) {
-        wordCount += translated.split(/\s+/).filter(Boolean).length;
-        const latencyMs = elapsed - result.total_audio_proc_ms;
-        callbacks.onTranslation(ts, translated, latencyMs);
+    const fullOriginal = finalOriginalParts.join("") + nonFinalOriginal.join("");
+    const fullTranslated = finalTranslatedParts.join("") + nonFinalTranslated.join("");
+
+    if (fullOriginal) {
+      if (nonFinalOriginal.length === 0 && finalOriginalParts.length > 0) {
+        callbacks.onTranscript(ts, fullOriginal, false);
+        finalOriginalParts = [];
+      } else {
+        callbacks.onTranscript(ts, fullOriginal, true);
       }
+    }
+
+    if (nonFinalTranslated.length === 0 && finalTranslatedParts.length > 0) {
+      wordCount += fullTranslated.split(/\s+/).filter(Boolean).length;
+      const latencyMs = elapsed - result.total_audio_proc_ms;
+      callbacks.onTranslation(ts, fullTranslated, latencyMs);
+      finalTranslatedParts = [];
     }
   }
 
@@ -235,6 +241,7 @@ export async function startTranscription(
   state = SonioxState.Connecting;
   callbacks.onStateChange("loading");
   wordCount = 0;
+  resetTokenAccumulators();
   resetRetryState();
 
   activeConfig = config;
@@ -259,6 +266,7 @@ function cleanup(): void {
     logFlushTimer = null;
   }
   flushLogQueue();
+  resetTokenAccumulators();
   resetRetryState();
   activeConfig = null;
   activeCallbacks = null;
