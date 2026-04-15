@@ -118,14 +118,14 @@ export default function Controls(props: Props) {
           Stop
         </Button>
 
-        <Button variant="ghost" size="lg" onClick={props.onCopyAll} class="!text-tx-2">
-          <Copy size={14} />
-          Copy All
-        </Button>
-
         <Button variant="ghost" size="lg" onClick={props.onClear} class="!text-tx-2">
           <Trash2 size={14} />
           Clear
+        </Button>
+
+        <Button variant="ghost" size="lg" onClick={props.onCopyAll} class="!text-tx-2">
+          <Copy size={14} />
+          Copy All
         </Button>
       </div>
     </div>
