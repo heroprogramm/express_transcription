@@ -217,12 +217,10 @@ body.theme-transitioning h2 {
   color: var(--violet);
 }
 .toast-error {
-  border-left-width: 3px;
-  border-left-color: var(--red);
+  border-color: var(--border-lit);
 }
 .toast-info {
-  border-left-width: 3px;
-  border-left-color: var(--violet);
+  border-color: var(--border-lit);
 }
 
 /* ── App mount stagger ────────────────────────────────────────── */

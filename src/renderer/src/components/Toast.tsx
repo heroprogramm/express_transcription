@@ -40,9 +40,8 @@ function dismiss(id: number) {
 }
 
 const TOAST_STYLES = {
-  error:
-    "toast-error bg-red-soft/15 border-red/25 text-red light:bg-red-soft/10 light:border-red-soft/30 light:text-red-soft",
-  info: "toast-info bg-violet-soft/15 border-violet/25 text-violet light:bg-violet-soft/10 light:border-violet-soft/30 light:text-violet-soft",
+  error: "toast-error bg-raised text-tx-2 border-border",
+  info: "toast-info bg-raised text-tx-2 border-border",
 } as const;
 
 /** Fixed-position container that renders active toast notifications. */
@@ -61,7 +60,7 @@ export default function ToastContainer() {
       <For each={toasts()}>
         {(toast) => (
           <div
-            class={`toast-item flex items-start gap-3 px-4 py-3 rounded-md border shadow-lg backdrop-blur-sm cursor-pointer font-ui text-[13px] leading-snug ${
+            class={`toast-item flex items-start gap-3 px-4 py-3 rounded-lg border shadow-[0_8px_24px_var(--bg)] backdrop-blur-sm cursor-pointer font-ui text-[13px] leading-snug ${
               toast.dismissing ? "toast-out" : "toast-in"
             } ${TOAST_STYLES[toast.type]}`}
             role="alert"
