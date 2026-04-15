@@ -47,7 +47,8 @@ export default function VizPane() {
   });
 
   function toastError(action: string, err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const raw = err instanceof Error ? err.message : String(err);
+    const msg = raw.replace(/^Error invoking remote method '[^']+': Error: /i, "");
     showToast(`Viz ${action} failed: ${msg}`, "error");
   }
 
