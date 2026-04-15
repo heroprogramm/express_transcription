@@ -32,12 +32,12 @@ function Stat(props: {
   active: Accessor<boolean>;
 }) {
   return (
-    <div class="flex items-center gap-1.5 px-3 py-1 rounded-md bg-surface">
-      <span class="text-[10px] font-semibold text-tx-4 tracking-wider uppercase select-none">
+    <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-surface">
+      <span class="text-[11px] font-semibold text-tx-4 tracking-wider uppercase select-none">
         {props.label}
       </span>
       <span
-        class="text-[12px] font-bold tabular-nums"
+        class="text-[13px] font-bold tabular-nums"
         classList={{ "text-tx": props.active(), "text-tx-4": !props.active() }}
       >
         {props.value()}
@@ -56,12 +56,12 @@ export default function StatsBar(props: Props) {
       <Stat label="Latency" value={props.latency} active={props.live} />
       <Stat label="Lines" value={() => props.lines()} active={props.live} />
       <Stat label="Uptime" value={props.uptime} active={props.live} />
-      <div class="flex items-center gap-1.5 px-3 py-1 rounded-md bg-surface">
-        <span class="text-[10px] font-semibold text-tx-4 tracking-wider uppercase select-none">
+      <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-surface">
+        <span class="text-[11px] font-semibold text-tx-4 tracking-wider uppercase select-none">
           Signal
         </span>
         <span class={`inline-block w-1.5 h-1.5 rounded-full ${cfg().dot}`} />
-        <span class={`text-[12px] font-bold ${cfg().color}`}>{cfg().label}</span>
+        <span class={`text-[13px] font-bold ${cfg().color}`}>{cfg().label}</span>
       </div>
     </div>
   );

@@ -30,7 +30,8 @@ import StatsBar from "@/components/StatsBar";
 import Controls from "@/components/Controls";
 import Button from "@/components/Button";
 import ThemeToggle from "@/components/ThemeToggle";
-import { SpeechPane, TranslationPane } from "@/components/TranscriptPane";
+import SpeechPane from "@/components/SpeechPane";
+import TranslationPane from "@/components/TranslationPane";
 import VizPane from "@/components/VizPane";
 import ResizeHandle from "@/components/ResizeHandle";
 import ToastContainer, { showToast } from "@/components/Toast";
@@ -313,7 +314,7 @@ export default function App() {
             aria-label="Settings"
             class="gear-spin"
           >
-            <Settings size={14} />
+            <Settings size={18} />
           </Button>
 
           <div class="w-px h-6 bg-border" />
@@ -327,7 +328,10 @@ export default function App() {
         </div>
       </header>
 
-      <div ref={containerRef} class="stagger-2 flex flex-col flex-1 min-h-0 bg-bg">
+      <div
+        ref={containerRef}
+        class="stagger-2 flex flex-col flex-1 min-h-0 bg-bg relative overflow-hidden"
+      >
         <Controls
           running={running}
           onStart={handleStart}
@@ -339,7 +343,7 @@ export default function App() {
         />
         <main
           ref={mainRef}
-          class="flex min-h-0 overflow-hidden pt-3 px-3 gap-0"
+          class="flex min-h-0 overflow-hidden pt-2 px-2 gap-0"
           style={{ flex: String(vSplit()) }}
         >
           <div style={{ flex: String(hSplit()) }} class="min-w-0 flex">
@@ -367,17 +371,44 @@ export default function App() {
           </div>
         </main>
 
+        <Show when={running()}>
+          <div class="partial-bar shrink-0 px-4 py-3 relative" dir="rtl">
+            <div class="partial-bar-border" />
+            <p
+              class="font-urdu text-xl leading-loose italic"
+              classList={{
+                "text-tx-3": !!entries.sttPartial(),
+                "text-tx-4": !entries.sttPartial(),
+              }}
+            >
+              {entries.sttPartial() || "\u200F\u2026"}
+            </p>
+          </div>
+        </Show>
+
         <ResizeHandle direction="vertical" onResize={onVResize} />
 
         <div style={{ flex: String(100 - vSplit()) }} class="min-h-0 flex flex-col">
           <VizPane />
         </div>
+
+        <span
+          class="pointer-events-none select-none absolute bottom-[35%] right-6 font-urdu text-[10rem] leading-none text-tx opacity-[0.04] z-0"
+          aria-hidden="true"
+        >
+          ایکسپریس<sup class="text-[3rem] align-super">24/7</sup>
+        </span>
       </div>
 
       <ToastContainer />
 
       <Show when={showSettings()}>
-        <ErrorBoundary fallback={() => setShowSettings(false)}>
+        <ErrorBoundary
+          fallback={() => {
+            setShowSettings(false);
+            return <></>;
+          }}
+        >
           <SettingsModal
             config={config()}
             onClose={() => setShowSettings(false)}
@@ -387,7 +418,12 @@ export default function App() {
       </Show>
 
       <Show when={perf.enabled()}>
-        <ErrorBoundary fallback={() => perf.toggle()}>
+        <ErrorBoundary
+          fallback={() => {
+            perf.toggle();
+            return <></>;
+          }}
+        >
           <PerfOverlay
             fps={perf.fps}
             ipcRtt={perf.ipcRtt}

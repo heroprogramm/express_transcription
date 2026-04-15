@@ -13,11 +13,13 @@ function statusColor(value: number, warn: number, crit: number): string {
 
 function Metric(props: { label: string; value: string; colorClass?: string }) {
   return (
-    <div class="flex justify-between items-center gap-3">
-      <span class="text-[10px] font-semibold text-tx-4 tracking-wider uppercase">
+    <div class="flex justify-between items-baseline gap-2">
+      <span class="text-[10px] font-semibold text-tx-4 tracking-wider uppercase whitespace-nowrap">
         {props.label}
       </span>
-      <span class={`text-[12px] font-bold tabular-nums ${props.colorClass ?? "text-tx"}`}>
+      <span
+        class={`text-[12px] font-bold tabular-nums whitespace-nowrap text-right ${props.colorClass ?? "text-tx"}`}
+      >
         {props.value}
       </span>
     </div>
@@ -44,20 +46,20 @@ export default function PerfOverlay(props: Props) {
   const audio = () => getAudioHealth();
 
   return (
-    <div class="fixed bottom-4 right-4 z-[9998] w-[260px] rounded-md border border-border bg-raised/90 backdrop-blur-md shadow-xl font-ui">
+    <div class="fixed bottom-4 right-4 z-[9998] w-[300px] rounded-md border border-border bg-raised/90 backdrop-blur-md shadow-xl font-ui">
       <div class="flex items-center justify-between px-3 py-2 border-b border-border">
         <span class="text-[10px] font-bold text-tx-3 tracking-widest uppercase">
           Performance Monitor
         </span>
         <button
-          class="text-tx-4 hover:text-tx text-[12px] font-bold w-5 h-5 flex items-center justify-center rounded transition-colors"
+          class="text-tx-4 hover:text-tx text-[12px] font-bold w-5 h-5 flex items-center justify-center rounded transition-colors cursor-pointer"
           onClick={props.onClose}
         >
           x
         </button>
       </div>
 
-      <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 px-3 py-2.5">
+      <div class="grid grid-cols-2 gap-x-6 gap-y-1.5 px-3 py-2.5">
         <Metric
           label="CPU Main"
           value={`${props.mainCpu().toFixed(1)}%`}

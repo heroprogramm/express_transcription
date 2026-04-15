@@ -10,59 +10,160 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ExpressText</title>
     <style>
-      /* Inline skeleton — shown before JS loads, removed by SolidJS mount */
+      /* Inline skeleton — shown before JS loads, replaced by SolidJS mount */
       .skeleton {
         display: flex;
         flex-direction: column;
         height: 100%;
         font-family: system-ui, sans-serif;
+        animation: skeletonFadeIn 0.3s ease both;
       }
-      .skeleton-bar {
+      .skeleton.fade-out {
+        animation: skeletonFadeOut 0.25s ease both;
+      }
+
+      /* ── Header ── */
+      .sk-header {
         height: 60px;
-        background: var(--bg-raised, #13161f);
-        border-bottom: 1px solid var(--border, #1f2433);
+        background: var(--bg-raised, #10131b);
+        border-bottom: 1px solid var(--border, #1a1f2e);
         display: flex;
         align-items: center;
-        padding: 0 24px;
-        gap: 14px;
+        justify-content: space-between;
+        padding: 0 20px;
         flex-shrink: 0;
       }
-      .skeleton-text {
+      .sk-header-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .sk-header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .sk-pill {
+        height: 24px;
+        border-radius: 6px;
+        background: var(--bg-surface, #161a25);
+      }
+      .sk-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: var(--bg-surface, #161a25);
+      }
+      .sk-badge {
+        height: 30px;
+        width: 90px;
+        border-radius: 999px;
+        background: var(--bg-surface, #161a25);
+      }
+      .sk-divider {
+        width: 1px;
+        height: 24px;
+        background: var(--border, #1a1f2e);
+      }
+
+      /* ── Controls bar ── */
+      .sk-controls {
+        height: 72px;
+        background: var(--bg, #080a10);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        flex-shrink: 0;
+      }
+      .sk-controls-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .sk-controls-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .sk-btn {
+        height: 40px;
+        border-radius: 8px;
+        background: var(--bg-surface, #161a25);
+      }
+
+      /* ── Panels ── */
+      .sk-main {
+        flex: 1;
+        display: flex;
+        gap: 0;
+        padding: 8px 8px 0;
+        background: var(--bg, #080a10);
+        min-height: 0;
+      }
+      .sk-panel {
+        flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 4px;
-      }
-      .skeleton-text span {
-        font-size: 11px;
-        color: var(--text-3, #6b7394);
-      }
-      .skeleton-body {
-        flex: 1;
-        display: flex;
-        gap: 16px;
-        padding: 16px;
-        background: var(--bg, #0c0f16);
-      }
-      .skeleton-panel {
-        flex: 1;
-        border-radius: 14px;
-        background: var(--bg-raised, #13161f);
-        border: 1px solid var(--border, #1f2433);
+        min-width: 0;
         overflow: hidden;
-        position: relative;
       }
-      .skeleton-panel::after {
+      .sk-panel-header {
+        height: 42px;
+        border-bottom: 1px solid var(--border, #1a1f2e);
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        flex-shrink: 0;
+      }
+      .sk-panel-label {
+        height: 12px;
+        width: 64px;
+        border-radius: 4px;
+        background: var(--bg-surface, #161a25);
+      }
+      .sk-panel-body {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+      }
+      .sk-panel-body::after {
         content: "";
         position: absolute;
         inset: 0;
         background: linear-gradient(
           90deg,
           transparent 0%,
-          rgba(255, 255, 255, 0.03) 50%,
+          rgba(255, 255, 255, 0.02) 50%,
           transparent 100%
         );
-        animation: shimmer 1.5s ease-in-out infinite;
+        animation: shimmer 2s ease-in-out infinite;
       }
+      .sk-resize-h {
+        width: 8px;
+        flex-shrink: 0;
+      }
+
+      /* ── Viz bar ── */
+      .sk-viz {
+        height: 44px;
+        background: var(--bg, #080a10);
+        border-top: 1px solid var(--border, #1a1f2e);
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+
+      /* ── Bottom area ── */
+      .sk-bottom {
+        flex: 0 0 120px;
+        background: var(--bg, #080a10);
+        min-height: 0;
+      }
+
+      /* ── Animations ── */
       @keyframes shimmer {
         0% {
           transform: translateX(-100%);
@@ -71,23 +172,144 @@
           transform: translateX(100%);
         }
       }
+      @keyframes skeletonFadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes skeletonFadeOut {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+        }
+      }
+
+      /* Logo theme toggle */
+      .sk-logo-dark {
+        display: block;
+      }
+      .sk-logo-light {
+        display: none;
+      }
+      [data-theme="light"] .sk-logo-dark {
+        display: none;
+      }
+      [data-theme="light"] .sk-logo-light {
+        display: block;
+      }
+
+      /* Light theme overrides */
+      [data-theme="light"] .sk-header {
+        background: #ffffff;
+        border-color: #d4d6dc;
+      }
+      [data-theme="light"] .sk-pill,
+      [data-theme="light"] .sk-circle,
+      [data-theme="light"] .sk-badge,
+      [data-theme="light"] .sk-btn,
+      [data-theme="light"] .sk-panel-label {
+        background: #ecedf1;
+      }
+      [data-theme="light"] .sk-controls,
+      [data-theme="light"] .sk-main,
+      [data-theme="light"] .sk-bottom,
+      [data-theme="light"] .sk-viz {
+        background: #f2f3f6;
+      }
+      [data-theme="light"] .sk-panel-header,
+      [data-theme="light"] .sk-viz {
+        border-color: #d4d6dc;
+      }
+      [data-theme="light"] .sk-divider {
+        background: #d4d6dc;
+      }
+      [data-theme="light"] .sk-panel-body::after {
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(0, 0, 0, 0.03) 50%,
+          transparent 100%
+        );
+      }
     </style>
   </head>
   <body class="h-full overflow-hidden font-ui bg-bg text-tx antialiased flex flex-col">
     <div id="root" class="h-full flex flex-col overflow-hidden">
       <!-- Skeleton shown instantly, replaced when SolidJS mounts -->
-      <div class="skeleton">
-        <div class="skeleton-bar">
-          <img
-            src="./src/assets/logo.png"
-            alt="Express 24/7"
-            style="height: 40px; width: auto; object-fit: contain"
-          />
+      <div class="skeleton" id="app-skeleton">
+        <!-- Header -->
+        <div class="sk-header">
+          <div class="sk-header-left">
+            <img
+              src="./src/assets/logo-dark.png"
+              alt=""
+              style="height: 32px; width: auto; object-fit: contain"
+              class="sk-logo-dark"
+            />
+            <img
+              src="./src/assets/logo.png"
+              alt=""
+              style="height: 32px; width: auto; object-fit: contain"
+              class="sk-logo-light"
+            />
+            <div class="sk-divider"></div>
+            <div class="sk-pill" style="width: 80px"></div>
+            <div class="sk-pill" style="width: 64px"></div>
+            <div class="sk-pill" style="width: 100px"></div>
+            <div class="sk-pill" style="width: 72px"></div>
+          </div>
+          <div class="sk-header-right">
+            <div class="sk-circle"></div>
+            <div class="sk-circle"></div>
+            <div class="sk-divider"></div>
+            <div class="sk-badge"></div>
+          </div>
         </div>
-        <div class="skeleton-body">
-          <div class="skeleton-panel"></div>
-          <div class="skeleton-panel"></div>
+
+        <!-- Controls bar -->
+        <div class="sk-controls">
+          <div class="sk-controls-left">
+            <div class="sk-btn" style="width: 240px; border-radius: 10px"></div>
+          </div>
+          <div class="sk-controls-right">
+            <div class="sk-btn" style="width: 100px"></div>
+            <div class="sk-btn" style="width: 80px"></div>
+            <div class="sk-btn" style="width: 80px"></div>
+          </div>
         </div>
+
+        <!-- Main panels -->
+        <div class="sk-main">
+          <div class="sk-panel">
+            <div class="sk-panel-header">
+              <div class="sk-panel-label"></div>
+            </div>
+            <div class="sk-panel-body"></div>
+          </div>
+          <div class="sk-resize-h"></div>
+          <div class="sk-panel">
+            <div class="sk-panel-header">
+              <div class="sk-panel-label" style="width: 80px"></div>
+            </div>
+            <div class="sk-panel-body"></div>
+          </div>
+        </div>
+
+        <!-- Viz Engine bar -->
+        <div class="sk-viz">
+          <div class="sk-pill" style="width: 90px; height: 20px"></div>
+          <div class="sk-pill" style="width: 80px; height: 28px"></div>
+          <div class="sk-pill" style="width: 64px; height: 28px"></div>
+          <div class="sk-pill" style="width: 72px; height: 28px"></div>
+        </div>
+
+        <!-- Bottom area (viz history) -->
+        <div class="sk-bottom"></div>
       </div>
     </div>
     <script type="module" src="./src/index.tsx"></script>

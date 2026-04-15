@@ -49,7 +49,7 @@ export function initAutoUpdater(): void {
   });
 
   autoUpdater.on("error", (err) => {
-    log(LogLevel.Error, "updater:error", { message: err.message });
+    log(LogLevel.Error, "updater:error", { message: err.message, stack: err.stack });
     if (isManualCheck) {
       sendStatus("error", err.message);
       isManualCheck = false;

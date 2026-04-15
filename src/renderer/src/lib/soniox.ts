@@ -110,7 +110,9 @@ export function getWordCount(): number {
 }
 
 function isTransientError(err: Error): boolean {
-  return err instanceof ConnectionError || err instanceof NetworkError;
+  if (err instanceof ConnectionError || err instanceof NetworkError) return true;
+  // 503: server-side early termination — "Cannot continue request (code N)"
+  return /cannot continue request/i.test(err.message);
 }
 
 function retryDelayMs(): number {
@@ -194,7 +196,6 @@ function connectRecording(
     model: config.soniox.model,
     language_hints: [config.soniox.language],
     language_hints_strict: true,
-    enable_endpoint_detection: true,
     translation: {
       type: "one_way",
       target_language: config.soniox.translate_to,
@@ -275,6 +276,18 @@ export function stopTranscription(): void {
   }
   client = null;
   state = SonioxState.Idle;
+}
+
+/** Pause audio capture; the SDK sends keepalive messages to prevent timeout. */
+export function pauseTranscription(): void {
+  if (state !== SonioxState.Recording || !recording) return;
+  recording.pause();
+}
+
+/** Resume audio capture after a pause. */
+export function resumeTranscription(): void {
+  if (!recording || recording.state !== "paused") return;
+  recording.resume();
 }
 
 /** Immediately cancel the active recording without waiting for final results. */

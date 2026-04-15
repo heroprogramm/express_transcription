@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
-import { Settings as SettingsIcon, X, Save } from "lucide-solid";
+import { Settings as SettingsIcon, X, Save, Mic, MonitorPlay, FileOutput } from "lucide-solid";
 import type { AppConfig } from "@/lib/types";
 import { hasApiKey, saveApiKey, saveConfig } from "@/lib/ipc";
 import { reportError } from "@/lib/errors";
@@ -13,8 +13,15 @@ interface Props {
   onSaved: (config: AppConfig) => void;
 }
 
-/** Modal dialog for editing Soniox API key, model, and output feed delay settings. */
+const TABS = ["Soniox", "Output", "Viz Engine"] as const;
+type Tab = (typeof TABS)[number];
+
+const INPUT =
+  "settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4";
+
+/** Modal dialog for editing application settings across multiple tabs. */
 export default function SettingsModal(props: Props) {
+  const [tab, setTab] = createSignal<Tab>("Soniox");
   const [key, setKey] = createSignal("");
   const [keyExists, setKeyExists] = createSignal(false);
   const [fields, setFields] = createStore({
@@ -35,24 +42,28 @@ export default function SettingsModal(props: Props) {
   async function handleSave() {
     const modelValue = fields.model.trim();
     if (!modelValue) {
+      setTab("Soniox");
       setError("Model cannot be empty");
       return;
     }
 
     const delayNum = Number(fields.feedDelay);
     if (!fields.feedDelay.trim() || Number.isNaN(delayNum) || delayNum < 0) {
+      setTab("Output");
       setError("Feed delay must be a non-negative number");
       return;
     }
 
     const portNum = Number(fields.vizPort);
     if (!fields.vizPort.trim() || Number.isNaN(portNum) || portNum < 1 || portNum > 65535) {
+      setTab("Viz Engine");
       setError("Viz port must be a number between 1 and 65535");
       return;
     }
 
     const speedNum = Number(fields.vizScrollSpeed);
     if (Number.isNaN(speedNum) || speedNum < 0.1 || speedNum > 1.0) {
+      setTab("Viz Engine");
       setError("Viz scroll speed must be between 0.1 and 1.0");
       return;
     }
@@ -90,6 +101,15 @@ export default function SettingsModal(props: Props) {
     if (e.key === "Escape") props.onClose();
   }
 
+  const tabIcon = (t: Tab) =>
+    t === "Soniox" ? (
+      <Mic size={14} />
+    ) : t === "Output" ? (
+      <FileOutput size={14} />
+    ) : (
+      <MonitorPlay size={14} />
+    );
+
   return (
     <div
       class="fixed inset-0 z-[1000] bg-bg/80 backdrop-blur-sm flex items-center justify-center"
@@ -100,8 +120,9 @@ export default function SettingsModal(props: Props) {
         if (e.target === e.currentTarget) props.onClose();
       }}
     >
-      <div class="animate-modal bg-raised border border-border rounded-md p-7 w-[560px] max-w-[90vw] shadow-[0_20px_60px_var(--bg)]">
-        <div class="flex items-center gap-3 mb-5">
+      <div class="animate-modal bg-raised border border-border rounded-md w-[600px] max-w-[90vw] shadow-[0_20px_60px_var(--bg)] flex flex-col max-h-[85vh]">
+        {/* Header */}
+        <div class="flex items-center gap-3 px-7 pt-6 pb-4 shrink-0">
           <div class="w-9 h-9 rounded-md bg-surface flex items-center justify-center shrink-0">
             <SettingsIcon size={18} class="text-tx-3" />
           </div>
@@ -111,10 +132,31 @@ export default function SettingsModal(props: Props) {
           </div>
         </div>
 
-        {/* ── Soniox section ── */}
-        <div class="mb-5">
-          <h3 class="text-[10px] font-bold text-tx-4 tracking-widest uppercase mb-3">Soniox</h3>
-          <div class="flex flex-col gap-4">
+        {/* Tabs */}
+        <div class="flex gap-1 px-7 shrink-0">
+          {TABS.map((t) => (
+            <button
+              class="flex items-center gap-1.5 px-3 py-2 text-[12px] font-semibold rounded-t-md border-b-2 transition-colors cursor-pointer outline-none"
+              classList={{
+                "border-[var(--blue)] text-tx": tab() === t,
+                "border-transparent text-tx-3 hover:text-tx-2 hover:bg-surface/50": tab() !== t,
+              }}
+              onClick={() => {
+                setTab(t);
+                setError("");
+              }}
+            >
+              {tabIcon(t)}
+              {t}
+            </button>
+          ))}
+        </div>
+        <div class="border-b border-border shrink-0" />
+
+        {/* Tab content */}
+        <div class="overflow-y-auto px-7 py-5 h-[340px]">
+          {/* ── Soniox tab ── */}
+          <div class="flex flex-col gap-4" classList={{ hidden: tab() !== "Soniox" }}>
             <div>
               <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
                 Model
@@ -122,7 +164,7 @@ export default function SettingsModal(props: Props) {
               <input
                 type="text"
                 placeholder="stt-rt-v4"
-                class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
+                class={INPUT}
                 ref={(el) => requestAnimationFrame(() => el.focus())}
                 value={fields.model}
                 onInput={(e) => setFields("model", e.currentTarget.value)}
@@ -141,41 +183,37 @@ export default function SettingsModal(props: Props) {
                     ? "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022 (leave empty to keep)"
                     : "Enter your Soniox API key"
                 }
-                class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
+                class={INPUT}
                 value={key()}
                 onInput={(e) => setKey(e.currentTarget.value)}
                 onKeyDown={handleKeyDown}
               />
             </div>
           </div>
-        </div>
 
-        {/* ── Output section ── */}
-        <div class="border-t border-border pt-5">
-          <h3 class="text-[10px] font-bold text-tx-4 tracking-widest uppercase mb-3">Output</h3>
-          <div>
-            <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
-              Feed Delay (seconds)
-            </label>
-            <input
-              type="text"
-              inputmode="numeric"
-              placeholder="10"
-              class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
-              value={fields.feedDelay}
-              onInput={(e) => setFields("feedDelay", e.currentTarget.value)}
-              onKeyDown={handleKeyDown}
-            />
-            <p class="text-[10px] text-tx-4 mt-1">
-              Time to edit translations before they are sent to feed
-            </p>
+          {/* ── Output tab ── */}
+          <div class="flex flex-col gap-4" classList={{ hidden: tab() !== "Output" }}>
+            <div>
+              <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                Feed Delay (seconds)
+              </label>
+              <input
+                type="text"
+                inputmode="numeric"
+                placeholder="10"
+                class={INPUT}
+                value={fields.feedDelay}
+                onInput={(e) => setFields("feedDelay", e.currentTarget.value)}
+                onKeyDown={handleKeyDown}
+              />
+              <p class="text-[10px] text-tx-4 mt-1">
+                Time to edit translations before they are sent to feed
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* ── Viz Engine section ── */}
-        <div class="border-t border-border pt-5 mt-5">
-          <h3 class="text-[10px] font-bold text-tx-4 tracking-widest uppercase mb-3">Viz Engine</h3>
-          <div class="flex flex-col gap-4">
+          {/* ── Viz Engine tab ── */}
+          <div class="flex flex-col gap-4" classList={{ hidden: tab() !== "Viz Engine" }}>
             <div class="flex gap-3">
               <div class="flex-1">
                 <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
@@ -184,7 +222,7 @@ export default function SettingsModal(props: Props) {
                 <input
                   type="text"
                   placeholder="127.0.0.1"
-                  class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
+                  class={INPUT}
                   value={fields.vizHost}
                   onInput={(e) => setFields("vizHost", e.currentTarget.value)}
                   onKeyDown={handleKeyDown}
@@ -198,7 +236,7 @@ export default function SettingsModal(props: Props) {
                   type="text"
                   inputmode="numeric"
                   placeholder="6100"
-                  class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
+                  class={INPUT}
                   value={fields.vizPort}
                   onInput={(e) => setFields("vizPort", e.currentTarget.value)}
                   onKeyDown={handleKeyDown}
@@ -212,7 +250,7 @@ export default function SettingsModal(props: Props) {
               <input
                 type="text"
                 placeholder="EXPRESS_24_7/TRANSLATION_BB/Translation_BB"
-                class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
+                class={INPUT}
                 value={fields.vizScenePath}
                 onInput={(e) => setFields("vizScenePath", e.currentTarget.value)}
                 onKeyDown={handleKeyDown}
@@ -226,7 +264,7 @@ export default function SettingsModal(props: Props) {
                 type="text"
                 inputmode="decimal"
                 placeholder="0.3"
-                class="settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4"
+                class={INPUT}
                 value={fields.vizScrollSpeed}
                 onInput={(e) => setFields("vizScrollSpeed", e.currentTarget.value)}
                 onKeyDown={handleKeyDown}
@@ -236,9 +274,10 @@ export default function SettingsModal(props: Props) {
           </div>
         </div>
 
-        {error() && <div class="text-xs text-red mt-3 font-medium">{error()}</div>}
-        <div class="flex items-center gap-2 mt-5 justify-end">
-          <div class="flex gap-2">
+        {/* Footer */}
+        <div class="shrink-0 px-7 pb-6 pt-3">
+          {error() && <div class="text-xs text-red mb-3 font-medium">{error()}</div>}
+          <div class="flex items-center justify-end gap-2">
             <Button variant="ghost" onClick={props.onClose}>
               <X size={14} />
               Cancel

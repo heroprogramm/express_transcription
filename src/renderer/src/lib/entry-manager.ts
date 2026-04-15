@@ -11,6 +11,7 @@ const MAX_ENTRIES = 500;
  */
 export function createEntryManager(feedDelayMs: () => number) {
   const [sttEntries, setSttEntries] = createSignal<TranscriptEntry[]>([]);
+  const [sttPartial, setSttPartial] = createSignal<string>("");
   const [transEntries, setTransEntries] = createSignal<TranslationEntry[]>([]);
   const [sentEntries, setSentEntries] = createSignal<TranslationEntry[]>([]);
   const [sttCount, setSttCount] = createSignal(0);
@@ -84,13 +85,20 @@ export function createEntryManager(feedDelayMs: () => number) {
   // ── Public API ──
 
   function pushStt(timestamp: string, text: string, isPartial: boolean): void {
-    if (!isPartial && !text.trim()) return;
-    setSttEntries((prev) => {
-      const next = prev.length >= MAX_ENTRIES ? prev.slice(1) : prev.slice();
-      next.push({ id: entryId++, timestamp, text, isPartial });
-      return next;
+    if (isPartial) {
+      setSttPartial(text);
+      return;
+    }
+    if (!text.trim()) return;
+    batch(() => {
+      setSttPartial("");
+      setSttEntries((prev) => {
+        const next = prev.length >= MAX_ENTRIES ? prev.slice(1) : prev.slice();
+        next.push({ id: entryId++, timestamp, text, isPartial: false });
+        return next;
+      });
+      setSttCount((c) => c + 1);
     });
-    if (!isPartial) setSttCount((c) => c + 1);
   }
 
   function pushTranslation(timestamp: string, text: string, latencyMs: number): void {
@@ -170,6 +178,7 @@ export function createEntryManager(feedDelayMs: () => number) {
     entryTimers.clear();
     stopTick();
     setLatency("\u2014");
+    setSttPartial("");
     setTransEntries((prev) =>
       prev.map((e) =>
         e.status === EntryStatus.Pending || e.status === EntryStatus.Editing
@@ -187,6 +196,7 @@ export function createEntryManager(feedDelayMs: () => number) {
     nextWriteIndex = 0;
     batch(() => {
       setSttEntries([]);
+      setSttPartial("");
       setTransEntries([]);
       setSentEntries([]);
       setSttCount(0);
@@ -203,6 +213,7 @@ export function createEntryManager(feedDelayMs: () => number) {
 
   return {
     sttEntries,
+    sttPartial,
     transEntries,
     sentEntries,
     sttCount,

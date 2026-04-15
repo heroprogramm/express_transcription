@@ -140,18 +140,22 @@ app.whenReady().then(() => {
       {
         label: "Help",
         submenu: [
-          {
-            label: "Settings\u2026",
-            accelerator: "CmdOrCtrl+,",
-            click: () => {
-              getMainWindow()?.webContents.send("open-settings");
-            },
-          },
-          {
-            label: "Check for Updates\u2026",
-            click: () => checkForUpdatesManual(),
-          },
-          { type: "separator" },
+          ...(!isMac
+            ? [
+                {
+                  label: "Settings\u2026",
+                  accelerator: "CmdOrCtrl+," as const,
+                  click: () => {
+                    getMainWindow()?.webContents.send("open-settings");
+                  },
+                },
+                {
+                  label: "Check for Updates\u2026",
+                  click: () => checkForUpdatesManual(),
+                },
+                { type: "separator" as const },
+              ]
+            : []),
           {
             label: "Send Feedback",
             click: () => {

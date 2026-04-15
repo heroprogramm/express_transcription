@@ -34,7 +34,6 @@ export default function AudioWaveform(props: Props) {
     const midY = (HEIGHT * dpr) / 2;
     const maxBarH = HEIGHT - 2;
 
-    const fadeBars = 6;
     for (let i = 0; i < BAR_COUNT; i++) {
       const level = ring[(head + i) % BAR_COUNT];
       const barH = Math.max(MIN_BAR_H, level * maxBarH) * dpr;
@@ -42,12 +41,10 @@ export default function AudioWaveform(props: Props) {
       const y = midY - barH / 2;
       const w = BAR_WIDTH * dpr;
 
-      ctx.globalAlpha = i < fadeBars ? (i + 1) / fadeBars : 1;
       ctx.beginPath();
       ctx.roundRect(x, y, w, barH, w / 2);
       ctx.fill();
     }
-    ctx.globalAlpha = 1;
   }
 
   function tick() {

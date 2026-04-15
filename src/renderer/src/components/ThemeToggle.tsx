@@ -23,8 +23,8 @@ export default function ThemeToggle() {
       onClick={toggle}
       class="[&_svg]:transition-transform [&:hover_svg]:rotate-[30deg]"
     >
-      <Sun size={14} class="hidden dark:block" />
-      <Moon size={14} class="hidden light:block" />
+      <Sun size={18} class="hidden dark:block" />
+      <Moon size={18} class="hidden light:block" />
     </Button>
   );
 }
