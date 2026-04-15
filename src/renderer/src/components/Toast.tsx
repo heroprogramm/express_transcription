@@ -53,7 +53,7 @@ export default function ToastContainer() {
 
   return (
     <div
-      class="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 max-w-[420px]"
+      class="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] flex flex-col items-center gap-2 max-w-[420px]"
       aria-live="assertive"
       aria-atomic="false"
     >
