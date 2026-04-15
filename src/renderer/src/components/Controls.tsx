@@ -1,5 +1,5 @@
 import { createSignal, onMount, onCleanup, Show, type Accessor } from "solid-js";
-import { Play, Square, ChevronDown, Trash2, Mic, Copy } from "lucide-solid";
+import { Play, Square, ChevronDown, Trash2, Mic, Copy, Check } from "lucide-solid";
 import Button from "@/components/Button";
 
 /** Props for the {@link Controls} component. */
@@ -16,6 +16,7 @@ export default function Controls(props: Props) {
   const [mics, setMics] = createSignal<MediaDeviceInfo[]>([]);
   const [selectedMic, setSelectedMic] = createSignal("");
   const [open, setOpen] = createSignal(false);
+  const [copied, setCopied] = createSignal(false);
   let dropdownRef!: HTMLDivElement;
 
   const selectedLabel = () => {
@@ -123,9 +124,20 @@ export default function Controls(props: Props) {
           Clear
         </Button>
 
-        <Button variant="ghost" size="lg" onClick={props.onCopyAll} class="!text-tx-2">
-          <Copy size={14} />
-          Copy All
+        <Button
+          variant="ghost"
+          size="lg"
+          onClick={() => {
+            props.onCopyAll();
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          }}
+          class="!text-tx-2"
+        >
+          <Show when={copied()} fallback={<Copy size={14} />}>
+            <Check size={14} class="text-green" />
+          </Show>
+          {copied() ? "Copied!" : "Copy All"}
         </Button>
       </div>
     </div>
