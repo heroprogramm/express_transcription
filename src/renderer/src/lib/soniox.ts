@@ -3,6 +3,8 @@ import {
   BrowserPermissionResolver,
   MicrophoneSource,
   AuthError,
+  BadRequestError,
+  QuotaError,
   ConnectionError,
   NetworkError,
   type Recording,
@@ -130,6 +132,26 @@ function resetRetryState(): void {
   }
 }
 
+function userFacingErrorMessage(err: Error): string {
+  if (/no soniox api key/i.test(err.message)) return "No Soniox API key configured.";
+  if (err instanceof AuthError) return "Invalid or expired API key. Please update it in Settings.";
+  if (err instanceof BadRequestError) return "Bad request — check your transcription settings.";
+  if (err instanceof QuotaError) {
+    const statusCode = (err as QuotaError).statusCode;
+    if (statusCode === 402) return "Payment required — your Soniox plan needs billing attention.";
+    return "Too many requests — please wait a moment and try again.";
+  }
+  if (err instanceof NetworkError) {
+    const statusCode = (err as NetworkError).statusCode;
+    if (statusCode === 408) return "Request timed out — please try again.";
+    if (statusCode === 503)
+      return "Soniox service is temporarily unavailable. Please try again later.";
+    return "Soniox server error — please try again later.";
+  }
+  if (err instanceof ConnectionError) return "Connection failed — check your internet connection.";
+  return err.message;
+}
+
 function connectRecording(
   config: AppConfig,
   callbacks: SonioxCallbacks,
@@ -192,7 +214,7 @@ function connectRecording(
     }
 
     const isApiKeyError = err instanceof AuthError || /no soniox api key/i.test(err.message);
-    callbacks.onError(err.message, isApiKeyError);
+    callbacks.onError(userFacingErrorMessage(err), isApiKeyError);
     state = SonioxState.Idle;
     callbacks.onStateChange("stopped");
     resetRetryState();
