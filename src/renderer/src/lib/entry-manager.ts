@@ -1,4 +1,5 @@
 import { createSignal, batch, onCleanup } from "solid-js";
+import { createStore, produce, reconcile } from "solid-js/store";
 import { EntryStatus, type TranscriptEntry, type TranslationEntry } from "@/lib/types";
 import { getWordCount, queueLogTranslation } from "@/lib/soniox";
 
@@ -10,10 +11,10 @@ const MAX_ENTRIES = 500;
  * @param feedDelayMs Accessor returning the delay before a pending entry is auto-confirmed.
  */
 export function createEntryManager(feedDelayMs: () => number) {
-  const [sttEntries, setSttEntries] = createSignal<TranscriptEntry[]>([]);
+  const [sttEntries, setSttEntries] = createStore<TranscriptEntry[]>([]);
   const [sttPartial, setSttPartial] = createSignal<string>("");
-  const [transEntries, setTransEntries] = createSignal<TranslationEntry[]>([]);
-  const [sentEntries, setSentEntries] = createSignal<TranslationEntry[]>([]);
+  const [transEntries, setTransEntries] = createStore<TranslationEntry[]>([]);
+  const [sentEntries, setSentEntries] = createStore<TranslationEntry[]>([]);
   const [sttCount, setSttCount] = createSignal(0);
   const [latency, setLatency] = createSignal("\u2014");
   const [words, setWords] = createSignal(0);
@@ -40,38 +41,35 @@ export function createEntryManager(feedDelayMs: () => number) {
   // ── Internal helpers ──
 
   function updateEntryStatus(id: number, status: EntryStatus, text?: string): void {
-    setTransEntries((prev) => {
-      const idx = prev.findIndex((e) => e.id === id);
-      if (idx === -1) return prev;
-      const next = prev.slice();
-      next[idx] = { ...prev[idx], status, ...(text !== undefined ? { text } : {}) };
-      return next;
-    });
+    const idx = transEntries.findIndex((e) => e.id === id);
+    if (idx === -1) return;
+    setTransEntries(idx, "status", status);
+    if (text !== undefined) setTransEntries(idx, "text", text);
   }
 
   function drainConfirmedQueue(): void {
-    const entries = transEntries();
     const newSent: TranslationEntry[] = [];
-    const indices: number[] = [];
+    const startIdx = nextWriteIndex;
     while (
-      nextWriteIndex < entries.length &&
-      entries[nextWriteIndex].status === EntryStatus.Confirmed
+      nextWriteIndex < transEntries.length &&
+      transEntries[nextWriteIndex].status === EntryStatus.Confirmed
     ) {
-      const e = entries[nextWriteIndex];
+      const e = transEntries[nextWriteIndex];
       queueLogTranslation(e.timestamp, e.text);
       newSent.push({ ...e, status: EntryStatus.Sent });
-      indices.push(nextWriteIndex);
       nextWriteIndex++;
     }
-    if (indices.length > 0) {
-      setTransEntries((prev) => {
-        const next = prev.slice();
-        for (let i = 0; i < indices.length; i++) {
-          next[indices[i]] = newSent[i];
+    if (newSent.length > 0) {
+      batch(() => {
+        for (let i = 0; i < newSent.length; i++) {
+          setTransEntries(startIdx + i, "status", EntryStatus.Sent);
         }
-        return next;
+        setSentEntries(
+          produce((draft) => {
+            for (const e of newSent) draft.push(e);
+          }),
+        );
       });
-      setSentEntries((prev) => [...prev, ...newSent]);
     }
   }
 
@@ -92,11 +90,12 @@ export function createEntryManager(feedDelayMs: () => number) {
     if (!text.trim()) return;
     batch(() => {
       setSttPartial("");
-      setSttEntries((prev) => {
-        const next = prev.length >= MAX_ENTRIES ? prev.slice(1) : prev.slice();
-        next.push({ id: entryId++, timestamp, text, isPartial: false });
-        return next;
-      });
+      setSttEntries(
+        produce((draft) => {
+          if (draft.length >= MAX_ENTRIES) draft.shift();
+          draft.push({ id: entryId++, timestamp, text, isPartial: false });
+        }),
+      );
       setSttCount((c) => c + 1);
     });
   }
@@ -104,19 +103,21 @@ export function createEntryManager(feedDelayMs: () => number) {
   function pushTranslation(timestamp: string, text: string, latencyMs: number): void {
     const thisId = entryId++;
     batch(() => {
-      setTransEntries((prev) => {
-        const overflow = prev.length >= MAX_ENTRIES;
-        const next = overflow ? prev.slice(1) : prev.slice();
-        next.push({
-          id: thisId,
-          timestamp,
-          text,
-          status: EntryStatus.Pending,
-          createdAt: Date.now(),
-        });
-        if (overflow && nextWriteIndex > 0) nextWriteIndex--;
-        return next;
-      });
+      setTransEntries(
+        produce((draft) => {
+          if (draft.length >= MAX_ENTRIES) {
+            draft.shift();
+            if (nextWriteIndex > 0) nextWriteIndex--;
+          }
+          draft.push({
+            id: thisId,
+            timestamp,
+            text,
+            status: EntryStatus.Pending,
+            createdAt: Date.now(),
+          });
+        }),
+      );
       setWords(getWordCount());
       setLatency(`${(Math.abs(latencyMs) / 1000).toFixed(1)}s`);
     });
@@ -126,7 +127,7 @@ export function createEntryManager(feedDelayMs: () => number) {
   }
 
   function startEdit(id: number): void {
-    const current = transEntries().find((e) => e.status === EntryStatus.Editing);
+    const current = transEntries.find((e) => e.status === EntryStatus.Editing);
     if (current) {
       saveEdit(current.id, editingText.get(current.id) ?? current.text);
     }
@@ -139,7 +140,7 @@ export function createEntryManager(feedDelayMs: () => number) {
   }
 
   function remainingDelayMs(id: number): number {
-    const entry = transEntries().find((e) => e.id === id);
+    const entry = transEntries.find((e) => e.id === id);
     if (!entry) return 0;
     const elapsed = Date.now() - entry.createdAt;
     return Math.max(0, feedDelayMs() - elapsed);
@@ -179,12 +180,14 @@ export function createEntryManager(feedDelayMs: () => number) {
     stopTick();
     setLatency("\u2014");
     setSttPartial("");
-    setTransEntries((prev) =>
-      prev.map((e) =>
-        e.status === EntryStatus.Pending || e.status === EntryStatus.Editing
-          ? { ...e, status: EntryStatus.Confirmed }
-          : e,
-      ),
+    setTransEntries(
+      produce((draft) => {
+        for (const e of draft) {
+          if (e.status === EntryStatus.Pending || e.status === EntryStatus.Editing) {
+            e.status = EntryStatus.Confirmed;
+          }
+        }
+      }),
     );
     drainConfirmedQueue();
   }
@@ -195,10 +198,10 @@ export function createEntryManager(feedDelayMs: () => number) {
     stopTick();
     nextWriteIndex = 0;
     batch(() => {
-      setSttEntries([]);
+      setSttEntries(reconcile([]));
       setSttPartial("");
-      setTransEntries([]);
-      setSentEntries([]);
+      setTransEntries(reconcile([]));
+      setSentEntries(reconcile([]));
       setSttCount(0);
       setWords(0);
       setLatency("\u2014");
@@ -212,10 +215,10 @@ export function createEntryManager(feedDelayMs: () => number) {
   });
 
   return {
-    sttEntries,
+    sttEntries: () => sttEntries,
     sttPartial,
-    transEntries,
-    sentEntries,
+    transEntries: () => transEntries,
+    sentEntries: () => sentEntries,
     sttCount,
     latency,
     words,
