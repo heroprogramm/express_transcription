@@ -185,7 +185,7 @@ export default function SettingsModal(props: Props) {
                   onChange={(e) => setFields("endpointDetection", e.currentTarget.checked)}
                   class="w-4 h-4 rounded border border-border bg-surface accent-[var(--blue)] cursor-pointer"
                 />
-                <span class="text-sm text-tx">Detect speech endpoints</span>
+                <span class="text-sm text-tx">Enabled</span>
               </label>
               <p class="text-[10px] text-tx-4 mt-1">
                 Segment transcription at natural speech pauses
