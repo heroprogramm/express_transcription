@@ -19,7 +19,6 @@ export function showToast(
   type: "error" | "info" = "error",
   action?: { label: string; onClick: () => void },
 ) {
-  if (toasts().some((t) => t.message === message && !t.dismissing)) return;
   const id = nextId++;
   setToasts((prev) => [...prev, { id, message, type, action }]);
 

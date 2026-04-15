@@ -8,7 +8,8 @@ ExpressText is an Electron desktop application that provides real-time speech-to
 ┌─────────────────────────────────────────────────────────┐
 │                    Main Process                         │
 │  index.ts  ipc.ts  config.ts  session.ts  store.ts      │
-│  window.ts  metrics.ts  logger.ts                       │
+│  window.ts  metrics.ts  logger.ts  updater.ts           │
+│  viz-engine.ts                                          │
 ├─────────────────────────────────────────────────────────┤
 │                 Preload (contextBridge)                 │
 │  preload/index.ts — exposes electronAPI on window       │
@@ -19,7 +20,7 @@ ExpressText is an Electron desktop application that provides real-time speech-to
 └─────────────────────────────────────────────────────────┘
 ```
 
-The main process owns configuration persistence, session file I/O, feed file writes, API key encryption, microphone permission brokering, and performance metrics collection. The renderer process owns the Soniox WebSocket connection, audio capture, UI rendering, and the entry lifecycle state machine.
+The main process owns configuration persistence, session file I/O, feed file writes, API key encryption, microphone permission brokering, performance metrics collection, auto-updates, and the Viz Engine TCP connection. The renderer process owns the Soniox WebSocket connection, audio capture, UI rendering, and the entry lifecycle state machine.
 
 ## Process Communication
 
@@ -39,6 +40,14 @@ All IPC flows through `contextBridge.exposeInMainWorld("electronAPI", ...)` in t
 | `ensure-mic-access`                | Request/check microphone permission (OS-level)    |
 | `perf:start` / `perf:stop`       | Start/stop metrics collection interval            |
 | `perf:ping`                        | Measure IPC round-trip time                       |
+| `clipboard:write`                  | Write text to system clipboard                    |
+| `viz:load-scene`                   | Load the configured Viz Engine scene              |
+| `viz:continue`                     | Send IN/OUT (continue) command to Viz Engine      |
+| `viz:send-text`                    | Push a translation line to a Viz Engine text slot  |
+| `viz:toggle-scroll`                | Start or stop Viz Engine scroll animation         |
+| `viz:set-speed`                    | Set Viz Engine scroll speed                       |
+| `viz:hard-reset`                   | Stop scroll and clear all Viz Engine text slots   |
+| `viz:get-status`                   | Get current Viz Engine controller state           |
 
 **Main -> Renderer (webContents.send):**
 
@@ -46,6 +55,8 @@ All IPC flows through `contextBridge.exposeInMainWorld("electronAPI", ...)` in t
 | ----------------- | --------------------------------------------- |
 | `perf:snapshot` | Periodic performance metrics (every 2 s)      |
 | `open-settings` | Menu item triggers settings modal in renderer |
+| `update-status` | Auto-updater status (downloading, ready, up-to-date, error) |
+| `viz:status`    | Periodic Viz Engine state snapshot            |
 
 ## Data Flow
 
@@ -56,6 +67,7 @@ flowchart LR
     SONIOX -->|"onTranslation()"| TRANS["Translation Entries<br/>(TranslationPane)"]
     TRANS -->|"timer expires or<br/>manual confirm"| SENT["Sent Entries<br/>(OutputPane)"]
     SENT -->|"queueLogTranslation()"| BATCH["IPC Batch Queue<br/>(200 ms flush)"]
+    SENT -->|"vizSendText()"| VIZ["Viz Engine<br/>(TCP)"]
     BATCH -->|"log-translations-batch"| MAIN["Main Process"]
     MAIN -->|"session file"| LOG["session_YYYYMMDD_HHMMSS.txt"]
     MAIN -->|"atomic write<br/>(tmp + rename)"| FEED["feed.txt"]
@@ -65,9 +77,10 @@ flowchart LR
 2. Audio streams over a WebSocket to Soniox servers. Results arrive as `RealtimeResult` objects containing tokens.
 3. Tokens are parsed into original text (Urdu) and translated text (English). Original text is pushed to `sttEntries`; translations are pushed to `transEntries`.
 4. Each translation entry starts a countdown timer (`feedDelayMs`). When the timer fires (or the user manually confirms), the entry transitions to `confirmed` then `sent`.
-5. Sent entries are batched in a renderer-side queue (`logQueue`) that flushes every 200 ms via the `log-translations-batch` IPC channel.
+5. Sent entries are batched in a renderer-side queue (`logQueue`) that flushes every 200 ms via the `log-translations-batch` IPC channel. Concurrently, each sent entry is pushed to the Viz Engine via `vizSendText()`.
 6. The main process writes each line to the session log (append-only `WriteStream`) and buffers the latest line for the feed file.
 7. The feed file is atomically updated (write to `.tmp`, then rename) every 200 ms, always containing the most recent translation line.
+8. The Viz Engine controller (`viz-engine.ts`) sends text to a Vizrt graphics engine over TCP, managing scene loading, text slot assignment, and scroll animation.
 
 ## Entry Lifecycle
 
@@ -104,11 +117,11 @@ The app uses SolidJS fine-grained reactivity throughout:
 
 Key reactive hooks:
 
-| Hook                   | Location                 | Purpose                                                                              |
-| ---------------------- | ------------------------ | ------------------------------------------------------------------------------------ |
-| `createEntryManager` | `lib/entry-manager.ts` | Manages STT, translation, and sent entry arrays plus the edit/confirm/send lifecycle |
-| `createPerfMonitor`  | `lib/perf.ts`          | FPS counter, IPC RTT measurement, main/renderer CPU/memory tracking                  |
-| `useVirtualList`     | `lib/virtual-list.ts`  | Windowed rendering for transcript/translation/output lists                           |
+| Hook                   | Location                   | Purpose                                                                              |
+| ---------------------- | -------------------------- | ------------------------------------------------------------------------------------ |
+| `createEntryManager` | `lib/entry-manager.ts`   | Manages STT, translation, and sent entry arrays plus the edit/confirm/send lifecycle |
+| `createPerfMonitor`  | `lib/perf.ts`            | FPS counter, IPC RTT measurement, main/renderer CPU/memory tracking                  |
+| `useAutoScroll`      | `lib/use-auto-scroll.ts` | Auto-scroll pinning for pane lists (stays pinned to bottom unless user scrolls up)   |
 
 State does not use a global store. Each concern is encapsulated in a hook and composed in `App.tsx`.
 
@@ -131,9 +144,9 @@ State does not use a global store. Each concern is encapsulated in a hook and co
 
 ## Performance Optimizations
 
-### Virtual Scrolling
+### Auto-Scroll
 
-All three panes (Speech, Translation, Output) use `useVirtualList` which renders only visible items plus an overscan of 5 items above and below the viewport. Scroll updates are throttled via `requestAnimationFrame`. Each rendered row uses `contain: content` CSS containment.
+All panes (Speech, Translation, VizPane history) use `useAutoScroll` to keep the list pinned to the bottom as new entries arrive. When the user scrolls up (more than 80 px from the bottom), auto-scroll is suspended until they scroll back down.
 
 ### Batched IPC
 
@@ -141,7 +154,7 @@ Translation log writes are batched in a renderer-side queue (`logQueue`) and flu
 
 ### Code Splitting
 
-`SettingsModal` and `PerfOverlay` are lazy-loaded with SolidJS `lazy()` so they are not in the critical render path.
+`SettingsModal` and `PerfOverlay` are lazy-loaded with SolidJS `lazy()` so they are not in the critical render path. Both are wrapped in `ErrorBoundary` to prevent rendering failures from crashing the app.
 
 ### Deferred Menu
 

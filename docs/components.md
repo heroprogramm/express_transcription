@@ -16,7 +16,8 @@ graph TD
     MainArea --> ResizeHandle_H["ResizeHandle (horizontal)"]
     MainArea --> TranslationPane
     MainArea --> ResizeHandle_V["ResizeHandle (vertical)"]
-    MainArea --> OutputPane
+    MainArea --> VizPane
+    VizPane --> ConfirmDialog
     App --> ToastContainer
     App --> SettingsModal["SettingsModal (lazy)"]
     App --> PerfOverlay["PerfOverlay (lazy)"]
@@ -71,7 +72,7 @@ The root component. Owns all top-level state and orchestrates the transcription 
 
 ## SpeechPane
 
-**File:** `src/renderer/src/components/TranscriptPane.tsx`
+**File:** `src/renderer/src/components/SpeechPane.tsx`
 
 **Props:**
 
@@ -84,7 +85,7 @@ The root component. Owns all top-level state and orchestrates the transcription 
 
 **Behavior:**
 - Renders Urdu text right-to-left (`dir="rtl"`) using the eagerly-loaded Urdu font
-- Uses `useVirtualList` with 56 px item height
+- Uses `useAutoScroll` to stay pinned to the latest entry
 - Shows `AudioWaveform` in the header when live
 - Partial entries shown with "..." marker and dimmed text; final entries with a triangle marker
 - Empty state shows animated waveform bars
@@ -93,7 +94,7 @@ The root component. Owns all top-level state and orchestrates the transcription 
 
 ## TranslationPane
 
-**File:** `src/renderer/src/components/TranscriptPane.tsx`
+**File:** `src/renderer/src/components/TranslationPane.tsx`
 
 **Props:**
 
@@ -101,6 +102,7 @@ The root component. Owns all top-level state and orchestrates the transcription 
 |---|---|---|
 | `entries` | `Accessor<TranslationEntry[]>` | Translation entries with status |
 | `live` | `Accessor<boolean>` | Whether session is active |
+| `tick` | `Accessor<number>` | Clock signal (updates every 500 ms) driving countdown recalculation |
 | `feedDelayMs` | `() => number` | Current feed delay in milliseconds |
 | `onStartEdit` | `(id: number) => void` | Begin editing an entry |
 | `onSaveEdit` | `(id: number, text: string) => void` | Save edited text |
@@ -108,7 +110,7 @@ The root component. Owns all top-level state and orchestrates the transcription 
 | `onEditChange` | `(id: number, text: string) => void` | Track in-progress edit text |
 
 **Behavior:**
-- Uses `useVirtualList` with 40 px item height
+- Uses `useAutoScroll` to stay pinned to the latest entry
 - Each entry rendered by `TranslationEntryRow` sub-component
 - Color-coded left border per status: pending (amber), editing (blue), confirmed (green), sent (gray)
 - Pending entries show a countdown timer and a progress bar animation
@@ -119,29 +121,50 @@ The root component. Owns all top-level state and orchestrates the transcription 
 
 ## TranslationEntryRow
 
-**File:** `src/renderer/src/components/TranscriptPane.tsx` (internal component)
+**File:** `src/renderer/src/components/TranslationPane.tsx` (internal component)
 
 Renders a single translation entry row within the TranslationPane. Manages its own countdown interval for pending entries and handles inline editing via keyboard (Enter to save, Escape to cancel) or button clicks.
 
 ---
 
-## OutputPane
+## VizPane
 
-**File:** `src/renderer/src/components/OutputPane.tsx`
+**File:** `src/renderer/src/components/VizPane.tsx`
+
+**Props:** none (manages its own state via IPC)
+
+**Behavior:**
+- Viz Engine control panel replacing the former read-only OutputPane
+- Polls `vizGetStatus` on mount and subscribes to `onVizStatus` push events for live state
+- **Controls:** Load Scene, IN/OUT (continue), Scroll/Stop toggle (Ctrl+Space), speed slider (0.1–1.0), Hard Reset
+- Connection status indicator (green dot = connected, gray = disconnected)
+- Slot counter shows current text index out of 15 slots when scene is loaded
+- History log with auto-scroll (`useAutoScroll`) displaying timestamped action/info entries
+- Hard Reset protected by a `ConfirmDialog` prompt
+- Empty state prompts user to load a scene
+
+---
+
+## ConfirmDialog
+
+**File:** `src/renderer/src/components/ConfirmDialog.tsx`
 
 **Props:**
 
 | Prop | Type | Description |
 |---|---|---|
-| `entries` | `Accessor<TranslationEntry[]>` | Sent (confirmed) translation entries |
-| `wordCount` | `Accessor<number>` | Total translated word count |
+| `open` | `boolean` | Whether the dialog is visible |
+| `title` | `string` | Dialog heading |
+| `message` | `string` | Explanatory body text |
+| `confirmLabel` | `string` (optional) | Label for confirm button (default: `"Confirm"`) |
+| `onConfirm` | `() => void` | Called when user confirms |
+| `onCancel` | `() => void` | Called when user cancels or clicks backdrop |
 
 **Behavior:**
-- Read-only virtualized list (32 px item height)
-- Header shows line count and word count
-- Copy-to-clipboard button copies all entries as `[timestamp] text` lines
-- Uses `electronAPI.copyToClipboard` (preload bridge to `clipboard.writeText`)
-- Shows a "Copied" confirmation for 2 seconds
+- Modal overlay with backdrop blur
+- Danger-styled confirm button, ghost cancel button
+- Clicking backdrop triggers cancel
+- Used by VizPane for the Hard Reset confirmation
 
 ---
 
@@ -159,8 +182,11 @@ Renders a single translation entry row within the TranslationPane. Manages its o
 
 **Behavior:**
 - Lazy-loaded via `solid-js/lazy`
-- Fields: Soniox model (text), API key (password, leave empty to keep current), feed delay (numeric)
-- Validates model non-empty and feed delay non-negative before saving
+- Three tabs: **Soniox**, **Output**, **Viz Engine**
+- **Soniox tab:** model (text), endpoint detection (checkbox), API key (password, leave empty to keep current)
+- **Output tab:** feed delay (numeric, seconds)
+- **Viz Engine tab:** host (text), port (numeric, 1–65535), scene path (text), default scroll speed (0.1–1.0)
+- Validates model non-empty, feed delay non-negative, port valid, scroll speed in range before saving
 - Enter saves, Escape closes; clicking backdrop closes
 - Saves API key and config via separate IPC calls
 
@@ -204,13 +230,13 @@ Renders a single translation entry row within the TranslationPane. Manages its o
 | Prop | Type | Description |
 |---|---|---|
 | `latency` | `Accessor<string>` | Transcription latency |
-| `words` | `Accessor<number>` | Word count |
+| `lines` | `Accessor<number>` | Sent line count |
 | `uptime` | `Accessor<string>` | Session uptime |
 | `live` | `Accessor<boolean>` | Whether session is active |
 
 **Behavior:**
-- Renders three `Stat` sub-components in the header bar
-- Each stat flashes briefly (400 ms) when its value changes while live
+- Renders three `Stat` sub-components (Latency, Lines, Uptime) plus a Signal quality indicator
+- Signal quality is derived from latency: good (<2s), fair (2-5s), poor (>5s), with color-coded dot and label
 
 ---
 
@@ -242,9 +268,10 @@ Renders a single translation entry row within the TranslationPane. Manages its o
 
 | Prop | Type | Description |
 |---|---|---|
-| `variant` | `"primary" \| "danger" \| "ghost" \| "icon"` | Visual style variant (default: `ghost`) |
+| `variant` | `"primary" \| "success" \| "danger" \| "ghost" \| "ghost-danger" \| "icon"` | Visual style variant (default: `ghost`) |
+| `size` | `"sm" \| "md" \| "lg"` | Size preset (default: `md`; ignored for `icon` variant) |
 
-Four variants: `primary` (green), `danger` (red), `ghost` (transparent border), `icon` (small circular).
+Six variants: `primary` (blue), `success` (green), `danger` (red), `ghost` (transparent border), `ghost-danger` (transparent with red text), `icon` (small square).
 
 ---
 
@@ -265,12 +292,13 @@ Toggles `data-theme` between `"dark"` and `"light"` on `<html>`. Persists choice
 **Props:** none (module-level state)
 
 **Exports:**
-- `showToast(message, type)` — adds a toast (`"error"` or `"info"`)
+- `showToast(message, type, action?)` — adds a toast (`"error"` or `"info"`, optional action button)
 
 **Behavior:**
 - Fixed bottom-right position, stacks vertically
-- Toasts auto-dismiss after 6 seconds with a 200 ms slide-out animation
+- Toasts auto-dismiss after 6 seconds (30 seconds if an action button is present)
 - Click to dismiss early
+- Optional action button (e.g., "Restart" for auto-updates) with callback
 - Error toasts have red styling; info toasts have blue/steel styling
 - Used by `reportError()` in `lib/errors.ts` to surface errors to the user
 
@@ -296,13 +324,13 @@ Toggles `data-theme` between `"dark"` and `"light"` on `<html>`. Persists choice
 
 ## Shared Hooks
 
-### `useVirtualList<T>(entries, containerRef, itemHeight)`
+### `useAutoScroll(containerRef, count)`
 
-**File:** `src/renderer/src/lib/virtual-list.ts`
+**File:** `src/renderer/src/lib/use-auto-scroll.ts`
 
-Provides windowed rendering for scrollable lists. Calculates visible item range based on scroll position and viewport height with an overscan of 5 items. Auto-scrolls to bottom when the user is near the bottom. Scroll updates and auto-scroll are throttled via `requestAnimationFrame`.
+Keeps scroll pinned to the bottom of a container as items are added. Unpins when the user scrolls up more than 80 px from the bottom, and re-pins when they scroll back down.
 
-**Returns:** `{ totalHeight, visibleItems, offsetY, onScroll, itemHeight }`
+**Returns:** `{ onScroll }` — attach to the container's `onScroll` event.
 
 ### `createEntryManager(feedDelayMs)`
 

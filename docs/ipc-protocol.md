@@ -17,7 +17,7 @@ All IPC communication between the main and renderer processes passes through the
 | Channel | Parameters | Return Type | Description |
 |---|---|---|---|
 | `get-config` | none | `{ config: AppConfig; warnings: string[] }` | Returns the current config merged with defaults, plus any validation warnings |
-| `save-config` | `fields: { model?: string; feed_delay_seconds?: number }` | `{ config: AppConfig; warnings: string[] }` | Merges provided fields into stored config, validates, reloads, and returns the result |
+| `save-config` | `fields: { model?: string; endpoint_detection?: boolean; feed_delay_seconds?: number; viz_host?: string; viz_port?: number; viz_scene_path?: string; viz_scroll_speed?: number }` | `{ config: AppConfig; warnings: string[] }` | Merges provided fields into stored config, validates, reloads, and returns the result |
 
 ### Session Management
 
@@ -33,6 +33,7 @@ All IPC communication between the main and renderer processes passes through the
 | Channel | Parameters | Return Type | Description |
 |---|---|---|---|
 | `ensure-mic-access` | none | `"granted" \| "denied" \| "opened-settings"` | macOS: checks `getMediaAccessStatus`, prompts via `askForMediaAccess`, or opens System Preferences. Windows: checks status or opens `ms-settings:privacy-microphone`. Linux: returns `"granted"` |
+| `clipboard:write` | `text: string` | `void` | Writes text to the system clipboard |
 
 ### Performance Monitoring
 
@@ -42,12 +43,26 @@ All IPC communication between the main and renderer processes passes through the
 | `perf:stop` | none | `void` | Stops the collection interval and logs a summary (peak RSS, peak heap, avg CPU, avg lag) |
 | `perf:ping` | none | `number` | Returns `Date.now()` — used by renderer to measure IPC round-trip time |
 
+### Viz Engine
+
+| Channel | Parameters | Return Type | Description |
+|---|---|---|---|
+| `viz:load-scene` | none | `void` | Connects to Viz Engine (if needed) and loads the configured scene |
+| `viz:continue` | none | `void` | Sends an IN/OUT (continue) command to the Viz Engine |
+| `viz:send-text` | `text: string` | `void` | Pushes a translation line to the next available Viz Engine text slot. Validates: max 10,000 chars |
+| `viz:toggle-scroll` | `start: boolean` | `void` | Starts or stops the Viz Engine scroll animation |
+| `viz:set-speed` | `speed: number` | `void` | Sets the scroll speed (0.1–1.0) |
+| `viz:hard-reset` | none | `void` | Stops scroll animation and clears all text slots |
+| `viz:get-status` | none | `VizStatus` | Returns the current Viz Engine controller state |
+
 ## Push Events (Main -> Renderer)
 
 | Channel | Payload | Source | Description |
 |---|---|---|---|
 | `perf:snapshot` | `PerfSnapshot` | `metrics.ts` interval (2 s) | Contains per-process CPU/memory, main process heap stats, and event loop lag |
 | `open-settings` | none | Application menu | Sent when user clicks Settings in the app menu (macOS app menu or Help menu) |
+| `update-status` | `status: string, version?: string` | `updater.ts` | Auto-updater lifecycle events: `"downloading"`, `"ready"`, `"up-to-date"`, `"error"` |
+| `viz:status` | `VizStatus` | `viz-engine.ts` | Periodic Viz Engine state snapshot pushed to the renderer |
 
 ## Type Definitions
 
@@ -55,8 +70,30 @@ All IPC communication between the main and renderer processes passes through the
 
 ```typescript
 interface AppConfig {
-  soniox: { language: string; model: string; translate_to: string };
+  soniox: { language: string; model: string; translate_to: string; endpoint_detection: boolean };
   output: { feed_file: string; session_log_dir: string; feed_delay_seconds: number };
+  viz: { host: string; port: number; scene_path: string; scroll_speed: number };
+}
+```
+
+### VizStatus
+
+```typescript
+interface VizStatus {
+  connected: boolean;
+  isAnimating: boolean;
+  isLoaded: boolean;
+  hasData: boolean;
+  currentIdx: number;
+  yPos: number;
+  scrollSpeed: number;
+  history: VizLogEntry[];
+}
+
+interface VizLogEntry {
+  time: string;
+  msg: string;
+  type: "info" | "action";
 }
 ```
 
@@ -83,7 +120,7 @@ interface PerfSnapshot {
 
 ## Renderer-Side Wrapper
 
-The file `src/renderer/src/lib/ipc.ts` provides typed wrapper functions for every IPC channel. These wrappers access `window.electronAPI` via a `getApi()` helper that throws if the preload bridge is not available. All invoke wrappers are async; the two event listeners (`onPerfSnapshot`, `onOpenSettings`) return unsubscribe functions. `copyToClipboard` is synchronous (uses `clipboard.writeText` from the preload).
+The file `src/renderer/src/lib/ipc.ts` provides typed wrapper functions for every IPC channel. These wrappers access `window.electronAPI` via a `getApi()` helper that throws if the preload bridge is not available. All invoke wrappers are async; event listeners (`onPerfSnapshot`, `onOpenSettings`, `onUpdateStatus`, `onVizStatus`) return unsubscribe functions. `copyToClipboard` is fire-and-forget. `restartForUpdate` sends a one-way message to trigger app restart for updates.
 
 ## Batching Strategy
 

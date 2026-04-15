@@ -1,0 +1,151 @@
+# Viz Engine Integration
+
+ExpressText pushes live translations to a Vizrt graphics engine over TCP, enabling on-air lower-third crawls. The main process (`src/main/viz-engine.ts`) owns the TCP connections; the renderer controls Viz through IPC.
+
+## Architecture
+
+```
+┌──────────────────────────────────┐     ┌──────────────────────┐
+│          Renderer (UI)           │     │      Viz Engine      │
+│                                  │     │   (TCP port, e.g.    │
+│  VizPane ──IPC──► viz-engine.ts ─┼─TCP─┤    6100)             │
+│                                  │     │                      │
+│  App.tsx createEffect:           │     │  Scene with DataPool │
+│    sentEntries → vizSendText() ──┼─IPC─┤  15 text slots       │
+└──────────────────────────────────┘     └──────────────────────┘
+```
+
+The renderer communicates with `viz-engine.ts` via IPC only. Two independent TCP sockets connect to the Viz Engine host:
+
+| Socket | Purpose | Lifecycle |
+|---|---|---|
+| **Command socket** | Scene loading, text slot writes, animation control, reset | Persistent with auto-reconnect (2 s backoff) |
+| **Scroll socket** | High-frequency `ScrollY` updates (~30 ms interval) | Created on scroll start, destroyed on stop |
+
+## Connection Management
+
+### Command Socket
+
+- Created lazily on the first Viz command (not on app startup)
+- Kept alive (`setKeepAlive: true`) for the app's lifetime
+- On disconnect: auto-reconnects after 2 seconds
+- On error: logs warning, marks `connected = false`, pushes status to renderer
+- Commands use request/response with a 500 ms timeout
+
+### Scroll Socket
+
+- Separate socket to avoid blocking command responses with high-frequency writes
+- Created only when scroll animation starts
+- If disconnected during animation: reconnects after 2 s and resumes the scroll loop
+- Destroyed when scroll stops or on hard reset
+
+## Protocol
+
+All commands are null-terminated (`\0`) UTF-8 strings sent over raw TCP. The Viz Engine uses a line-based protocol where each command gets a response.
+
+### Command Types
+
+**Scene Loading:**
+```
+-1 RENDERER*MAIN_LAYER SET_OBJECT SCENE*{scene_path}
+```
+
+**Animation Control (Director IN/OUT):**
+```
+-1 RENDERER*MAIN_LAYER*STAGE*DIRECTOR*Default CONTINUE
+```
+
+**DataPool SET (single or batched):**
+```
+0 MAIN_SCENE*FUNCTION*DataPool*Data SET var1=val1;var2=val2;
+```
+
+All DataPool writes are batched into a single TCP write using semicolon-delimited `key=value` pairs.
+
+### DataPool Variables
+
+| Variable | Purpose |
+|---|---|
+| `TXT1` – `TXT15` | Text content for each slot |
+| `READY1` – `READY15` | Slot visibility flag (`"0"` = hidden, `"1"` = visible) |
+| `ScrollY` | Vertical scroll position (float, updated ~33x/sec during animation) |
+| `SHOW_WAIT` | Controls wait indicator (`"0"` = scrolling, `"1"` = paused) |
+| `DO_RESET` | Triggers scene reset logic (`"1"`) |
+
+## Text Slot System
+
+The engine manages 15 text slots (`TXT1` through `TXT15`) in a circular buffer:
+
+1. `vizSendText(text)` writes to `TXT{currentIdx}` and sets `READY{currentIdx} = 1`
+2. `currentIdx` advances from 1 to 15, then wraps back to 1
+3. Text is sanitized: newlines → spaces, semicolons → spaces, commas → single low-9 quotation marks (to avoid breaking the DataPool SET syntax)
+4. Both the text and ready flag are sent as a single batched DataPool command
+
+## Scroll Engine
+
+The scroll animation drives a `ScrollY` DataPool variable at ~30 ms intervals:
+
+1. `vizToggleScroll(true)` sets `SHOW_WAIT = 0` and starts the scroll loop
+2. Each tick: `yPos += scrollSpeed * (elapsed / 30)` (frame-rate independent)
+3. Speed is configurable at runtime via `vizSetSpeed(0.1–1.0)`
+4. `vizToggleScroll(false)` sets `SHOW_WAIT = 1` and stops the loop
+5. Keyboard shortcut: `Ctrl+Space` toggles scroll from the renderer
+
+## Hard Reset
+
+`vizHardReset()` performs a full state reset in a single TCP write:
+
+1. Stops scroll animation and clears the scroll interval
+2. Resets `yPos = 0`, `currentIdx = 1`, `hasData = false`
+3. Sends a batched DataPool command that:
+   - Sets `ScrollY = 0` and `DO_RESET = 1`
+   - Clears all 15 text slots (`TXT{n} = " "`) and hides them (`READY{n} = 0`)
+4. Clears history log and pushes status to renderer
+
+The reset is guarded by a `ConfirmDialog` in the UI to prevent accidental triggering.
+
+## Auto-Send Flow
+
+Translations are automatically forwarded to Viz when they reach `sent` status:
+
+```
+TranslationEntry (confirmed) → drainConfirmedQueue() → sentEntries signal
+    ↓
+App.tsx createEffect watches sentEntries
+    ↓
+For each new entry: vizSendText(entry.text) via IPC
+```
+
+This runs in a `createEffect` in `App.tsx` that tracks the `sentEntries` array length and sends only newly added entries.
+
+## Status Reporting
+
+The `viz:status` push event sends a `VizStatus` snapshot to the renderer after every state change:
+
+```typescript
+interface VizStatus {
+  connected: boolean;      // Command socket connected
+  isAnimating: boolean;    // Scroll loop active
+  isLoaded: boolean;       // Scene has been loaded
+  hasData: boolean;        // At least one text slot has been written
+  currentIdx: number;      // Next slot index (1–15)
+  yPos: number;            // Current scroll position
+  scrollSpeed: number;     // Active scroll speed
+  history: VizLogEntry[];  // Recent action/event log (max 30 entries)
+}
+```
+
+The VizPane subscribes to this on mount and also polls `viz:get-status` once for the initial state.
+
+## Configuration
+
+Viz Engine settings are stored in the `viz` section of `AppConfig`:
+
+| Field | Default | Description |
+|---|---|---|
+| `host` | `127.0.0.1` | Viz Engine hostname or IP |
+| `port` | `6100` | Viz Engine TCP port |
+| `scene_path` | (empty) | Scene object path (e.g. `EXPRESS_24_7/TRANSLATION_BB/Translation_BB`) |
+| `scroll_speed` | `0.3` | Default scroll velocity per frame (0.1–1.0) |
+
+These are editable in the **Viz Engine** tab of the Settings modal. Config changes update the in-memory state via `vizUpdateConfig()` without requiring a restart.

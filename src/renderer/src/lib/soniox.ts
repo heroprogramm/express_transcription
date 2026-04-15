@@ -149,17 +149,17 @@ function connectRecording(
     const nonFinalOriginal: string[] = [];
     const nonFinalTranslated: string[] = [];
 
-    for (const t of result.tokens) {
-      if (t.is_final) {
-        if (t.translation_status === "translation") {
-          finalTranslatedParts.push(t.text);
+    for (const token of result.tokens) {
+      if (token.is_final) {
+        if (token.translation_status === "translation") {
+          finalTranslatedParts.push(token.text);
         } else {
-          finalOriginalParts.push(t.text);
+          finalOriginalParts.push(token.text);
         }
-      } else if (t.translation_status === "translation") {
-        nonFinalTranslated.push(t.text);
+      } else if (token.translation_status === "translation") {
+        nonFinalTranslated.push(token.text);
       } else {
-        nonFinalOriginal.push(t.text);
+        nonFinalOriginal.push(token.text);
       }
     }
 
