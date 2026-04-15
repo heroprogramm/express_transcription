@@ -122,13 +122,13 @@ function vizTalk(cmd: string): Promise<string> {
 
   return ensureCmdSocket().then(
     (socket) =>
-      new Promise((resolve) => {
+      new Promise((resolve, reject) => {
         let responded = false;
 
         const timeout = setTimeout(() => {
           if (!responded) {
             responded = true;
-            resolve("ERR:timeout");
+            reject(new Error("Viz Engine command timed out"));
           }
         }, CMD_TIMEOUT_MS);
 
@@ -144,7 +144,9 @@ function vizTalk(cmd: string): Promise<string> {
         socket.on("data", onData);
         socket.write(Buffer.from(terminated, "utf-8"));
       }),
-    () => "ERR:no-connection",
+    () => {
+      throw new Error("Viz Engine not connected");
+    },
   );
 }
 
