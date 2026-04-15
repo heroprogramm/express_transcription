@@ -110,6 +110,10 @@ function TranslationEntryRow(props: {
                 if (!cancelled) props.onSaveEdit(props.entry.id, editText());
               }}
             />
+            <div class="flex justify-end gap-3 mt-1.5">
+              <span class="text-[11px] text-tx-4 font-ui">Enter to save</span>
+              <span class="text-[11px] text-tx-4 font-ui">Esc to cancel</span>
+            </div>
           </div>
         }
       >
