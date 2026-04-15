@@ -336,6 +336,13 @@ export default function App() {
           running={running}
           onStart={handleStart}
           onStop={handleStop}
+          onCopyAll={() => {
+            const text = entries
+              .transEntries()
+              .map((e) => e.text)
+              .join("\n");
+            if (text) navigator.clipboard.writeText(text);
+          }}
           onClear={() => {
             entries.clear();
             lastVizSentCount = 0;

@@ -1,5 +1,5 @@
 import { createSignal, onMount, onCleanup, Show, type Accessor } from "solid-js";
-import { Play, Square, ChevronDown, Trash2, Mic } from "lucide-solid";
+import { Play, Square, ChevronDown, Trash2, Mic, Copy } from "lucide-solid";
 import Button from "@/components/Button";
 
 /** Props for the {@link Controls} component. */
@@ -8,6 +8,7 @@ interface Props {
   onStart: (micDeviceId: string) => void;
   onStop: () => void;
   onClear: () => void;
+  onCopyAll: () => void;
 }
 
 /** Toolbar with microphone selector and start/stop/clear session controls. */
@@ -115,6 +116,11 @@ export default function Controls(props: Props) {
         >
           <Square size={14} fill="currentColor" />
           Stop
+        </Button>
+
+        <Button variant="ghost" size="lg" onClick={props.onCopyAll} class="!text-tx-2">
+          <Copy size={14} />
+          Copy All
         </Button>
 
         <Button variant="ghost" size="lg" onClick={props.onClear} class="!text-tx-2">
