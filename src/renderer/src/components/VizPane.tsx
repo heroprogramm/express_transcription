@@ -4,6 +4,7 @@ import type { VizStatus } from "@/lib/types";
 import { useAutoScroll } from "@/lib/use-auto-scroll";
 import { showToast } from "@/components/Toast";
 import Button from "@/components/Button";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   vizLoadScene,
   vizContinue,
@@ -29,6 +30,7 @@ const DEFAULT_STATUS: VizStatus = {
 export default function VizPane() {
   const [status, setStatus] = createSignal<VizStatus>(DEFAULT_STATUS);
   const [busy, setBusy] = createSignal(false);
+  const [showResetConfirm, setShowResetConfirm] = createSignal(false);
 
   const history = () => status().history;
 
@@ -91,8 +93,8 @@ export default function VizPane() {
     }
   }
 
-  async function handleReset() {
-    if (!confirm("Hard Reset? Scroll will stop and all text will clear.")) return;
+  async function doReset() {
+    setShowResetConfirm(false);
     try {
       await vizHardReset();
       const s = await vizGetStatus();
@@ -174,7 +176,7 @@ export default function VizPane() {
           </span>
         </Show>
 
-        <Button variant="ghost-danger" size="md" onClick={handleReset}>
+        <Button variant="ghost-danger" size="md" onClick={() => setShowResetConfirm(true)}>
           <RotateCcw size={14} />
           Reset
         </Button>
@@ -235,6 +237,15 @@ export default function VizPane() {
           </For>
         </Show>
       </div>
+
+      <ConfirmDialog
+        open={showResetConfirm()}
+        title="Hard Reset"
+        message="Scroll will stop and all text will clear."
+        confirmLabel="Reset"
+        onConfirm={doReset}
+        onCancel={() => setShowResetConfirm(false)}
+      />
     </div>
   );
 }
