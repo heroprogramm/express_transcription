@@ -4,7 +4,7 @@ import type { AppConfig, ConfigResult } from "../shared/types";
 export type { AppConfig, ConfigResult };
 
 const DEFAULT_CONFIG: AppConfig = {
-  soniox: { language: "ur", model: "stt-rt-v4", translate_to: "en" },
+  soniox: { language: "ur", model: "stt-rt-v4", translate_to: "en", endpoint_detection: false },
   output: { feed_file: "feed.txt", session_log_dir: "sessions", feed_delay_seconds: 5 },
   viz: {
     host: "127.0.0.1",
@@ -26,6 +26,9 @@ function validateConfig(config: AppConfig): string[] {
   }
   if (!soniox.translate_to || typeof soniox.translate_to !== "string") {
     errors.push("soniox.translate_to must be a non-empty string");
+  }
+  if (typeof soniox.endpoint_detection !== "boolean") {
+    errors.push("soniox.endpoint_detection must be a boolean");
   }
   if (!output.feed_file || typeof output.feed_file !== "string") {
     errors.push("output.feed_file must be a non-empty string");
@@ -81,6 +84,7 @@ export function loadConfig(): ConfigResult {
 export function saveConfigFields(
   fields: Partial<{
     model: string;
+    endpoint_detection: boolean;
     feed_delay_seconds: number;
     viz_host: string;
     viz_port: number;
@@ -92,6 +96,9 @@ export function saveConfigFields(
 
   if (fields.model !== undefined) {
     config.soniox = { ...config.soniox, model: fields.model };
+  }
+  if (fields.endpoint_detection !== undefined) {
+    config.soniox = { ...config.soniox, endpoint_detection: fields.endpoint_detection };
   }
   if (fields.feed_delay_seconds !== undefined) {
     config.output = { ...config.output, feed_delay_seconds: fields.feed_delay_seconds };

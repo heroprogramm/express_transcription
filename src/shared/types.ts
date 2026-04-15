@@ -1,6 +1,6 @@
 /** Application configuration for Soniox transcription and output settings. */
 export interface AppConfig {
-  soniox: { language: string; model: string; translate_to: string };
+  soniox: { language: string; model: string; translate_to: string; endpoint_detection: boolean };
   output: { feed_file: string; session_log_dir: string; feed_delay_seconds: number };
   viz: { host: string; port: number; scene_path: string; scroll_speed: number };
 }

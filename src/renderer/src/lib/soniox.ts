@@ -202,6 +202,7 @@ function connectRecording(
     model: config.soniox.model,
     language_hints: [config.soniox.language],
     language_hints_strict: true,
+    enable_endpoint_detection: config.soniox.endpoint_detection,
     translation: {
       type: "one_way",
       target_language: config.soniox.translate_to,

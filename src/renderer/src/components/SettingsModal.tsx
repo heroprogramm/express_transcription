@@ -26,6 +26,7 @@ export default function SettingsModal(props: Props) {
   const [keyExists, setKeyExists] = createSignal(false);
   const [fields, setFields] = createStore({
     model: props.config?.soniox.model ?? "stt-rt-v4",
+    endpointDetection: props.config?.soniox.endpoint_detection ?? false,
     feedDelay: String(props.config?.output.feed_delay_seconds ?? 10),
     vizHost: props.config?.viz.host ?? "127.0.0.1",
     vizPort: String(props.config?.viz.port ?? 6100),
@@ -78,6 +79,7 @@ export default function SettingsModal(props: Props) {
 
       const result = await saveConfig({
         model: modelValue,
+        endpoint_detection: fields.endpointDetection,
         feed_delay_seconds: delayNum,
         viz_host: fields.vizHost.trim(),
         viz_port: portNum,
@@ -170,6 +172,24 @@ export default function SettingsModal(props: Props) {
                 onInput={(e) => setFields("model", e.currentTarget.value)}
                 onKeyDown={handleKeyDown}
               />
+            </div>
+
+            <div>
+              <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                Endpoint Detection
+              </label>
+              <label class="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={fields.endpointDetection}
+                  onChange={(e) => setFields("endpointDetection", e.currentTarget.checked)}
+                  class="w-4 h-4 rounded border border-border bg-surface accent-[var(--blue)] cursor-pointer"
+                />
+                <span class="text-sm text-tx">Detect speech endpoints</span>
+              </label>
+              <p class="text-[10px] text-tx-4 mt-1">
+                Segment transcription at natural speech pauses
+              </p>
             </div>
 
             <div>

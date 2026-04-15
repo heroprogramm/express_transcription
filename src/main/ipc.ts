@@ -45,6 +45,7 @@ export function registerIpcHandlers(
       const f = fields as Record<string, unknown>;
       const updates: Partial<{
         model: string;
+        endpoint_detection: boolean;
         feed_delay_seconds: number;
         viz_host: string;
         viz_port: number;
@@ -52,6 +53,8 @@ export function registerIpcHandlers(
         viz_scroll_speed: number;
       }> = {};
       if (typeof f.model === "string") updates.model = f.model;
+      if (typeof f.endpoint_detection === "boolean")
+        updates.endpoint_detection = f.endpoint_detection;
       if (typeof f.feed_delay_seconds === "number")
         updates.feed_delay_seconds = f.feed_delay_seconds;
       if (typeof f.viz_host === "string") updates.viz_host = f.viz_host;
