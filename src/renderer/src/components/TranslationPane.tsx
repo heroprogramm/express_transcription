@@ -1,5 +1,4 @@
 import { createSignal, For, Show, type Accessor } from "solid-js";
-import { Check, X } from "lucide-solid";
 import { EntryStatus, type TranslationEntry } from "@/lib/types";
 import { useAutoScroll } from "@/lib/use-auto-scroll";
 
@@ -82,7 +81,7 @@ function TranslationEntryRow(props: {
       class={`${props.isNew ? "animate-entry" : ""} transition-all duration-200 relative py-5 border-b border-border/30`}
       classList={{
         "cursor-pointer hover:bg-surface/50 rounded-md px-3": isPending(),
-        "editing-row z-10": isEditing(),
+        "z-10": isEditing(),
       }}
       onClick={() => isPending() && props.onStartEdit(props.entry.id)}
       onKeyDown={(e: KeyboardEvent) => {
@@ -97,10 +96,10 @@ function TranslationEntryRow(props: {
       <Show
         when={!isEditing()}
         fallback={
-          <div class="flex items-center gap-2">
+          <div class="border border-border-lit rounded-lg px-5 py-2.5 bg-surface transition-all duration-150 focus-within:border-violet-soft focus-within:ring-3 focus-within:ring-violet/12">
             <input
               ref={(el) => requestAnimationFrame(() => el.focus())}
-              class="editing-input flex-1 min-w-0 bg-transparent border-b-2 border-[var(--violet)] px-1 py-1.5 text-2xl text-tx outline-none"
+              class="w-full bg-transparent border-none outline-none text-xl leading-relaxed text-tx"
               value={editText()}
               onInput={(e) => {
                 setEditText(e.currentTarget.value);
@@ -111,29 +110,6 @@ function TranslationEntryRow(props: {
                 if (!cancelled) props.onSaveEdit(props.entry.id, editText());
               }}
             />
-            <button
-              class="editing-btn editing-btn-save shrink-0 w-8 h-8 flex items-center justify-center"
-              onClick={(e) => {
-                e.stopPropagation();
-                props.onSaveEdit(props.entry.id, editText());
-              }}
-              title="Save (Enter)"
-            >
-              <Check size={16} />
-            </button>
-            <button
-              class="editing-btn editing-btn-cancel shrink-0 w-8 h-8 flex items-center justify-center"
-              onMouseDown={() => {
-                cancelled = true;
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                props.onCancelEdit(props.entry.id);
-              }}
-              title="Cancel (Esc)"
-            >
-              <X size={16} />
-            </button>
           </div>
         }
       >

@@ -402,48 +402,7 @@ body.theme-transitioning h2 {
   );
 }
 
-/* ── Editing Row ─────────────────────────────────────────────── */
-.editing-row {
-  border-radius: 8px;
-  padding: 8px 12px;
-}
-.editing-input {
-  font-size: inherit;
-  border-radius: 0;
-  transition: border-color 0.15s ease;
-}
-.editing-input:focus {
-  border-color: var(--violet);
-}
-.editing-btn {
-  cursor: pointer;
-  line-height: 1;
-  border: 1px solid transparent;
-  background: transparent;
-  border-radius: 6px;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    transform 0.1s ease;
-}
-.editing-btn:active {
-  transform: scale(0.92);
-}
-.editing-btn-save {
-  color: var(--green);
-}
-.editing-btn-save:hover {
-  background: var(--green-glow);
-  border-color: var(--green-soft);
-}
-.editing-btn-cancel {
-  color: var(--text-3);
-}
-.editing-btn-cancel:hover {
-  background: var(--red-glow);
-  color: var(--red);
-  border-color: var(--red-soft);
-}
+/* (Editing capsule styles now use Tailwind classes inline) */
 
 /* ── Settings Inputs ─────────────────────────────────────────── */
 .settings-input {
