@@ -51,6 +51,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   vizSendText: (text: string): Promise<void> => ipcRenderer.invoke("viz:send-text", text),
   vizToggleScroll: (start: boolean): Promise<void> =>
     ipcRenderer.invoke("viz:toggle-scroll", start),
+  vizEditPause: (): Promise<void> => ipcRenderer.invoke("viz:edit-pause"),
   vizSetSpeed: (speed: number): Promise<void> => ipcRenderer.invoke("viz:set-speed", speed),
   vizHardReset: (): Promise<void> => ipcRenderer.invoke("viz:hard-reset"),
   vizGetStatus: (): Promise<VizStatus> => ipcRenderer.invoke("viz:get-status"),

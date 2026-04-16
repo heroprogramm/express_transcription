@@ -9,6 +9,7 @@ import {
   vizContinue,
   vizSendText,
   vizToggleScroll,
+  vizEditPause,
   vizSetSpeed,
   vizHardReset,
   getVizStatus,
@@ -154,6 +155,8 @@ export function registerIpcHandlers(
     if (typeof start !== "boolean") throw new Error("viz:toggle-scroll: start must be a boolean");
     return vizToggleScroll(start);
   });
+
+  ipcMain.handle("viz:edit-pause", () => vizEditPause());
 
   ipcMain.handle("viz:set-speed", (_event, speed: unknown) => {
     if (typeof speed !== "number") throw new Error("viz:set-speed: speed must be a number");

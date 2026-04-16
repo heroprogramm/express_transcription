@@ -11,6 +11,7 @@ export interface VizStatus {
   isAnimating: boolean;
   isLoaded: boolean;
   hasData: boolean;
+  autoPaused: boolean;
   currentIdx: number;
   yPos: number;
   scrollSpeed: number;

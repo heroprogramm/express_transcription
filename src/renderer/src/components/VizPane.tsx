@@ -20,6 +20,7 @@ const DEFAULT_STATUS: VizStatus = {
   isAnimating: false,
   isLoaded: false,
   hasData: false,
+  autoPaused: false,
   currentIdx: 1,
   yPos: 0,
   scrollSpeed: 0.3,
@@ -106,6 +107,7 @@ export default function VizPane() {
 
   const loaded = () => status().isLoaded;
   const animating = () => status().isAnimating;
+  const paused = () => status().autoPaused;
   const canScroll = () => loaded() && status().hasData;
 
   return (
@@ -142,6 +144,9 @@ export default function VizPane() {
             <Play size={14} /> Scroll
           </Show>
         </Button>
+        <Show when={paused()}>
+          <span class="text-[12px] text-yellow font-ui italic shrink-0">Paused</span>
+        </Show>
         <span class="text-[13px] text-tx-3 font-ui shrink-0">Ctrl+Space</span>
 
         <div class="flex-1" />

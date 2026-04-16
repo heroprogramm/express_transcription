@@ -21,6 +21,7 @@ import {
   restartForUpdate,
   vizSendText,
   vizToggleScroll,
+  vizEditPause,
   vizGetStatus,
 } from "@/lib/ipc";
 import { startTranscription, stopTranscription, cancelTranscription } from "@/lib/soniox";
@@ -67,6 +68,12 @@ export default function App() {
 
   const entries = createEntryManager(feedDelayMs);
   const perf = createPerfMonitor();
+
+  // ── Viz: pause scroll when user starts editing ──
+  function handleStartEdit(id: number): void {
+    entries.startEdit(id);
+    vizEditPause().catch(() => {});
+  }
 
   // ── Viz Engine auto-send ──
   let lastVizSentCount = 0;
@@ -370,7 +377,7 @@ export default function App() {
               live={running}
               tick={entries.tick}
               feedDelayMs={entries.feedDelayMs}
-              onStartEdit={entries.startEdit}
+              onStartEdit={handleStartEdit}
               onSaveEdit={entries.saveEdit}
               onCancelEdit={entries.cancelEdit}
               onEditChange={entries.onEditChange}

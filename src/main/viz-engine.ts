@@ -23,6 +23,10 @@ let isAnimating = false;
 let isLoaded = false;
 let hasData = false;
 let connected = false;
+let autoPaused = false;
+let idleTimer: ReturnType<typeof setTimeout> | null = null;
+let idlePauseMs = 15_000;
+const IDLE_BUFFER_MS = 5_000;
 
 const MAX_HISTORY = 30;
 const SLOT_COUNT = 15;
@@ -230,9 +234,14 @@ function stopScrollLoop(): void {
 
 function resetLogic(): void {
   isAnimating = false;
+  autoPaused = false;
   yPos = 0.0;
   currentIdx = 1;
   hasData = false;
+  if (idleTimer) {
+    clearTimeout(idleTimer);
+    idleTimer = null;
+  }
   stopScrollLoop();
 
   // Batch all reset commands into a single TCP write
@@ -249,21 +258,31 @@ function resetLogic(): void {
 // ── Public API ──
 
 /** Store config and BrowserWindow reference. No auto-connect. */
-export function vizInit(config: AppConfig["viz"], browserWindow: BrowserWindow): void {
+export function vizInit(
+  config: AppConfig["viz"],
+  feedDelaySeconds: number,
+  browserWindow: BrowserWindow,
+): void {
   vizConfig = config;
   win = browserWindow;
   scrollSpeed = config.scroll_speed;
+  idlePauseMs = feedDelaySeconds * 1000 + IDLE_BUFFER_MS;
 }
 
 /** Update config at runtime (e.g. after settings save). */
-export function vizUpdateConfig(config: AppConfig["viz"]): void {
+export function vizUpdateConfig(config: AppConfig["viz"], feedDelaySeconds: number): void {
   vizConfig = config;
   scrollSpeed = config.scroll_speed;
+  idlePauseMs = feedDelaySeconds * 1000 + IDLE_BUFFER_MS;
 }
 
 /** Clean up all sockets and intervals on app quit. */
 export function vizCleanup(): void {
   stopScrollLoop();
+  if (idleTimer) {
+    clearTimeout(idleTimer);
+    idleTimer = null;
+  }
   if (cmdReconnectTimer) {
     clearTimeout(cmdReconnectTimer);
     cmdReconnectTimer = null;
@@ -296,8 +315,39 @@ export async function vizContinue(): Promise<void> {
   addLog("ACTION: Animation Toggle (IN/OUT)", "action");
 }
 
+function resetIdleTimer(): void {
+  if (idleTimer) clearTimeout(idleTimer);
+  if (!isAnimating) return;
+  idleTimer = setTimeout(() => {
+    if (!isAnimating) return;
+    autoPaused = true;
+    isAnimating = false;
+    stopScrollLoop();
+    vizSend(batchDataPool([["SHOW_WAIT", "1"]]));
+    addLog("SCROLL: Auto-paused (no new text)", "action");
+    pushStatus();
+  }, idlePauseMs);
+}
+
 /** Send a text string to the next available Viz DataPool slot (single TCP write). */
 export function vizSendText(text: string): void {
+  // Resume scroll if it was auto-paused
+  if (autoPaused) {
+    autoPaused = false;
+    isAnimating = true;
+    vizSend(batchDataPool([["SHOW_WAIT", "0"]]));
+
+    if (!scrollSocket || scrollSocket.destroyed) {
+      connectScrollSocket()
+        .then(() => startScrollLoop())
+        .catch(() => {});
+    } else {
+      startScrollLoop();
+    }
+
+    addLog("SCROLL: Resumed (new text)", "action");
+  }
+
   const clean = text.replace(/\n/g, " ").replace(/;/g, " ").replace(/,/g, "\u201A");
   vizSend(
     batchDataPool([
@@ -309,6 +359,7 @@ export function vizSendText(text: string): void {
 
   hasData = true;
   currentIdx = currentIdx === SLOT_COUNT ? 1 : currentIdx + 1;
+  resetIdleTimer();
   pushStatus();
 }
 
@@ -326,17 +377,39 @@ export async function vizToggleScroll(start: boolean): Promise<void> {
       throw err;
     }
 
+    autoPaused = false;
     isAnimating = true;
     vizSend(batchDataPool([["SHOW_WAIT", "0"]]));
     startScrollLoop();
+    resetIdleTimer();
     addLog("SCROLL: Started", "action");
   } else {
+    autoPaused = false;
     isAnimating = false;
+    if (idleTimer) {
+      clearTimeout(idleTimer);
+      idleTimer = null;
+    }
     stopScrollLoop();
     vizSend(batchDataPool([["SHOW_WAIT", "1"]]));
     addLog("SCROLL: Stopped", "action");
   }
 
+  pushStatus();
+}
+
+/** Pause scroll due to editing — resumes automatically when new text arrives. */
+export function vizEditPause(): void {
+  if (!isAnimating) return;
+  autoPaused = true;
+  isAnimating = false;
+  if (idleTimer) {
+    clearTimeout(idleTimer);
+    idleTimer = null;
+  }
+  stopScrollLoop();
+  vizSend(batchDataPool([["SHOW_WAIT", "1"]]));
+  addLog("SCROLL: Paused (editing)", "action");
   pushStatus();
 }
 
@@ -361,6 +434,7 @@ export function getVizStatus(): VizStatus {
     isAnimating,
     isLoaded,
     hasData,
+    autoPaused,
     currentIdx,
     yPos,
     scrollSpeed,
