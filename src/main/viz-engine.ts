@@ -316,17 +316,19 @@ export function vizSendText(text: string): void {
 export async function vizToggleScroll(start: boolean): Promise<void> {
   if (start) {
     if (!hasData) return;
-    isAnimating = true;
-    vizSend(batchDataPool([["SHOW_WAIT", "0"]]));
 
-    if (!scrollSocket || scrollSocket.destroyed) {
-      connectScrollSocket()
-        .then(() => startScrollLoop())
-        .catch(() => {});
-    } else {
-      startScrollLoop();
+    try {
+      if (!scrollSocket || scrollSocket.destroyed) {
+        await connectScrollSocket();
+      }
+    } catch (err) {
+      pushStatus();
+      throw err;
     }
 
+    isAnimating = true;
+    vizSend(batchDataPool([["SHOW_WAIT", "0"]]));
+    startScrollLoop();
     addLog("SCROLL: Started", "action");
   } else {
     isAnimating = false;
