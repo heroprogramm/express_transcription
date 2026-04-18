@@ -1,4 +1,5 @@
 import { Show } from "solid-js";
+import { X, AlertTriangle } from "lucide-solid";
 import Button from "@/components/Button";
 
 interface Props {
@@ -27,9 +28,11 @@ export default function ConfirmDialog(props: Props) {
           <p class="text-[13px] text-tx-3 mt-2 font-ui leading-relaxed">{props.message}</p>
           <div class="flex justify-end gap-2 mt-5">
             <Button variant="ghost" size="sm" onClick={props.onCancel}>
+              <X size={14} />
               Cancel
             </Button>
             <Button variant="danger" size="sm" onClick={props.onConfirm}>
+              <AlertTriangle size={14} />
               {props.confirmLabel ?? "Confirm"}
             </Button>
           </div>

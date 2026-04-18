@@ -276,6 +276,24 @@ body.theme-transitioning h2 {
   animation: pulse 0.8s ease-in-out infinite;
 }
 
+.badge-connected {
+  border-color: var(--green);
+  background: var(--green-glow);
+  color: var(--green);
+}
+.badge-connected .status-dot {
+  background: var(--green);
+}
+.badge-disconnected {
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-4);
+}
+.badge-disconnected .status-dot {
+  background: var(--text-4);
+  animation: idlePulse 3s ease-in-out infinite;
+}
+
 /* ── Pending Progress Fill ───────────────────────────────────── */
 @keyframes pendingFill {
   from {

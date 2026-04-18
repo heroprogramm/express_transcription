@@ -189,28 +189,10 @@ export default function VizPane() {
         <div class="w-px h-5 bg-border shrink-0" />
 
         <div
-          class="flex items-center gap-1.5 shrink-0 rounded-full px-2.5 py-0.5 border transition-colors"
-          classList={{
-            "border-green/30 bg-green/10": status().connected,
-            "border-red/30 bg-red/10": !status().connected,
-          }}
+          class={`flex items-center gap-1.5 shrink-0 py-1.5 pl-3 pr-3.5 border rounded-full text-[12px] font-bold tracking-wider transition-all duration-300 ${status().connected ? "badge-connected" : "badge-disconnected"}`}
         >
-          <span
-            class="w-[7px] h-[7px] rounded-full shrink-0"
-            classList={{
-              "bg-green": status().connected,
-              "bg-red": !status().connected,
-            }}
-          />
-          <span
-            class="text-[12px] font-ui font-medium"
-            classList={{
-              "text-green": status().connected,
-              "text-red": !status().connected,
-            }}
-          >
-            {status().connected ? "Connected" : "Disconnected"}
-          </span>
+          <span class="status-dot w-[7px] h-[7px] rounded-full shrink-0 transition-all duration-300" />
+          <span>{status().connected ? "Connected" : "Disconnected"}</span>
         </div>
       </div>
 
