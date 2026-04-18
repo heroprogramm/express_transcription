@@ -1,4 +1,5 @@
-import { createMemo, type Accessor } from "solid-js";
+import { createMemo, type Accessor, type JSX } from "solid-js";
+import { Timer, Hash, Clock, Wifi } from "lucide-solid";
 
 /** Props for the {@link StatsBar} component. */
 interface Props {
@@ -28,11 +29,13 @@ function deriveQuality(latencyStr: string): Quality {
 
 function Stat(props: {
   label: string;
+  icon: JSX.Element;
   value: Accessor<string | number>;
   active: Accessor<boolean>;
 }) {
   return (
     <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-surface">
+      <span class="text-tx-4 shrink-0">{props.icon}</span>
       <span class="text-[11px] font-semibold text-tx-4 tracking-wider uppercase select-none">
         {props.label}
       </span>
@@ -53,10 +56,16 @@ export default function StatsBar(props: Props) {
 
   return (
     <div class="flex items-center gap-2.5">
-      <Stat label="Latency" value={props.latency} active={props.live} />
-      <Stat label="Lines" value={() => props.lines()} active={props.live} />
-      <Stat label="Uptime" value={props.uptime} active={props.live} />
+      <Stat label="Latency" icon={<Timer size={12} />} value={props.latency} active={props.live} />
+      <Stat
+        label="Lines"
+        icon={<Hash size={12} />}
+        value={() => props.lines()}
+        active={props.live}
+      />
+      <Stat label="Uptime" icon={<Clock size={12} />} value={props.uptime} active={props.live} />
       <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-surface">
+        <Wifi size={12} class="text-tx-4 shrink-0" />
         <span class="text-[11px] font-semibold text-tx-4 tracking-wider uppercase select-none">
           Signal
         </span>

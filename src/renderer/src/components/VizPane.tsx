@@ -1,5 +1,13 @@
 import { createSignal, onMount, onCleanup, For, Show } from "solid-js";
-import { Play, Square, RotateCcw, MonitorPlay, Layers, ArrowRightLeft } from "lucide-solid";
+import {
+  Play,
+  Square,
+  RotateCcw,
+  MonitorPlay,
+  Layers,
+  ArrowRightLeft,
+  Loader2,
+} from "lucide-solid";
 import type { VizStatus } from "@/lib/types";
 import { useAutoScroll } from "@/lib/use-auto-scroll";
 import { showToast } from "@/components/Toast";
@@ -31,6 +39,7 @@ const DEFAULT_STATUS: VizStatus = {
 export default function VizPane() {
   const [status, setStatus] = createSignal<VizStatus>(DEFAULT_STATUS);
   const [busy, setBusy] = createSignal(false);
+  const [scrollBusy, setScrollBusy] = createSignal(false);
   const [showResetConfirm, setShowResetConfirm] = createSignal(false);
 
   const history = () => status().history;
@@ -78,10 +87,13 @@ export default function VizPane() {
 
   async function handleToggleScroll() {
     const start = !status().isAnimating;
+    setScrollBusy(true);
     try {
       await vizToggleScroll(start);
     } catch (err) {
       toastError(start ? "Start Scroll" : "Stop Scroll", err);
+    } finally {
+      setScrollBusy(false);
     }
   }
 
@@ -120,8 +132,10 @@ export default function VizPane() {
         <div class="w-px h-5 bg-border shrink-0" />
 
         <Button variant="ghost" size="md" onClick={handleLoadScene} disabled={busy()}>
-          <Layers size={14} />
-          Load Scene
+          <Show when={!busy()} fallback={<Loader2 size={14} class="animate-spin" />}>
+            <Layers size={14} />
+          </Show>
+          {busy() ? "Loading…" : "Load Scene"}
         </Button>
         <Button variant="ghost" size="md" onClick={handleContinue}>
           <ArrowRightLeft size={14} />
@@ -132,18 +146,27 @@ export default function VizPane() {
           variant={animating() ? "danger" : "primary"}
           size="md"
           onClick={handleToggleScroll}
-          disabled={!canScroll()}
+          disabled={!canScroll() || scrollBusy()}
           title="Toggle scroll (Ctrl+Space)"
         >
           <Show
-            when={!animating()}
+            when={!scrollBusy()}
             fallback={
               <>
-                <Square size={14} /> Stop
+                <Loader2 size={14} class="animate-spin" /> Connecting…
               </>
             }
           >
-            <Play size={14} /> Scroll
+            <Show
+              when={!animating()}
+              fallback={
+                <>
+                  <Square size={14} /> Stop
+                </>
+              }
+            >
+              <Play size={14} /> Scroll
+            </Show>
           </Show>
         </Button>
         <Show when={paused()}>
@@ -220,7 +243,13 @@ export default function VizPane() {
           <For each={history()}>
             {(entry) => (
               <div class="flex items-start gap-2 py-1 min-h-6">
-                <span class="text-[12px] font-mono text-tx-4 tabular-nums shrink-0 pt-px">
+                <span
+                  class="text-[12px] font-mono tabular-nums shrink-0 pt-px"
+                  classList={{
+                    "text-blue/60": entry.type === "action",
+                    "text-tx-4": entry.type === "info",
+                  }}
+                >
                   {entry.time}
                 </span>
                 <span
