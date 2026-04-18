@@ -132,6 +132,7 @@ export default function VizPane() {
           size="md"
           onClick={handleToggleScroll}
           disabled={!canScroll()}
+          title="Toggle scroll (Ctrl+Space)"
         >
           <Show
             when={!animating()}
@@ -147,7 +148,6 @@ export default function VizPane() {
         <Show when={paused()}>
           <span class="text-[12px] text-yellow font-ui italic shrink-0">Paused</span>
         </Show>
-        <span class="text-[13px] text-tx-3 font-ui shrink-0">Ctrl+Space</span>
 
         <div class="flex-1" />
 
@@ -170,7 +170,7 @@ export default function VizPane() {
               class="capsule-slider absolute inset-0 w-full"
             />
           </div>
-          <span class="text-[14px] text-tx-3 font-mono tabular-nums w-6 text-right">
+          <span class="text-[15px] text-tx-2 font-mono font-semibold tabular-nums w-6 text-right">
             {status().scrollSpeed.toFixed(1)}
           </span>
         </div>
@@ -188,15 +188,27 @@ export default function VizPane() {
 
         <div class="w-px h-5 bg-border shrink-0" />
 
-        <div class="flex items-center gap-1.5 shrink-0">
+        <div
+          class="flex items-center gap-1.5 shrink-0 rounded-full px-2.5 py-0.5 border transition-colors"
+          classList={{
+            "border-green/30 bg-green/10": status().connected,
+            "border-red/30 bg-red/10": !status().connected,
+          }}
+        >
           <span
-            class="w-[7px] h-[7px] rounded-full shrink-0 transition-colors"
+            class="w-[7px] h-[7px] rounded-full shrink-0"
             classList={{
               "bg-green": status().connected,
-              "bg-tx-4": !status().connected,
+              "bg-red": !status().connected,
             }}
           />
-          <span class="text-[13px] text-tx-3 font-ui">
+          <span
+            class="text-[12px] font-ui font-medium"
+            classList={{
+              "text-green": status().connected,
+              "text-red": !status().connected,
+            }}
+          >
             {status().connected ? "Connected" : "Disconnected"}
           </span>
         </div>

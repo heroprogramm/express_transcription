@@ -119,7 +119,11 @@ export default function Controls(props: Props) {
           Stop
         </Button>
 
-        <Button variant="ghost-danger" size="lg" onClick={props.onClear}>
+        <Button
+          variant={props.running() ? "ghost-danger" : "ghost"}
+          size="lg"
+          onClick={props.onClear}
+        >
           <Trash2 size={14} />
           Clear
         </Button>
