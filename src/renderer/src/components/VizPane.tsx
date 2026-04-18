@@ -1,5 +1,5 @@
 import { createSignal, onMount, onCleanup, For, Show } from "solid-js";
-import { Play, Square, RotateCcw, MonitorPlay, Layers } from "lucide-solid";
+import { Play, Square, RotateCcw, MonitorPlay, Layers, ArrowRightLeft } from "lucide-solid";
 import type { VizStatus } from "@/lib/types";
 import { useAutoScroll } from "@/lib/use-auto-scroll";
 import { showToast } from "@/components/Toast";
@@ -124,6 +124,7 @@ export default function VizPane() {
           Load Scene
         </Button>
         <Button variant="ghost" size="md" onClick={handleContinue}>
+          <ArrowRightLeft size={14} />
           IN / OUT
         </Button>
 
