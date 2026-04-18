@@ -180,7 +180,7 @@ export default function SettingsModal(props: Props) {
         {/* Tab content */}
         <div class="relative">
           <div
-            class="overflow-y-auto overflow-x-hidden px-7 py-5"
+            class="overflow-y-auto overflow-x-hidden px-7 py-5 transcript-scroll"
             style={{
               height: contentHeight() !== undefined ? `${contentHeight()! + 40}px` : "auto",
               "max-height": "calc(85vh - 220px)",
