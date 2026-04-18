@@ -366,7 +366,6 @@ export default function App() {
               finalCount={entries.sttCount}
               live={running}
               micDeviceId={activeMicId}
-              onStart={() => handleStart(activeMicId())}
             />
           </div>
 
