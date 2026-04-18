@@ -21,8 +21,8 @@ function TranslationEmpty() {
         </svg>
       </div>
       <div class="text-center">
-        <p class="font-ui text-[14px] font-medium text-tx-3">Translations will appear here</p>
-        <p class="font-ui text-[12px] text-tx-4 mt-1.5">Speech is translated in real time</p>
+        <p class="font-ui text-[14px] font-medium text-tx-3">Real-time translation</p>
+        <p class="font-ui text-[12px] text-tx-4 mt-1.5">Urdu → English, as you speak</p>
       </div>
     </div>
   );
