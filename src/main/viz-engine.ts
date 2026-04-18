@@ -32,6 +32,7 @@ const MAX_HISTORY = 30;
 const SLOT_COUNT = 15;
 const SCROLL_INTERVAL_MS = 30;
 const CMD_TIMEOUT_MS = 500;
+const CONNECT_TIMEOUT_MS = 5_000;
 
 let history: VizLogEntry[] = [];
 
@@ -79,8 +80,12 @@ function connectCmdSocket(): Promise<net.Socket> {
   return new Promise((resolve, reject) => {
     const socket = new net.Socket();
     socket.setKeepAlive(true);
+    socket.setTimeout(CONNECT_TIMEOUT_MS, () => {
+      socket.destroy(new Error("Connection timed out"));
+    });
 
     socket.connect(vizConfig!.port, vizConfig!.host, () => {
+      socket.setTimeout(0);
       cmdSocket = socket;
       cmdConnecting = false;
       connected = true;
@@ -176,8 +181,12 @@ function connectScrollSocket(): Promise<void> {
   return new Promise((resolve, reject) => {
     const socket = new net.Socket();
     socket.setKeepAlive(true);
+    socket.setTimeout(CONNECT_TIMEOUT_MS, () => {
+      socket.destroy(new Error("Connection timed out"));
+    });
 
     socket.connect(vizConfig!.port, vizConfig!.host, () => {
+      socket.setTimeout(0);
       scrollSocket = socket;
       log(LogLevel.Info, "viz:scroll-connected");
       resolve();
