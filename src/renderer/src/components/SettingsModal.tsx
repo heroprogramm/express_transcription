@@ -1,4 +1,4 @@
-import { createSignal } from "solid-js";
+import { createSignal, createEffect, on } from "solid-js";
 import { createStore } from "solid-js/store";
 import { Settings as SettingsIcon, X, Save, Mic, MonitorPlay, FileOutput } from "lucide-solid";
 import type { AppConfig } from "@/lib/types";
@@ -27,14 +27,26 @@ export default function SettingsModal(props: Props) {
   const [fields, setFields] = createStore({
     model: props.config?.soniox.model ?? "stt-rt-v4",
     endpointDetection: props.config?.soniox.endpoint_detection ?? false,
-    feedDelay: String(props.config?.output.feed_delay_seconds ?? 10),
+    reviewTime: String(props.config?.output.review_time_seconds ?? 10),
     vizHost: props.config?.viz.host ?? "127.0.0.1",
     vizPort: String(props.config?.viz.port ?? 6100),
     vizScenePath: props.config?.viz.scene_path ?? "",
     vizScrollSpeed: String(props.config?.viz.scroll_speed ?? 0.3),
+    autoPauseOnIdle: props.config?.viz.auto_pause_on_idle ?? true,
+    autoPauseOnIdleSeconds: String(props.config?.viz.auto_pause_on_idle_seconds ?? 10),
+    autoPauseOnEdit: props.config?.viz.auto_pause_on_edit ?? true,
   });
   const [error, setError] = createSignal("");
   const [saving, setSaving] = createSignal(false);
+  const [contentHeight, setContentHeight] = createSignal<number | undefined>();
+  const tabRefs: Partial<Record<Tab, HTMLDivElement>> = {};
+
+  function measureTab(t: Tab): void {
+    const el = tabRefs[t];
+    if (el) setContentHeight(el.scrollHeight);
+  }
+
+  createEffect(on(tab, (t) => measureTab(t)));
 
   hasApiKey()
     .then(setKeyExists)
@@ -48,10 +60,10 @@ export default function SettingsModal(props: Props) {
       return;
     }
 
-    const delayNum = Number(fields.feedDelay);
-    if (!fields.feedDelay.trim() || Number.isNaN(delayNum) || delayNum < 0) {
+    const delayNum = Number(fields.reviewTime);
+    if (!fields.reviewTime.trim() || Number.isNaN(delayNum) || delayNum < 0) {
       setTab("Output");
-      setError("Feed delay must be a non-negative number");
+      setError("Review time must be a non-negative number");
       return;
     }
 
@@ -69,6 +81,13 @@ export default function SettingsModal(props: Props) {
       return;
     }
 
+    const idleSecondsNum = Number(fields.autoPauseOnIdleSeconds);
+    if (Number.isNaN(idleSecondsNum) || idleSecondsNum < 1) {
+      setTab("Viz Engine");
+      setError("Auto-pause idle time must be at least 1 second");
+      return;
+    }
+
     setSaving(true);
     setError("");
     try {
@@ -80,11 +99,14 @@ export default function SettingsModal(props: Props) {
       const result = await saveConfig({
         model: modelValue,
         endpoint_detection: fields.endpointDetection,
-        feed_delay_seconds: delayNum,
+        review_time_seconds: delayNum,
         viz_host: fields.vizHost.trim(),
         viz_port: portNum,
         viz_scene_path: fields.vizScenePath.trim(),
         viz_scroll_speed: speedNum,
+        viz_auto_pause_on_idle: fields.autoPauseOnIdle,
+        viz_auto_pause_on_idle_seconds: idleSecondsNum,
+        viz_auto_pause_on_edit: fields.autoPauseOnEdit,
       });
 
       props.onSaved(result.config);
@@ -156,142 +178,212 @@ export default function SettingsModal(props: Props) {
         <div class="border-b border-border shrink-0" />
 
         {/* Tab content */}
-        <div class="overflow-y-auto px-7 py-5 h-[340px]">
-          {/* ── Soniox tab ── */}
-          <div class="flex flex-col gap-4" classList={{ hidden: tab() !== "Soniox" }}>
-            <div>
-              <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
-                Model
-              </label>
-              <input
-                type="text"
-                placeholder="stt-rt-v4"
-                class={INPUT}
-                ref={(el) => requestAnimationFrame(() => el.focus())}
-                value={fields.model}
-                onInput={(e) => setFields("model", e.currentTarget.value)}
-                onKeyDown={handleKeyDown}
-              />
-            </div>
-
-            <div>
-              <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
-                Endpoint Detection
-              </label>
-              <label class="flex items-center gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={fields.endpointDetection}
-                  onChange={(e) => setFields("endpointDetection", e.currentTarget.checked)}
-                  class="w-4 h-4 rounded border border-border bg-surface accent-[var(--blue)] cursor-pointer"
-                />
-                <span class="text-sm text-tx">Enabled</span>
-              </label>
-              <p class="text-[10px] text-tx-4 mt-1">
-                Segment transcription at natural speech pauses
-              </p>
-            </div>
-
-            <div>
-              <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
-                API Key
-              </label>
-              <input
-                type="password"
-                placeholder={
-                  keyExists()
-                    ? "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022 (leave empty to keep)"
-                    : "Enter your Soniox API key"
-                }
-                class={INPUT}
-                value={key()}
-                onInput={(e) => setKey(e.currentTarget.value)}
-                onKeyDown={handleKeyDown}
-              />
-            </div>
-          </div>
-
-          {/* ── Output tab ── */}
-          <div class="flex flex-col gap-4" classList={{ hidden: tab() !== "Output" }}>
-            <div>
-              <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
-                Feed Delay (seconds)
-              </label>
-              <input
-                type="text"
-                inputmode="numeric"
-                placeholder="10"
-                class={INPUT}
-                value={fields.feedDelay}
-                onInput={(e) => setFields("feedDelay", e.currentTarget.value)}
-                onKeyDown={handleKeyDown}
-              />
-              <p class="text-[10px] text-tx-4 mt-1">
-                Time to edit translations before they are sent to feed
-              </p>
-            </div>
-          </div>
-
-          {/* ── Viz Engine tab ── */}
-          <div class="flex flex-col gap-4" classList={{ hidden: tab() !== "Viz Engine" }}>
-            <div class="flex gap-3">
-              <div class="flex-1">
+        <div class="relative">
+          <div
+            class="overflow-y-auto overflow-x-hidden px-7 py-5"
+            style={{
+              height: contentHeight() !== undefined ? `${contentHeight()! + 40}px` : "auto",
+              "max-height": "calc(85vh - 220px)",
+              transition: "height 200ms ease",
+            }}
+          >
+            {/* ── Soniox tab ── */}
+            <div
+              ref={(el) => {
+                tabRefs["Soniox"] = el;
+                requestAnimationFrame(() => measureTab(tab()));
+              }}
+              class="flex flex-col gap-4"
+              classList={{ hidden: tab() !== "Soniox" }}
+            >
+              <div>
                 <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
-                  Host
+                  Model
                 </label>
                 <input
                   type="text"
-                  placeholder="127.0.0.1"
+                  placeholder="stt-rt-v4"
                   class={INPUT}
-                  value={fields.vizHost}
-                  onInput={(e) => setFields("vizHost", e.currentTarget.value)}
+                  ref={(el) => requestAnimationFrame(() => el.focus())}
+                  value={fields.model}
+                  onInput={(e) => setFields("model", e.currentTarget.value)}
                   onKeyDown={handleKeyDown}
                 />
               </div>
-              <div class="w-24">
+
+              <div>
                 <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
-                  Port
+                  Endpoint Detection
+                </label>
+                <label class="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={fields.endpointDetection}
+                    onChange={(e) => setFields("endpointDetection", e.currentTarget.checked)}
+                    class="w-4 h-4 rounded border border-border bg-surface accent-[var(--blue)] cursor-pointer"
+                  />
+                  <span class="text-sm text-tx">Enabled</span>
+                </label>
+                <p class="text-[10px] text-tx-3 mt-1">
+                  Segment transcription at natural speech pauses
+                </p>
+              </div>
+
+              <div>
+                <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                  API Key
+                </label>
+                <input
+                  type="password"
+                  placeholder={
+                    keyExists()
+                      ? "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022 (leave empty to keep)"
+                      : "Enter your Soniox API key"
+                  }
+                  class={INPUT}
+                  value={key()}
+                  onInput={(e) => setKey(e.currentTarget.value)}
+                  onKeyDown={handleKeyDown}
+                />
+              </div>
+            </div>
+
+            {/* ── Output tab ── */}
+            <div
+              ref={(el) => (tabRefs["Output"] = el)}
+              class="flex flex-col gap-4"
+              classList={{ hidden: tab() !== "Output" }}
+            >
+              <div>
+                <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                  Review Time (seconds)
                 </label>
                 <input
                   type="text"
                   inputmode="numeric"
-                  placeholder="6100"
+                  placeholder="10"
                   class={INPUT}
-                  value={fields.vizPort}
-                  onInput={(e) => setFields("vizPort", e.currentTarget.value)}
+                  value={fields.reviewTime}
+                  onInput={(e) => setFields("reviewTime", e.currentTarget.value)}
+                  onKeyDown={handleKeyDown}
+                />
+                <p class="text-[10px] text-tx-3 mt-1">
+                  Time to review translations before they are auto-confirmed
+                </p>
+              </div>
+            </div>
+
+            {/* ── Viz Engine tab ── */}
+            <div
+              ref={(el) => (tabRefs["Viz Engine"] = el)}
+              class="flex flex-col gap-4"
+              classList={{ hidden: tab() !== "Viz Engine" }}
+            >
+              <div class="flex gap-3">
+                <div class="flex-1">
+                  <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                    Host
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="127.0.0.1"
+                    class={INPUT}
+                    value={fields.vizHost}
+                    onInput={(e) => setFields("vizHost", e.currentTarget.value)}
+                    onKeyDown={handleKeyDown}
+                  />
+                </div>
+                <div class="w-24">
+                  <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                    Port
+                  </label>
+                  <input
+                    type="text"
+                    inputmode="numeric"
+                    placeholder="6100"
+                    class={INPUT}
+                    value={fields.vizPort}
+                    onInput={(e) => setFields("vizPort", e.currentTarget.value)}
+                    onKeyDown={handleKeyDown}
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                  Scene Path
+                </label>
+                <input
+                  type="text"
+                  placeholder="EXPRESS_24_7/TRANSLATION_BB/Translation_BB"
+                  class={INPUT}
+                  value={fields.vizScenePath}
+                  onInput={(e) => setFields("vizScenePath", e.currentTarget.value)}
                   onKeyDown={handleKeyDown}
                 />
               </div>
-            </div>
-            <div>
-              <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
-                Scene Path
-              </label>
-              <input
-                type="text"
-                placeholder="EXPRESS_24_7/TRANSLATION_BB/Translation_BB"
-                class={INPUT}
-                value={fields.vizScenePath}
-                onInput={(e) => setFields("vizScenePath", e.currentTarget.value)}
-                onKeyDown={handleKeyDown}
-              />
-            </div>
-            <div>
-              <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
-                Default Scroll Speed
-              </label>
-              <input
-                type="text"
-                inputmode="decimal"
-                placeholder="0.3"
-                class={INPUT}
-                value={fields.vizScrollSpeed}
-                onInput={(e) => setFields("vizScrollSpeed", e.currentTarget.value)}
-                onKeyDown={handleKeyDown}
-              />
-              <p class="text-[10px] text-tx-4 mt-1">Scroll velocity per frame (0.1 – 1.0)</p>
+              <div>
+                <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                  Default Scroll Speed
+                </label>
+                <input
+                  type="text"
+                  inputmode="decimal"
+                  placeholder="0.3"
+                  class={INPUT}
+                  value={fields.vizScrollSpeed}
+                  onInput={(e) => setFields("vizScrollSpeed", e.currentTarget.value)}
+                  onKeyDown={handleKeyDown}
+                />
+                <p class="text-[10px] text-tx-3 mt-1">Scroll velocity per frame (0.1 – 1.0)</p>
+              </div>
+              <div>
+                <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                  Auto-Pause on Idle
+                </label>
+                <label class="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={fields.autoPauseOnIdle}
+                    onChange={(e) => setFields("autoPauseOnIdle", e.currentTarget.checked)}
+                    class="w-4 h-4 rounded border border-border bg-surface accent-[var(--blue)] cursor-pointer"
+                  />
+                  <span class="text-sm text-tx">Enabled</span>
+                </label>
+                <p class="text-[10px] text-tx-3 mt-1">Pause viz scroll when no new text arrives</p>
+                <div class="mt-2">
+                  <label class="text-[10px] text-tx-3 mb-1 block">Idle timeout (seconds)</label>
+                  <input
+                    type="text"
+                    inputmode="numeric"
+                    placeholder="10"
+                    class={INPUT}
+                    value={fields.autoPauseOnIdleSeconds}
+                    onInput={(e) => setFields("autoPauseOnIdleSeconds", e.currentTarget.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={!fields.autoPauseOnIdle}
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                  Auto-Pause on Edit
+                </label>
+                <label class="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={fields.autoPauseOnEdit}
+                    onChange={(e) => setFields("autoPauseOnEdit", e.currentTarget.checked)}
+                    class="w-4 h-4 rounded border border-border bg-surface accent-[var(--blue)] cursor-pointer"
+                  />
+                  <span class="text-sm text-tx">Enabled</span>
+                </label>
+                <p class="text-[10px] text-tx-3 mt-1">
+                  Pause viz scroll when editing a translation
+                </p>
+              </div>
             </div>
           </div>
+          <div class="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-raised to-transparent" />
         </div>
 
         {/* Footer */}

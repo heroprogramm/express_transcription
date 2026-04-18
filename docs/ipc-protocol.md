@@ -17,7 +17,7 @@ All IPC communication between the main and renderer processes passes through the
 | Channel | Parameters | Return Type | Description |
 |---|---|---|---|
 | `get-config` | none | `{ config: AppConfig; warnings: string[] }` | Returns the current config merged with defaults, plus any validation warnings |
-| `save-config` | `fields: { model?: string; endpoint_detection?: boolean; feed_delay_seconds?: number; viz_host?: string; viz_port?: number; viz_scene_path?: string; viz_scroll_speed?: number }` | `{ config: AppConfig; warnings: string[] }` | Merges provided fields into stored config, validates, reloads, and returns the result |
+| `save-config` | `fields: { model?: string; endpoint_detection?: boolean; review_time_seconds?: number; viz_host?: string; viz_port?: number; viz_scene_path?: string; viz_scroll_speed?: number; viz_auto_pause_on_idle?: boolean; viz_auto_pause_on_idle_seconds?: number; viz_auto_pause_on_edit?: boolean }` | `{ config: AppConfig; warnings: string[] }` | Merges provided fields into stored config, validates, reloads, and returns the result |
 
 ### Session Management
 
@@ -51,6 +51,7 @@ All IPC communication between the main and renderer processes passes through the
 | `viz:continue` | none | `void` | Sends an IN/OUT (continue) command to the Viz Engine |
 | `viz:send-text` | `text: string` | `void` | Pushes a translation line to the next available Viz Engine text slot. Validates: max 10,000 chars |
 | `viz:toggle-scroll` | `start: boolean` | `void` | Starts or stops the Viz Engine scroll animation |
+| `viz:edit-pause` | none | `void` | Pauses scroll due to user editing a translation (only if `auto_pause_on_edit` is enabled) |
 | `viz:set-speed` | `speed: number` | `void` | Sets the scroll speed (0.1–1.0) |
 | `viz:hard-reset` | none | `void` | Stops scroll animation and clears all text slots |
 | `viz:get-status` | none | `VizStatus` | Returns the current Viz Engine controller state |
@@ -71,8 +72,8 @@ All IPC communication between the main and renderer processes passes through the
 ```typescript
 interface AppConfig {
   soniox: { language: string; model: string; translate_to: string; endpoint_detection: boolean };
-  output: { feed_file: string; session_log_dir: string; feed_delay_seconds: number };
-  viz: { host: string; port: number; scene_path: string; scroll_speed: number };
+  output: { feed_file: string; session_log_dir: string; review_time_seconds: number };
+  viz: { host: string; port: number; scene_path: string; scroll_speed: number; auto_pause_on_idle: boolean; auto_pause_on_idle_seconds: number; auto_pause_on_edit: boolean };
 }
 ```
 
@@ -84,6 +85,7 @@ interface VizStatus {
   isAnimating: boolean;
   isLoaded: boolean;
   hasData: boolean;
+  autoPaused: boolean;
   currentIdx: number;
   yPos: number;
   scrollSpeed: number;

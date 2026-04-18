@@ -118,6 +118,20 @@ For each new entry: vizSendText(entry.text) via IPC
 
 This runs in a `createEffect` in `App.tsx` that tracks the `sentEntries` array length and sends only newly added entries.
 
+## Auto-Pause
+
+The Viz scroll can automatically pause in two scenarios, each independently configurable in Settings:
+
+### Idle Pause (`auto_pause_on_idle`)
+
+When enabled, if no new text arrives for `auto_pause_on_idle_seconds` (default 10 s), the scroll loop stops and `SHOW_WAIT = 1` is sent. The timeout resets each time `vizSendText()` is called. When new text arrives, scroll resumes automatically.
+
+### Edit Pause (`auto_pause_on_edit`)
+
+When enabled, clicking into a pending translation entry to edit it immediately pauses the scroll. The renderer calls `vizEditPause()` via IPC, which stops the scroll loop and sends `SHOW_WAIT = 1`. Scroll resumes when the next text is sent to Viz.
+
+Both pause types set `autoPaused = true` in the status, and the VizPane shows a yellow "Paused" indicator.
+
 ## Status Reporting
 
 The `viz:status` push event sends a `VizStatus` snapshot to the renderer after every state change:
@@ -128,6 +142,7 @@ interface VizStatus {
   isAnimating: boolean;    // Scroll loop active
   isLoaded: boolean;       // Scene has been loaded
   hasData: boolean;        // At least one text slot has been written
+  autoPaused: boolean;     // Scroll auto-paused (idle or edit)
   currentIdx: number;      // Next slot index (1–15)
   yPos: number;            // Current scroll position
   scrollSpeed: number;     // Active scroll speed
@@ -147,5 +162,8 @@ Viz Engine settings are stored in the `viz` section of `AppConfig`:
 | `port` | `6100` | Viz Engine TCP port |
 | `scene_path` | (empty) | Scene object path (e.g. `EXPRESS_24_7/TRANSLATION_BB/Translation_BB`) |
 | `scroll_speed` | `0.3` | Default scroll velocity per frame (0.1–1.0) |
+| `auto_pause_on_idle` | `true` | Pause scroll when no new text arrives |
+| `auto_pause_on_idle_seconds` | `10` | Seconds of inactivity before idle pause triggers |
+| `auto_pause_on_edit` | `true` | Pause scroll when editing a translation entry |
 
 These are editable in the **Viz Engine** tab of the Settings modal. Config changes update the in-memory state via `vizUpdateConfig()` without requiring a restart.

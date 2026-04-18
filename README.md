@@ -97,7 +97,7 @@ Settings are managed via `electron-store` with sensible defaults. Configurable v
 | `soniox.translate_to`        | `en`         | Target translation language code (e.g., `en` for English)   |
 | `output.feed_file`           | `feed.txt`   | Name of the rolling feed file written to the app data dir   |
 | `output.session_log_dir`     | `sessions`   | Subdirectory (under app data) where session logs are stored |
-| `output.feed_delay_seconds`  | `5`          | Delay in seconds before writing to the feed file            |
+| `output.review_time_seconds` | `10`         | Time in seconds to review translations before auto-confirm  |
 
 Output files are written to the Electron `userData` directory:
 

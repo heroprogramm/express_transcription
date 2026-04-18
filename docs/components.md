@@ -37,7 +37,7 @@ The root component. Owns all top-level state and orchestrates the transcription 
 - `hSplit` / `vSplit` — resizable panel split ratios (percentage)
 
 **Hooks composed:**
-- `createEntryManager(feedDelayMs)` — manages all entry arrays and lifecycle
+- `createEntryManager(reviewTimeMs)` — manages all entry arrays and lifecycle
 - `createPerfMonitor()` — toggleable performance monitoring
 
 **Key behaviors:**
@@ -103,7 +103,7 @@ The root component. Owns all top-level state and orchestrates the transcription 
 | `entries` | `Accessor<TranslationEntry[]>` | Translation entries with status |
 | `live` | `Accessor<boolean>` | Whether session is active |
 | `tick` | `Accessor<number>` | Clock signal (updates every 500 ms) driving countdown recalculation |
-| `feedDelayMs` | `() => number` | Current feed delay in milliseconds |
+| `reviewTimeMs` | `() => number` | Current review time in milliseconds |
 | `onStartEdit` | `(id: number) => void` | Begin editing an entry |
 | `onSaveEdit` | `(id: number, text: string) => void` | Save edited text |
 | `onCancelEdit` | `(id: number) => void` | Cancel edit, restore original |
@@ -184,9 +184,9 @@ Renders a single translation entry row within the TranslationPane. Manages its o
 - Lazy-loaded via `solid-js/lazy`
 - Three tabs: **Soniox**, **Output**, **Viz Engine**
 - **Soniox tab:** model (text), endpoint detection (checkbox), API key (password, leave empty to keep current)
-- **Output tab:** feed delay (numeric, seconds)
-- **Viz Engine tab:** host (text), port (numeric, 1–65535), scene path (text), default scroll speed (0.1–1.0)
-- Validates model non-empty, feed delay non-negative, port valid, scroll speed in range before saving
+- **Output tab:** review time (numeric, seconds)
+- **Viz Engine tab:** host (text), port (numeric, 1–65535), scene path (text), default scroll speed (0.1–1.0), auto-pause on idle (checkbox + seconds), auto-pause on edit (checkbox)
+- Validates model non-empty, review time non-negative, port valid, scroll speed in range before saving
 - Enter saves, Escape closes; clicking backdrop closes
 - Saves API key and config via separate IPC calls
 
@@ -332,7 +332,7 @@ Keeps scroll pinned to the bottom of a container as items are added. Unpins when
 
 **Returns:** `{ onScroll }` — attach to the container's `onScroll` event.
 
-### `createEntryManager(feedDelayMs)`
+### `createEntryManager(reviewTimeMs)`
 
 **File:** `src/renderer/src/lib/entry-manager.ts`
 

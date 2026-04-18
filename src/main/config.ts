@@ -5,12 +5,15 @@ export type { AppConfig, ConfigResult };
 
 const DEFAULT_CONFIG: AppConfig = {
   soniox: { language: "ur", model: "stt-rt-v4", translate_to: "en", endpoint_detection: false },
-  output: { feed_file: "feed.txt", session_log_dir: "sessions", feed_delay_seconds: 5 },
+  output: { feed_file: "feed.txt", session_log_dir: "sessions", review_time_seconds: 10 },
   viz: {
     host: "127.0.0.1",
     port: 6100,
     scene_path: "EXPRESS_24_7/TRANSLATION_BB/Translation_BB",
     scroll_speed: 0.3,
+    auto_pause_on_idle: true,
+    auto_pause_on_idle_seconds: 10,
+    auto_pause_on_edit: true,
   },
 };
 
@@ -36,8 +39,8 @@ function validateConfig(config: AppConfig): string[] {
   if (!output.session_log_dir || typeof output.session_log_dir !== "string") {
     errors.push("output.session_log_dir must be a non-empty string");
   }
-  if (typeof output.feed_delay_seconds !== "number" || output.feed_delay_seconds < 0) {
-    errors.push("output.feed_delay_seconds must be a non-negative number");
+  if (typeof output.review_time_seconds !== "number" || output.review_time_seconds < 0) {
+    errors.push("output.review_time_seconds must be a non-negative number");
   }
 
   const { viz } = config;
@@ -52,6 +55,15 @@ function validateConfig(config: AppConfig): string[] {
   }
   if (typeof viz.scroll_speed !== "number" || viz.scroll_speed < 0.1 || viz.scroll_speed > 1.0) {
     errors.push("viz.scroll_speed must be a number between 0.1 and 1.0");
+  }
+  if (typeof viz.auto_pause_on_idle !== "boolean") {
+    errors.push("viz.auto_pause_on_idle must be a boolean");
+  }
+  if (typeof viz.auto_pause_on_idle_seconds !== "number" || viz.auto_pause_on_idle_seconds < 1) {
+    errors.push("viz.auto_pause_on_idle_seconds must be a number >= 1");
+  }
+  if (typeof viz.auto_pause_on_edit !== "boolean") {
+    errors.push("viz.auto_pause_on_edit must be a boolean");
   }
 
   return errors;
@@ -85,11 +97,14 @@ export function saveConfigFields(
   fields: Partial<{
     model: string;
     endpoint_detection: boolean;
-    feed_delay_seconds: number;
+    review_time_seconds: number;
     viz_host: string;
     viz_port: number;
     viz_scene_path: string;
     viz_scroll_speed: number;
+    viz_auto_pause_on_idle: boolean;
+    viz_auto_pause_on_idle_seconds: number;
+    viz_auto_pause_on_edit: boolean;
   }>,
 ): ConfigResult {
   const { config } = loadConfig();
@@ -100,8 +115,8 @@ export function saveConfigFields(
   if (fields.endpoint_detection !== undefined) {
     config.soniox = { ...config.soniox, endpoint_detection: fields.endpoint_detection };
   }
-  if (fields.feed_delay_seconds !== undefined) {
-    config.output = { ...config.output, feed_delay_seconds: fields.feed_delay_seconds };
+  if (fields.review_time_seconds !== undefined) {
+    config.output = { ...config.output, review_time_seconds: fields.review_time_seconds };
   }
   if (fields.viz_host !== undefined) {
     config.viz = { ...config.viz, host: fields.viz_host };
@@ -114,6 +129,18 @@ export function saveConfigFields(
   }
   if (fields.viz_scroll_speed !== undefined) {
     config.viz = { ...config.viz, scroll_speed: fields.viz_scroll_speed };
+  }
+  if (fields.viz_auto_pause_on_idle !== undefined) {
+    config.viz = { ...config.viz, auto_pause_on_idle: fields.viz_auto_pause_on_idle };
+  }
+  if (fields.viz_auto_pause_on_idle_seconds !== undefined) {
+    config.viz = {
+      ...config.viz,
+      auto_pause_on_idle_seconds: fields.viz_auto_pause_on_idle_seconds,
+    };
+  }
+  if (fields.viz_auto_pause_on_edit !== undefined) {
+    config.viz = { ...config.viz, auto_pause_on_edit: fields.viz_auto_pause_on_edit };
   }
 
   saveStoredConfig(config);

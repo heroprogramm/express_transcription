@@ -1,6 +1,7 @@
 import net from "net";
 import type { BrowserWindow } from "electron";
 import type { AppConfig, VizLogEntry, VizStatus } from "../shared/types";
+import { secondsToMs } from "../shared/utils";
 import { log, LogLevel } from "./logger";
 
 // ── Module state ──
@@ -25,8 +26,7 @@ let hasData = false;
 let connected = false;
 let autoPaused = false;
 let idleTimer: ReturnType<typeof setTimeout> | null = null;
-let idlePauseMs = 15_000;
-const IDLE_BUFFER_MS = 5_000;
+let idlePauseMs = 10_000;
 
 const MAX_HISTORY = 30;
 const SLOT_COUNT = 15;
@@ -258,22 +258,18 @@ function resetLogic(): void {
 // ── Public API ──
 
 /** Store config and BrowserWindow reference. No auto-connect. */
-export function vizInit(
-  config: AppConfig["viz"],
-  feedDelaySeconds: number,
-  browserWindow: BrowserWindow,
-): void {
+export function vizInit(config: AppConfig["viz"], browserWindow: BrowserWindow): void {
   vizConfig = config;
   win = browserWindow;
   scrollSpeed = config.scroll_speed;
-  idlePauseMs = feedDelaySeconds * 1000 + IDLE_BUFFER_MS;
+  idlePauseMs = secondsToMs(config.auto_pause_on_idle_seconds);
 }
 
 /** Update config at runtime (e.g. after settings save). */
-export function vizUpdateConfig(config: AppConfig["viz"], feedDelaySeconds: number): void {
+export function vizUpdateConfig(config: AppConfig["viz"]): void {
   vizConfig = config;
   scrollSpeed = config.scroll_speed;
-  idlePauseMs = feedDelaySeconds * 1000 + IDLE_BUFFER_MS;
+  idlePauseMs = secondsToMs(config.auto_pause_on_idle_seconds);
 }
 
 /** Clean up all sockets and intervals on app quit. */
@@ -317,7 +313,7 @@ export async function vizContinue(): Promise<void> {
 
 function resetIdleTimer(): void {
   if (idleTimer) clearTimeout(idleTimer);
-  if (!isAnimating) return;
+  if (!isAnimating || !vizConfig?.auto_pause_on_idle) return;
   idleTimer = setTimeout(() => {
     if (!isAnimating) return;
     autoPaused = true;
@@ -400,7 +396,7 @@ export async function vizToggleScroll(start: boolean): Promise<void> {
 
 /** Pause scroll due to editing — resumes automatically when new text arrives. */
 export function vizEditPause(): void {
-  if (!isAnimating) return;
+  if (!isAnimating || !vizConfig?.auto_pause_on_edit) return;
   autoPaused = true;
   isAnimating = false;
   if (idleTimer) {

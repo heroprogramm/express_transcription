@@ -47,21 +47,30 @@ export function registerIpcHandlers(
       const updates: Partial<{
         model: string;
         endpoint_detection: boolean;
-        feed_delay_seconds: number;
+        review_time_seconds: number;
         viz_host: string;
         viz_port: number;
         viz_scene_path: string;
         viz_scroll_speed: number;
+        viz_auto_pause_on_idle: boolean;
+        viz_auto_pause_on_idle_seconds: number;
+        viz_auto_pause_on_edit: boolean;
       }> = {};
       if (typeof f.model === "string") updates.model = f.model;
       if (typeof f.endpoint_detection === "boolean")
         updates.endpoint_detection = f.endpoint_detection;
-      if (typeof f.feed_delay_seconds === "number")
-        updates.feed_delay_seconds = f.feed_delay_seconds;
+      if (typeof f.review_time_seconds === "number")
+        updates.review_time_seconds = f.review_time_seconds;
       if (typeof f.viz_host === "string") updates.viz_host = f.viz_host;
       if (typeof f.viz_port === "number") updates.viz_port = f.viz_port;
       if (typeof f.viz_scene_path === "string") updates.viz_scene_path = f.viz_scene_path;
       if (typeof f.viz_scroll_speed === "number") updates.viz_scroll_speed = f.viz_scroll_speed;
+      if (typeof f.viz_auto_pause_on_idle === "boolean")
+        updates.viz_auto_pause_on_idle = f.viz_auto_pause_on_idle;
+      if (typeof f.viz_auto_pause_on_idle_seconds === "number")
+        updates.viz_auto_pause_on_idle_seconds = f.viz_auto_pause_on_idle_seconds;
+      if (typeof f.viz_auto_pause_on_edit === "boolean")
+        updates.viz_auto_pause_on_edit = f.viz_auto_pause_on_edit;
       const result = saveConfigFields(updates);
       setConfig(result.config);
       return result;

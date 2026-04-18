@@ -50,7 +50,7 @@ app.whenReady().then(() => {
     () => appConfig,
     (c) => {
       appConfig = c;
-      vizUpdateConfig(c.viz, c.output.feed_delay_seconds);
+      vizUpdateConfig(c.viz);
     },
     configResult.warnings,
   );
@@ -60,7 +60,7 @@ app.whenReady().then(() => {
   });
 
   createWindow();
-  vizInit(appConfig.viz, appConfig.output.feed_delay_seconds, getMainWindow()!);
+  vizInit(appConfig.viz, getMainWindow()!);
   initAutoUpdater();
   ipcMain.on("restart-for-update", () => quitAndInstall());
 

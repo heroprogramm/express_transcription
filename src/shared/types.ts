@@ -1,8 +1,16 @@
 /** Application configuration for Soniox transcription and output settings. */
 export interface AppConfig {
   soniox: { language: string; model: string; translate_to: string; endpoint_detection: boolean };
-  output: { feed_file: string; session_log_dir: string; feed_delay_seconds: number };
-  viz: { host: string; port: number; scene_path: string; scroll_speed: number };
+  output: { feed_file: string; session_log_dir: string; review_time_seconds: number };
+  viz: {
+    host: string;
+    port: number;
+    scene_path: string;
+    scroll_speed: number;
+    auto_pause_on_idle: boolean;
+    auto_pause_on_idle_seconds: number;
+    auto_pause_on_edit: boolean;
+  };
 }
 
 /** Point-in-time snapshot of the Viz Engine controller state, pushed to the renderer via IPC. */

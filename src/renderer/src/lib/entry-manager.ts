@@ -8,9 +8,9 @@ const MAX_ENTRIES = 500;
 /**
  * Reactive store managing STT and translation entries with timed auto-confirm and editing.
  * Entries flow through pending -> confirmed -> sent, with an optional editing pause.
- * @param feedDelayMs Accessor returning the delay before a pending entry is auto-confirmed.
+ * @param reviewTimeMs Accessor returning the review time (ms) before a pending entry is auto-confirmed.
  */
-export function createEntryManager(feedDelayMs: () => number) {
+export function createEntryManager(reviewTimeMs: () => number) {
   const [sttEntries, setSttEntries] = createStore<TranscriptEntry[]>([]);
   const [sttPartial, setSttPartial] = createSignal<string>("");
   const [transEntries, setTransEntries] = createStore<TranslationEntry[]>([]);
@@ -121,7 +121,7 @@ export function createEntryManager(feedDelayMs: () => number) {
       setWords(getWordCount());
       setLatency(`${(Math.abs(latencyMs) / 1000).toFixed(1)}s`);
     });
-    const timer = setTimeout(() => confirmEntry(thisId), feedDelayMs());
+    const timer = setTimeout(() => confirmEntry(thisId), reviewTimeMs());
     entryTimers.set(thisId, timer);
     startTick();
   }
@@ -143,7 +143,7 @@ export function createEntryManager(feedDelayMs: () => number) {
     const entry = transEntries.find((e) => e.id === id);
     if (!entry) return 0;
     const elapsed = Date.now() - entry.createdAt;
-    return Math.max(0, feedDelayMs() - elapsed);
+    return Math.max(0, reviewTimeMs() - elapsed);
   }
 
   function saveEdit(id: number, text: string): void {
@@ -223,7 +223,7 @@ export function createEntryManager(feedDelayMs: () => number) {
     latency,
     words,
     tick,
-    feedDelayMs,
+    reviewTimeMs,
     pushStt,
     pushTranslation,
     startEdit,

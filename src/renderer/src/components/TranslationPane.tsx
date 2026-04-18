@@ -33,7 +33,7 @@ interface TransPaneProps {
   entries: Accessor<TranslationEntry[]>;
   live: Accessor<boolean>;
   tick: Accessor<number>;
-  feedDelayMs: () => number;
+  reviewTimeMs: () => number;
   onStartEdit: (id: number) => void;
   onSaveEdit: (id: number, text: string) => void;
   onCancelEdit: (id: number) => void;
@@ -45,7 +45,7 @@ function TranslationEntryRow(props: {
   isNew: boolean;
   isLatest: boolean;
   tick: Accessor<number>;
-  feedDelayMs: () => number;
+  reviewTimeMs: () => number;
   onStartEdit: (id: number) => void;
   onSaveEdit: (id: number, text: string) => void;
   onCancelEdit: (id: number) => void;
@@ -60,7 +60,7 @@ function TranslationEntryRow(props: {
 
   const remaining = () => {
     const now = props.tick();
-    return Math.max(0, Math.ceil((props.feedDelayMs() - (now - props.entry.createdAt)) / 1000));
+    return Math.max(0, Math.ceil((props.reviewTimeMs() - (now - props.entry.createdAt)) / 1000));
   };
 
   let cancelled = false;
@@ -178,7 +178,7 @@ export default function TranslationPane(props: TransPaneProps) {
                   isNew={Date.now() - entry.createdAt < 500}
                   isLatest={i() === props.entries().length - 1}
                   tick={props.tick}
-                  feedDelayMs={props.feedDelayMs}
+                  reviewTimeMs={props.reviewTimeMs}
                   onStartEdit={props.onStartEdit}
                   onSaveEdit={props.onSaveEdit}
                   onCancelEdit={props.onCancelEdit}

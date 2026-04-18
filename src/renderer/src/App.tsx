@@ -9,7 +9,7 @@ import {
   ErrorBoundary,
 } from "solid-js";
 import { Settings } from "lucide-solid";
-import type { AppConfig } from "@/lib/types";
+import { secondsToMs, type AppConfig } from "@/lib/types";
 import {
   hasApiKey,
   getConfig,
@@ -62,11 +62,11 @@ export default function App() {
   let uptimeInterval: ReturnType<typeof setInterval> | undefined;
   let startTime = 0;
 
-  function feedDelayMs(): number {
-    return (config()?.output.feed_delay_seconds ?? 10) * 1000;
+  function reviewTimeMs(): number {
+    return secondsToMs(config()?.output.review_time_seconds ?? 10);
   }
 
-  const entries = createEntryManager(feedDelayMs);
+  const entries = createEntryManager(reviewTimeMs);
   const perf = createPerfMonitor();
 
   // ── Viz: pause scroll when user starts editing ──
@@ -376,7 +376,7 @@ export default function App() {
               entries={entries.transEntries}
               live={running}
               tick={entries.tick}
-              feedDelayMs={entries.feedDelayMs}
+              reviewTimeMs={entries.reviewTimeMs}
               onStartEdit={handleStartEdit}
               onSaveEdit={entries.saveEdit}
               onCancelEdit={entries.cancelEdit}

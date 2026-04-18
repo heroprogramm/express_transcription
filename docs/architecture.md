@@ -76,7 +76,7 @@ flowchart LR
 1. The renderer captures microphone audio via `MicrophoneSource` (Soniox SDK wrapper around `getUserMedia`).
 2. Audio streams over a WebSocket to Soniox servers. Results arrive as `RealtimeResult` objects containing tokens.
 3. Tokens are parsed into original text (Urdu) and translated text (English). Original text is pushed to `sttEntries`; translations are pushed to `transEntries`.
-4. Each translation entry starts a countdown timer (`feedDelayMs`). When the timer fires (or the user manually confirms), the entry transitions to `confirmed` then `sent`.
+4. Each translation entry starts a countdown timer (`reviewTimeMs`). When the timer fires (or the user manually confirms), the entry transitions to `confirmed` then `sent`.
 5. Sent entries are batched in a renderer-side queue (`logQueue`) that flushes every 200 ms via the `log-translations-batch` IPC channel. Concurrently, each sent entry is pushed to the Viz Engine via `vizSendText()`.
 6. The main process writes each line to the session log (append-only `WriteStream`) and buffers the latest line for the feed file.
 7. The feed file is atomically updated (write to `.tmp`, then rename) every 200 ms, always containing the most recent translation line.
@@ -97,7 +97,7 @@ stateDiagram-v2
 
 | Status              | Behavior                                                                                                                                                  |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Pending**   | Entry is visible with a countdown. User can click to edit. Timer runs for `feed_delay_seconds`.                                                         |
+| **Pending**   | Entry is visible with a countdown. User can click to edit. Timer runs for `review_time_seconds`.                                                         |
 | **Editing**   | Timer is paused. An inline text input replaces the entry text. Enter saves, Escape cancels. Focus-out auto-saves. Only one entry can be edited at a time. |
 | **Confirmed** | Timer expired or edit was saved. Entry awaits sequential drain.                                                                                           |
 | **Sent**      | Entry has been written to the IPC batch queue and appears in the OutputPane.                                                                              |
