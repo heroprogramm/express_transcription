@@ -17,7 +17,12 @@ import { reportError } from "@/lib/errors";
 
 /** Callbacks invoked by the Soniox recording lifecycle. */
 export interface SonioxCallbacks {
-  onTranscript: (timestamp: string, text: string, isPartial: boolean) => void;
+  onTranscript: (
+    startTime: string,
+    endTime: string | undefined,
+    text: string,
+    isPartial: boolean,
+  ) => void;
   onTranslation: (timestamp: string, text: string, latencyMs: number) => void;
   onError: (message: string, isApiKeyError: boolean) => void;
   onStateChange: (state: "started" | "stopped" | "loading" | "reconnecting") => void;
@@ -201,19 +206,16 @@ function connectRecording(
     const fullTranslated = finalTranslatedParts.join("") + nonFinalTranslated.join("");
 
     if (fullOriginal) {
-      const startMs = firstOriginalStartMs ?? partialOriginalStartMs ?? 0;
+      const start = formatTimestamp(firstOriginalStartMs ?? partialOriginalStartMs ?? 0);
       const endMs = lastOriginalEndMs ?? partialOriginalEndMs;
-      const ts =
-        endMs !== undefined
-          ? `${formatTimestamp(startMs)} - ${formatTimestamp(endMs)}`
-          : formatTimestamp(startMs);
+      const end = endMs !== undefined ? formatTimestamp(endMs) : undefined;
       if (nonFinalOriginal.length === 0 && finalOriginalParts.length > 0) {
-        callbacks.onTranscript(ts, fullOriginal, false);
+        callbacks.onTranscript(start, end, fullOriginal, false);
         finalOriginalParts = [];
         firstOriginalStartMs = undefined;
         lastOriginalEndMs = undefined;
       } else {
-        callbacks.onTranscript(ts, fullOriginal, true);
+        callbacks.onTranscript(start, end, fullOriginal, true);
       }
     }
 

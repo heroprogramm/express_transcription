@@ -387,18 +387,20 @@ body.theme-transitioning h2 {
 }
 
 /* ── Partial Bar ────────────────────────────────────────────── */
-@keyframes partialSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.partial-bar-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease;
 }
-.partial-bar {
-  animation: partialSlideIn 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+.partial-bar-wrapper.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.partial-bar-wrapper > .partial-bar {
+  overflow: hidden;
 }
 .partial-bar p {
   transition: opacity 0.15s ease;

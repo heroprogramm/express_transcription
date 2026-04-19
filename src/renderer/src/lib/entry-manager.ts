@@ -82,7 +82,12 @@ export function createEntryManager(reviewTimeMs: () => number) {
 
   // ── Public API ──
 
-  function pushStt(timestamp: string, text: string, isPartial: boolean): void {
+  function pushStt(
+    startTime: string,
+    endTime: string | undefined,
+    text: string,
+    isPartial: boolean,
+  ): void {
     if (isPartial) {
       setSttPartial(text);
       return;
@@ -93,7 +98,7 @@ export function createEntryManager(reviewTimeMs: () => number) {
       setSttEntries(
         produce((draft) => {
           if (draft.length >= MAX_ENTRIES) draft.shift();
-          draft.push({ id: entryId++, timestamp, text, isPartial: false });
+          draft.push({ id: entryId++, startTime, endTime, text, isPartial: false });
         }),
       );
       setSttCount((c) => c + 1);

@@ -73,13 +73,15 @@ export default function SpeechPane(props: SpeechPaneProps) {
             {(entry) => (
               <div class="py-1">
                 <div class="speech-card rounded-lg border border-border px-4 py-3">
-                  <div class="flex justify-between items-center mb-1">
-                    <div />
-                    <span class="text-[10px] font-mono text-tx-4 tabular-nums">
-                      {entry.timestamp}
-                    </span>
-                  </div>
+                  <span dir="ltr" class="text-[10px] font-mono text-tx-4 tabular-nums block mb-1">
+                    {entry.startTime}
+                  </span>
                   <p class="font-urdu text-2xl leading-relaxed text-tx">{entry.text}</p>
+                  <Show when={entry.endTime}>
+                    <span dir="ltr" class="text-[10px] font-mono text-tx-4 tabular-nums mt-1 block">
+                      {entry.endTime}
+                    </span>
+                  </Show>
                 </div>
               </div>
             )}

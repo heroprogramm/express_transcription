@@ -385,7 +385,7 @@ export default function App() {
           </div>
         </main>
 
-        <Show when={running()}>
+        <div class="partial-bar-wrapper" classList={{ open: running() }}>
           <div class="partial-bar shrink-0 px-4 py-3 relative" dir="rtl">
             <div class="partial-bar-border" />
             <p
@@ -398,7 +398,7 @@ export default function App() {
               {entries.sttPartial() || "\u200F\u2026"}
             </p>
           </div>
-        </Show>
+        </div>
 
         <ResizeHandle direction="vertical" onResize={onVResize} />
 

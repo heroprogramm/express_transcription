@@ -4,7 +4,8 @@ export { secondsToMs } from "@shared/utils";
 /** A single speech-to-text transcript entry from Soniox. */
 export interface TranscriptEntry {
   id: number;
-  timestamp: string;
+  startTime: string;
+  endTime?: string;
   text: string;
   isPartial: boolean;
 }
