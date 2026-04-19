@@ -42,6 +42,9 @@ let wordCount = 0;
 // ── Token accumulation (finals are returned once, non-finals replace each result) ──
 let finalOriginalParts: string[] = [];
 let finalTranslatedParts: string[] = [];
+let firstOriginalStartMs: number | undefined;
+let lastOriginalEndMs: number | undefined;
+let firstTranslatedStartMs: number | undefined;
 
 // ── Reconnection state ──
 const MAX_RETRIES = 5;
@@ -86,6 +89,9 @@ function formatTimestamp(ms: number): string {
 function resetTokenAccumulators(): void {
   finalOriginalParts = [];
   finalTranslatedParts = [];
+  firstOriginalStartMs = undefined;
+  lastOriginalEndMs = undefined;
+  firstTranslatedStartMs = undefined;
 }
 
 /** Return the cumulative number of translated words since the session started. */
@@ -165,22 +171,28 @@ function connectRecording(
 
   function handleResult(result: RealtimeResult): void {
     const elapsed = Date.now() - startTime;
-    const ts = formatTimestamp(elapsed);
 
     // Accumulate finals, collect current non-finals (reset each result).
     const nonFinalOriginal: string[] = [];
     const nonFinalTranslated: string[] = [];
+    let partialOriginalStartMs: number | undefined;
+    let partialOriginalEndMs: number | undefined;
 
     for (const token of result.tokens) {
       if (token.is_final) {
         if (token.translation_status === "translation") {
+          if (firstTranslatedStartMs === undefined) firstTranslatedStartMs = token.start_ms;
           finalTranslatedParts.push(token.text);
         } else {
+          if (firstOriginalStartMs === undefined) firstOriginalStartMs = token.start_ms;
+          if (token.end_ms !== undefined) lastOriginalEndMs = token.end_ms;
           finalOriginalParts.push(token.text);
         }
       } else if (token.translation_status === "translation") {
         nonFinalTranslated.push(token.text);
       } else {
+        if (partialOriginalStartMs === undefined) partialOriginalStartMs = token.start_ms;
+        if (token.end_ms !== undefined) partialOriginalEndMs = token.end_ms;
         nonFinalOriginal.push(token.text);
       }
     }
@@ -189,9 +201,17 @@ function connectRecording(
     const fullTranslated = finalTranslatedParts.join("") + nonFinalTranslated.join("");
 
     if (fullOriginal) {
+      const startMs = firstOriginalStartMs ?? partialOriginalStartMs ?? 0;
+      const endMs = lastOriginalEndMs ?? partialOriginalEndMs;
+      const ts =
+        endMs !== undefined
+          ? `${formatTimestamp(startMs)} - ${formatTimestamp(endMs)}`
+          : formatTimestamp(startMs);
       if (nonFinalOriginal.length === 0 && finalOriginalParts.length > 0) {
         callbacks.onTranscript(ts, fullOriginal, false);
         finalOriginalParts = [];
+        firstOriginalStartMs = undefined;
+        lastOriginalEndMs = undefined;
       } else {
         callbacks.onTranscript(ts, fullOriginal, true);
       }
@@ -200,8 +220,13 @@ function connectRecording(
     if (nonFinalTranslated.length === 0 && finalTranslatedParts.length > 0) {
       wordCount += fullTranslated.split(/\s+/).filter(Boolean).length;
       const latencyMs = elapsed - result.total_audio_proc_ms;
-      callbacks.onTranslation(ts, fullTranslated, latencyMs);
+      callbacks.onTranslation(
+        formatTimestamp(firstTranslatedStartMs ?? 0),
+        fullTranslated,
+        latencyMs,
+      );
       finalTranslatedParts = [];
+      firstTranslatedStartMs = undefined;
     }
   }
 

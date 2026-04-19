@@ -127,19 +127,16 @@ function TranslationEntryRow(props: {
           }}
         >
           {props.entry.text}
+          <Show when={isConfirmed() || isSent()}>
+            <span class="text-green text-[14px] ml-2 align-middle">&#10003;</span>
+          </Show>
+          <Show when={isPending()}>
+            <span class="text-[10px] font-mono tabular-nums bg-violet-soft/20 text-st-pending border border-violet/20 rounded-full px-2 py-0.5 ml-2 align-middle">
+              {remaining()}s
+            </span>
+          </Show>
         </p>
       </Show>
-      <div class="flex items-center gap-2 mt-1">
-        <span class="text-[10px] font-mono text-tx-4 tabular-nums">{props.entry.timestamp}</span>
-        <Show when={isConfirmed() || isSent()}>
-          <span class="text-green text-[14px]">&#10003;</span>
-        </Show>
-        <Show when={isPending()}>
-          <span class="text-[10px] font-mono tabular-nums bg-violet-soft/20 text-st-pending border border-violet/20 rounded-full px-2 py-0.5">
-            {remaining()}s
-          </span>
-        </Show>
-      </div>
     </div>
   );
 }
