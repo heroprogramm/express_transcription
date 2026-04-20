@@ -375,7 +375,7 @@ export default function App() {
             <TranslationPane
               entries={entries.transEntries}
               live={running}
-              tick={entries.tick}
+              tickForEntry={entries.tickForEntry}
               reviewTimeMs={entries.reviewTimeMs}
               onStartEdit={handleStartEdit}
               onSaveEdit={entries.saveEdit}

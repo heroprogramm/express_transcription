@@ -98,7 +98,7 @@ stateDiagram-v2
 | Status              | Behavior                                                                                                                                                  |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Pending**   | Entry is visible with a countdown. User can click to edit. Timer runs for `review_time_seconds`.                                                         |
-| **Editing**   | Timer is paused. An inline text input replaces the entry text. Enter saves, Escape cancels. Focus-out auto-saves. Only one entry can be edited at a time. |
+| **Editing**   | Timers for the edited entry and all entries after it are paused; earlier entries keep counting down and auto-confirming normally. Auto-scroll is paused. An inline text input replaces the entry text. Enter saves, Escape cancels. Focus-out auto-saves. Only one entry can be edited at a time. On save/cancel, paused countdowns resume from where they left off; entries that arrived during the pause start with a full countdown. |
 | **Confirmed** | Timer expired or edit was saved. Entry awaits sequential drain.                                                                                           |
 | **Sent**      | Entry has been written to the IPC batch queue and appears in the OutputPane.                                                                              |
 
@@ -146,7 +146,7 @@ State does not use a global store. Each concern is encapsulated in a hook and co
 
 ### Auto-Scroll
 
-All panes (Speech, Translation, VizPane history) use `useAutoScroll` to keep the list pinned to the bottom as new entries arrive. When the user scrolls up (more than 80 px from the bottom), auto-scroll is suspended until they scroll back down.
+All panes (Speech, Translation, VizPane history) use `useAutoScroll` to keep the list pinned to the bottom as new entries arrive. When the user scrolls up (more than 80 px from the bottom), auto-scroll is suspended until they scroll back down. The TranslationPane also passes an editing flag that pauses auto-scroll while any entry is being edited, preventing the scroll position from jumping while the user is typing.
 
 ### Batched IPC
 

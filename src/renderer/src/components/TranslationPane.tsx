@@ -2,6 +2,12 @@ import { createSignal, For, Show, type Accessor } from "solid-js";
 import { EntryStatus, type TranslationEntry } from "@/lib/types";
 import { useAutoScroll } from "@/lib/use-auto-scroll";
 
+/** Whole seconds remaining before an entry auto-confirms (clamped to ≥ 0). */
+function countdownSeconds(now: number, createdAt: number, reviewMs: number): number {
+  const elapsed = Math.max(0, now - createdAt);
+  return Math.max(0, Math.ceil((reviewMs - elapsed) / 1000));
+}
+
 function TranslationEmpty() {
   return (
     <div class="flex flex-col items-center justify-center h-full gap-4">
@@ -32,7 +38,7 @@ function TranslationEmpty() {
 interface TransPaneProps {
   entries: Accessor<TranslationEntry[]>;
   live: Accessor<boolean>;
-  tick: Accessor<number>;
+  tickForEntry: (entryId: number) => number;
   reviewTimeMs: () => number;
   onStartEdit: (id: number) => void;
   onSaveEdit: (id: number, text: string) => void;
@@ -44,7 +50,7 @@ function TranslationEntryRow(props: {
   entry: TranslationEntry;
   isNew: boolean;
   isLatest: boolean;
-  tick: Accessor<number>;
+  tickForEntry: (entryId: number) => number;
   reviewTimeMs: () => number;
   onStartEdit: (id: number) => void;
   onSaveEdit: (id: number, text: string) => void;
@@ -58,20 +64,23 @@ function TranslationEntryRow(props: {
   const isConfirmed = () => props.entry.status === EntryStatus.Confirmed;
   const isSent = () => props.entry.status === EntryStatus.Sent;
 
-  const remaining = () => {
-    const now = props.tick();
-    return Math.max(0, Math.ceil((props.reviewTimeMs() - (now - props.entry.createdAt)) / 1000));
-  };
+  const remaining = () =>
+    countdownSeconds(
+      props.tickForEntry(props.entry.id),
+      props.entry.createdAt,
+      props.reviewTimeMs(),
+    );
 
-  let cancelled = false;
+  let handled = false;
 
   function handleKeyDown(e: KeyboardEvent): void {
     if (e.key === "Enter") {
       e.stopPropagation();
+      handled = true;
       props.onSaveEdit(props.entry.id, editText());
     } else if (e.key === "Escape") {
       e.stopPropagation();
-      cancelled = true;
+      handled = true;
       props.onCancelEdit(props.entry.id);
     }
   }
@@ -107,7 +116,7 @@ function TranslationEntryRow(props: {
               }}
               onKeyDown={handleKeyDown}
               onFocusOut={() => {
-                if (!cancelled) props.onSaveEdit(props.entry.id, editText());
+                if (!handled) props.onSaveEdit(props.entry.id, editText());
               }}
             />
             <div class="flex justify-end gap-3 mt-1.5">
@@ -147,9 +156,11 @@ function TranslationEntryRow(props: {
  */
 export default function TranslationPane(props: TransPaneProps) {
   let container: HTMLDivElement | undefined;
+  const isEditing = () => props.entries().some((e) => e.status === EntryStatus.Editing);
   const { onScroll } = useAutoScroll(
     () => container,
     () => props.entries().length,
+    isEditing,
   );
 
   return (
@@ -174,7 +185,7 @@ export default function TranslationPane(props: TransPaneProps) {
                   entry={entry}
                   isNew={Date.now() - entry.createdAt < 500}
                   isLatest={i() === props.entries().length - 1}
-                  tick={props.tick}
+                  tickForEntry={props.tickForEntry}
                   reviewTimeMs={props.reviewTimeMs}
                   onStartEdit={props.onStartEdit}
                   onSaveEdit={props.onSaveEdit}

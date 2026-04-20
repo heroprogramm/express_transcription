@@ -1,9 +1,10 @@
 import { createEffect, createSignal, type Accessor } from "solid-js";
 
-/** Auto-scroll: keeps scroll pinned to bottom unless user scrolls up. */
+/** Auto-scroll: keeps scroll pinned to bottom unless user scrolls up or scrolling is paused. */
 export function useAutoScroll(
   containerRef: () => HTMLDivElement | undefined,
   count: Accessor<number>,
+  paused?: Accessor<boolean>,
 ) {
   const [pinned, setPinned] = createSignal(true);
 
@@ -15,6 +16,7 @@ export function useAutoScroll(
 
   createEffect(() => {
     count(); // track changes
+    if (paused?.()) return;
     if (pinned()) {
       const el = containerRef();
       if (el) el.scrollTop = el.scrollHeight;

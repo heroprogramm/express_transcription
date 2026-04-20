@@ -102,7 +102,7 @@ The root component. Owns all top-level state and orchestrates the transcription 
 |---|---|---|
 | `entries` | `Accessor<TranslationEntry[]>` | Translation entries with status |
 | `live` | `Accessor<boolean>` | Whether session is active |
-| `tick` | `Accessor<number>` | Clock signal (updates every 500 ms) driving countdown recalculation |
+| `tickForEntry` | `(entryId: number) => number` | Returns the live tick for pre-edit entries and a frozen tick for paused (post-edit) entries |
 | `reviewTimeMs` | `() => number` | Current review time in milliseconds |
 | `onStartEdit` | `(id: number) => void` | Begin editing an entry |
 | `onSaveEdit` | `(id: number, text: string) => void` | Save edited text |
@@ -110,7 +110,7 @@ The root component. Owns all top-level state and orchestrates the transcription 
 | `onEditChange` | `(id: number, text: string) => void` | Track in-progress edit text |
 
 **Behavior:**
-- Uses `useAutoScroll` to stay pinned to the latest entry
+- Uses `useAutoScroll` to stay pinned to the latest entry; auto-scroll is paused while any entry is being edited
 - Each entry rendered by `TranslationEntryRow` sub-component
 - Color-coded left border per status: pending (amber), editing (blue), confirmed (green), sent (gray)
 - Pending entries show a countdown timer and a progress bar animation
@@ -324,11 +324,11 @@ Toggles `data-theme` between `"dark"` and `"light"` on `<html>`. Persists choice
 
 ## Shared Hooks
 
-### `useAutoScroll(containerRef, count)`
+### `useAutoScroll(containerRef, count, paused?)`
 
 **File:** `src/renderer/src/lib/use-auto-scroll.ts`
 
-Keeps scroll pinned to the bottom of a container as items are added. Unpins when the user scrolls up more than 80 px from the bottom, and re-pins when they scroll back down.
+Keeps scroll pinned to the bottom of a container as items are added. Unpins when the user scrolls up more than 80 px from the bottom, and re-pins when they scroll back down. An optional `paused` accessor suppresses scrolling while active (e.g., during inline editing) without losing the pinned state.
 
 **Returns:** `{ onScroll }` — attach to the container's `onScroll` event.
 
