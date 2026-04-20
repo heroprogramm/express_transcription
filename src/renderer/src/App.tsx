@@ -23,6 +23,7 @@ import {
   vizToggleScroll,
   vizEditPause,
   vizGetStatus,
+  copyToClipboard,
 } from "@/lib/ipc";
 import { startTranscription, stopTranscription, cancelTranscription } from "@/lib/soniox";
 import { createPerfMonitor } from "@/lib/perf";
@@ -348,7 +349,7 @@ export default function App() {
               .transEntries()
               .map((e) => e.text)
               .join("\n");
-            if (text) navigator.clipboard.writeText(text);
+            if (text) copyToClipboard(text);
           }}
           onClear={() => {
             entries.clear();

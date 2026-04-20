@@ -7,6 +7,7 @@ import {
   Layers,
   ArrowRightLeft,
   Loader2,
+  WifiOff,
 } from "lucide-solid";
 import type { VizStatus } from "@/lib/types";
 import { useAutoScroll } from "@/lib/use-auto-scroll";
@@ -24,7 +25,7 @@ import {
 } from "@/lib/ipc";
 
 const DEFAULT_STATUS: VizStatus = {
-  connected: false,
+  connection: "idle",
   isAnimating: false,
   isLoaded: false,
   hasData: false,
@@ -213,10 +214,25 @@ export default function VizPane() {
         <div class="w-px h-5 bg-border shrink-0" />
 
         <div
-          class={`flex items-center gap-1.5 shrink-0 py-1.5 pl-3 pr-3.5 border rounded-full text-[12px] font-bold tracking-wider transition-all duration-300 ${status().connected ? "badge-connected" : "badge-disconnected"}`}
+          class={`flex items-center justify-center gap-1.5 shrink-0 min-w-[155px] py-1.5 pl-3 pr-3.5 border rounded-full text-[12px] font-bold tracking-wider transition-all duration-300 badge-viz-${status().connection}`}
         >
-          <span class="status-dot w-[7px] h-[7px] rounded-full shrink-0 transition-all duration-300" />
-          <span>{status().connected ? "Connected" : "Disconnected"}</span>
+          <Show
+            when={status().connection !== "failed"}
+            fallback={<WifiOff size={12} class="shrink-0" />}
+          >
+            <span class="status-dot w-[7px] h-[7px] rounded-full shrink-0 transition-all duration-300" />
+          </Show>
+          <span>
+            {
+              {
+                idle: "Disconnected",
+                connecting: "Connecting\u2026",
+                connected: "Connected",
+                reconnecting: "Reconnecting\u2026",
+                failed: "Connection Failed",
+              }[status().connection]
+            }
+          </span>
         </div>
       </div>
 

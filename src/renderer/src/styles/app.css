@@ -259,39 +259,82 @@ body.theme-transitioning h2 {
 }
 .badge-live {
   border-color: var(--red);
-  background: var(--red-glow);
-  color: var(--red);
+  background: var(--red);
+  color: #fff;
+  box-shadow:
+    0 0 8px var(--red-glow),
+    0 0 20px var(--red-glow);
+  animation: badgeGlow 2s ease-in-out infinite;
 }
 .badge-live .status-dot {
-  background: var(--red);
+  background: #fff;
   animation: pulse 1.5s ease-in-out infinite;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
 }
 .badge-loading {
   border-color: var(--blue);
-  background: rgba(80, 160, 208, 0.08);
-  color: var(--blue);
+  background: var(--blue);
+  color: #fff;
+  box-shadow:
+    0 0 8px rgba(80, 160, 208, 0.25),
+    0 0 20px rgba(80, 160, 208, 0.15);
+  animation: loadingGlow 1.5s ease-in-out infinite;
 }
 .badge-loading .status-dot {
-  background: var(--blue);
+  background: #fff;
   animation: pulse 0.8s ease-in-out infinite;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
 }
 
-.badge-connected {
-  border-color: var(--green);
-  background: var(--green-glow);
-  color: var(--green);
-}
-.badge-connected .status-dot {
-  background: var(--green);
-}
-.badge-disconnected {
+.badge-viz-idle {
   border-color: transparent;
   background: transparent;
   color: var(--text-4);
 }
-.badge-disconnected .status-dot {
+.badge-viz-idle .status-dot {
   background: var(--text-4);
   animation: idlePulse 3s ease-in-out infinite;
+}
+.badge-viz-connecting {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #fff;
+  box-shadow:
+    0 0 8px rgba(80, 160, 208, 0.25),
+    0 0 20px rgba(80, 160, 208, 0.15);
+  animation: loadingGlow 1.5s ease-in-out infinite;
+}
+.badge-viz-connecting .status-dot {
+  background: #fff;
+  animation: pulse 0.8s ease-in-out infinite;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+}
+.badge-viz-connected {
+  border-color: var(--green);
+  background: var(--green-glow);
+  color: var(--green);
+}
+.badge-viz-connected .status-dot {
+  background: var(--green);
+}
+.badge-viz-reconnecting {
+  border-color: var(--yellow, #d4a017);
+  background: rgba(212, 160, 23, 0.1);
+  color: var(--yellow, #d4a017);
+}
+.badge-viz-reconnecting .status-dot {
+  background: var(--yellow, #d4a017);
+  animation: pulse 0.8s ease-in-out infinite;
+}
+.badge-viz-failed {
+  border-color: var(--red);
+  background: var(--red-glow);
+  color: var(--red);
+  animation: failedPulse 2s ease-in-out infinite;
+}
+.badge-viz-failed .status-dot {
+  background: var(--red);
+  animation: blink 1s step-end infinite;
 }
 
 /* ── Pending Progress Fill ───────────────────────────────────── */
@@ -317,6 +360,52 @@ body.theme-transitioning h2 {
     opacity: 0.35;
   }
 }
+@keyframes failedPulse {
+  0%,
+  100% {
+    border-color: var(--red);
+    background: var(--red-glow);
+  }
+  50% {
+    border-color: var(--red-soft);
+    background: transparent;
+  }
+}
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes loadingGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 8px rgba(80, 160, 208, 0.25),
+      0 0 20px rgba(80, 160, 208, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 0 12px rgba(80, 160, 208, 0.35),
+      0 0 30px rgba(80, 160, 208, 0.25);
+  }
+}
+@keyframes badgeGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 8px var(--red-glow),
+      0 0 20px var(--red-glow);
+  }
+  50% {
+    box-shadow:
+      0 0 12px var(--red-glow),
+      0 0 30px var(--red-glow);
+  }
+}
 @keyframes pulse {
   0%,
   100% {
@@ -331,16 +420,16 @@ body.theme-transitioning h2 {
 @keyframes entryIn {
   from {
     opacity: 0;
-    scale: 0.97;
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    scale: 1;
+    transform: translateY(0);
   }
 }
 @utility animate-entry {
-  animation: entryIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
-  will-change: opacity;
+  animation: entryIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: opacity, transform;
 }
 @keyframes fadeIn {
   from {

@@ -13,9 +13,12 @@ export interface AppConfig {
   };
 }
 
+/** Viz Engine TCP connection lifecycle state. */
+export type VizConnection = "idle" | "connecting" | "connected" | "reconnecting" | "failed";
+
 /** Point-in-time snapshot of the Viz Engine controller state, pushed to the renderer via IPC. */
 export interface VizStatus {
-  connected: boolean;
+  connection: VizConnection;
   isAnimating: boolean;
   isLoaded: boolean;
   hasData: boolean;

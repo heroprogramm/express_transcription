@@ -1,6 +1,6 @@
 import net from "net";
 import type { BrowserWindow } from "electron";
-import type { AppConfig, VizLogEntry, VizStatus } from "../shared/types";
+import type { AppConfig, VizConnection, VizLogEntry, VizStatus } from "../shared/types";
 import { secondsToMs } from "../shared/utils";
 import { log, LogLevel } from "./logger";
 
@@ -23,7 +23,9 @@ let scrollSpeed = 0.3;
 let isAnimating = false;
 let isLoaded = false;
 let hasData = false;
-let connected = false;
+let connection: VizConnection = "idle";
+let reconnectFailures = 0;
+const RECONNECT_FAIL_THRESHOLD = 3;
 let autoPaused = false;
 let idleTimer: ReturnType<typeof setTimeout> | null = null;
 let idlePauseMs = 10_000;
@@ -33,6 +35,7 @@ const SLOT_COUNT = 15;
 const SCROLL_INTERVAL_MS = 30;
 const CMD_TIMEOUT_MS = 500;
 const CONNECT_TIMEOUT_MS = 5_000;
+const RECONNECT_DELAY_MS = 5_000;
 
 let history: VizLogEntry[] = [];
 
@@ -77,6 +80,10 @@ function connectCmdSocket(): Promise<net.Socket> {
   if (!vizConfig) return Promise.reject(new Error("No viz config"));
   cmdConnecting = true;
 
+  const wasConnected = connection === "reconnecting" || connection === "connected";
+  connection = wasConnected ? "reconnecting" : "connecting";
+  pushStatus();
+
   return new Promise((resolve, reject) => {
     const socket = new net.Socket();
     socket.setKeepAlive(true);
@@ -88,7 +95,8 @@ function connectCmdSocket(): Promise<net.Socket> {
       socket.setTimeout(0);
       cmdSocket = socket;
       cmdConnecting = false;
-      connected = true;
+      reconnectFailures = 0;
+      connection = "connected";
       log(LogLevel.Info, "viz:cmd-connected");
       pushStatus();
       resolve(socket);
@@ -98,8 +106,11 @@ function connectCmdSocket(): Promise<net.Socket> {
       log(LogLevel.Warn, "viz:cmd-error", { message: err.message });
       cmdConnecting = false;
       cmdSocket = null;
-      connected = false;
-      pushStatus();
+      reconnectFailures++;
+      if (reconnectFailures >= RECONNECT_FAIL_THRESHOLD || connection === "connecting") {
+        connection = "failed";
+        pushStatus();
+      }
       scheduleCmdReconnect();
       reject(err);
     });
@@ -107,8 +118,10 @@ function connectCmdSocket(): Promise<net.Socket> {
     socket.on("close", () => {
       cmdConnecting = false;
       cmdSocket = null;
-      connected = false;
-      pushStatus();
+      if (connection === "connected") {
+        connection = "reconnecting";
+        pushStatus();
+      }
       scheduleCmdReconnect();
     });
   });
@@ -119,9 +132,11 @@ function scheduleCmdReconnect(): void {
   cmdReconnectTimer = setTimeout(() => {
     cmdReconnectTimer = null;
     if (!cmdSocket && vizConfig) {
+      connection = "reconnecting";
+      pushStatus();
       connectCmdSocket().catch(() => {});
     }
-  }, 2000);
+  }, RECONNECT_DELAY_MS);
 }
 
 // ── TCP communication (uses persistent socket) ──
@@ -212,7 +227,7 @@ function scheduleScrollReconnect(): void {
     connectScrollSocket()
       .then(() => startScrollLoop())
       .catch(() => {});
-  }, 2000);
+  }, RECONNECT_DELAY_MS);
 }
 
 function startScrollLoop(): void {
@@ -300,7 +315,7 @@ export function vizCleanup(): void {
     scrollSocket.destroy();
     scrollSocket = null;
   }
-  connected = false;
+  connection = "idle";
 }
 
 /** Load the configured scene into Viz Engine. */
@@ -435,7 +450,7 @@ export function vizHardReset(): void {
 /** Return the current Viz Engine state snapshot. */
 export function getVizStatus(): VizStatus {
   return {
-    connected,
+    connection,
     isAnimating,
     isLoaded,
     hasData,
