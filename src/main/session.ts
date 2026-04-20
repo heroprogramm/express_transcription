@@ -4,15 +4,16 @@ import * as fs from "fs";
 import * as fsp from "fs/promises";
 import type { AppConfig } from "./config";
 import { log, LogLevel } from "./logger";
+import { FEED_FLUSH_INTERVAL_MS } from "@shared/timings";
 
 let sessionFile: fs.WriteStream | null = null;
 let feedPath = "";
 let feedBuffer: string[] = [];
 let feedFlushTimer: ReturnType<typeof setTimeout> | null = null;
-const FEED_FLUSH_INTERVAL_MS = 200;
+let stopping = false;
 
 function scheduleFeedFlush(): void {
-  if (feedFlushTimer) return;
+  if (feedFlushTimer || stopping) return;
   feedFlushTimer = setTimeout(flushFeed, FEED_FLUSH_INTERVAL_MS);
 }
 
@@ -67,6 +68,7 @@ export async function startSession(config: AppConfig): Promise<void> {
 
 /** Flushes pending feed writes and closes the session log file. */
 export async function stopSession(): Promise<void> {
+  stopping = true;
   if (feedFlushTimer) {
     clearTimeout(feedFlushTimer);
     feedFlushTimer = null;
@@ -78,12 +80,14 @@ export async function stopSession(): Promise<void> {
     });
     sessionFile = null;
   }
+  stopping = false;
 }
 
 /** Writes a translated line to both the session log and the feed buffer. */
 export function logTranslation(timestamp: string, text: string): void {
+  if (stopping || !sessionFile) return;
   const line = `[${timestamp}] ${text}\n`;
-  if (sessionFile) sessionFile.write(line);
+  sessionFile.write(line);
   if (feedPath) {
     feedBuffer.push(line);
     scheduleFeedFlush();

@@ -1,5 +1,7 @@
 import { createEffect, onCleanup, type Accessor } from "solid-js";
 import { startAudioLevel, stopAudioLevel, getLevel } from "@/lib/audio-level";
+import { reportError } from "@/lib/errors";
+import { WAVEFORM_PUSH_INTERVAL_MS } from "@shared/timings";
 
 const BAR_COUNT = 28;
 const BAR_WIDTH = 3;
@@ -7,7 +9,6 @@ const BAR_GAP = 1.5;
 const MIN_BAR_H = 3;
 const HEIGHT = 22;
 const TOTAL_W = BAR_COUNT * (BAR_WIDTH + BAR_GAP);
-const PUSH_INTERVAL = 80;
 
 /** Props for the {@link AudioWaveform} component. */
 interface Props {
@@ -68,8 +69,10 @@ export default function AudioWaveform(props: Props) {
       ring.fill(0);
       head = 0;
 
-      startAudioLevel(props.micDeviceId() || undefined).catch(() => {});
-      pushTimer = setInterval(tick, PUSH_INTERVAL);
+      startAudioLevel(props.micDeviceId() || undefined).catch((err) =>
+        reportError("mic", "Failed to start audio level monitor", err),
+      );
+      pushTimer = setInterval(tick, WAVEFORM_PUSH_INTERVAL_MS);
     } else {
       cleanup();
       ring.fill(0);

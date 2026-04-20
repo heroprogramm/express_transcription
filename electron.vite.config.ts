@@ -5,6 +5,11 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   main: {
+    resolve: {
+      alias: {
+        "@shared": resolve(__dirname, "src/shared"),
+      },
+    },
     define: {
       __GH_TOKEN__: JSON.stringify(process.env.GH_TOKEN ?? ""),
     },
@@ -15,6 +20,11 @@ export default defineConfig({
     },
   },
   preload: {
+    resolve: {
+      alias: {
+        "@shared": resolve(__dirname, "src/shared"),
+      },
+    },
     build: {
       sourcemap: false,
       minify: "esbuild",

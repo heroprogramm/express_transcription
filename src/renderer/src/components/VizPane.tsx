@@ -1,12 +1,12 @@
 import { createSignal, onMount, onCleanup, For, Show } from "solid-js";
 import {
-  Play,
+  ChevronsDown,
   Square,
   RotateCcw,
   MonitorPlay,
   Layers,
   ArrowRightLeft,
-  Loader2,
+  LoaderCircle,
   WifiOff,
 } from "lucide-solid";
 import type { VizStatus } from "@/lib/types";
@@ -55,7 +55,11 @@ export default function VizPane() {
     const unsub = onVizStatus(setStatus);
     vizGetStatus()
       .then(setStatus)
-      .catch(() => {});
+      .catch((err) => {
+        const raw = err instanceof Error ? err.message : String(err);
+        const msg = raw.replace(/^Error invoking remote method '[^']+': Error: /i, "");
+        showToast(`Viz status fetch failed: ${msg}`, "error");
+      });
     onCleanup(unsub);
   });
 
@@ -133,7 +137,7 @@ export default function VizPane() {
         <div class="w-px h-5 bg-border shrink-0" />
 
         <Button variant="ghost" size="md" onClick={handleLoadScene} disabled={busy()}>
-          <Show when={!busy()} fallback={<Loader2 size={14} class="animate-spin" />}>
+          <Show when={!busy()} fallback={<LoaderCircle size={14} class="animate-spin" />}>
             <Layers size={14} />
           </Show>
           {busy() ? "Loading…" : "Load Scene"}
@@ -154,7 +158,7 @@ export default function VizPane() {
             when={!scrollBusy()}
             fallback={
               <>
-                <Loader2 size={14} class="animate-spin" /> Connecting…
+                <LoaderCircle size={14} class="animate-spin" /> Connecting…
               </>
             }
           >
@@ -166,7 +170,7 @@ export default function VizPane() {
                 </>
               }
             >
-              <Play size={14} /> Scroll
+              <ChevronsDown size={14} /> Scroll
             </Show>
           </Show>
         </Button>

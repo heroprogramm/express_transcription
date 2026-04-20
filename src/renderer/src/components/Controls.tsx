@@ -1,6 +1,7 @@
 import { createSignal, onMount, onCleanup, Show, type Accessor } from "solid-js";
 import { Play, Square, ChevronDown, Trash2, Mic, Copy, Check } from "lucide-solid";
 import Button from "@/components/Button";
+import { reportError } from "@/lib/errors";
 
 /** Props for the {@link Controls} component. */
 interface Props {
@@ -37,7 +38,7 @@ export default function Controls(props: Props) {
   }
 
   function handleDeviceChange() {
-    populateMics().catch(() => {});
+    populateMics().catch((err) => reportError("mic", "Failed to enumerate microphones", err));
   }
 
   function handleClickOutside(e: MouseEvent) {
@@ -47,7 +48,7 @@ export default function Controls(props: Props) {
   }
 
   onMount(() => {
-    populateMics().catch(() => {});
+    populateMics().catch((err) => reportError("mic", "Failed to enumerate microphones", err));
     navigator.mediaDevices.addEventListener("devicechange", handleDeviceChange);
     document.addEventListener("mousedown", handleClickOutside);
   });

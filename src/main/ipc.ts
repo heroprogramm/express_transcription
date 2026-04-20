@@ -1,6 +1,7 @@
-import { clipboard, ipcMain, systemPreferences, shell } from "electron";
+import { clipboard, ipcMain, net, systemPreferences, shell } from "electron";
 import { type AppConfig, saveConfigFields } from "./config";
 import { getApiKey, saveApiKey, hasApiKey } from "./store";
+import { log, LogLevel } from "./logger";
 import { startSession, stopSession, logTranslation } from "./session";
 import { startMetricsCollection, stopMetricsCollection } from "./metrics";
 import { getMainWindow } from "./window";
@@ -34,6 +35,26 @@ export function registerIpcHandlers(
   });
 
   ipcMain.handle("has-api-key", () => hasApiKey());
+
+  ipcMain.handle("get-models", async (): Promise<Array<{ id: string; name: string }>> => {
+    const apiKey = getApiKey();
+    if (!apiKey) throw new Error("No API key configured");
+
+    const resp = await net.fetch("https://api.soniox.com/v1/models", {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => "");
+      log(LogLevel.Warn, "ipc:get-models-failed", { status: resp.status, body: text });
+      throw new Error(`Failed to fetch models (${resp.status})`);
+    }
+    const data = (await resp.json()) as {
+      models: Array<{ id: string; name: string; transcription_mode: string }>;
+    };
+    return data.models
+      .filter((m) => m.transcription_mode === "real_time")
+      .map((m) => ({ id: m.id, name: m.name }));
+  });
   ipcMain.handle("get-config", () => ({
     config: getConfig(),
     warnings: configWarnings,
@@ -56,19 +77,39 @@ export function registerIpcHandlers(
         viz_auto_pause_on_idle_seconds: number;
         viz_auto_pause_on_edit: boolean;
       }> = {};
-      if (typeof f.model === "string") updates.model = f.model;
+      if (typeof f.model === "string") {
+        if (!f.model.trim()) throw new Error("save-config: model cannot be empty");
+        updates.model = f.model;
+      }
       if (typeof f.endpoint_detection === "boolean")
         updates.endpoint_detection = f.endpoint_detection;
-      if (typeof f.review_time_seconds === "number")
+      if (typeof f.review_time_seconds === "number") {
+        if (f.review_time_seconds < 0)
+          throw new Error("save-config: review_time_seconds must be non-negative");
         updates.review_time_seconds = f.review_time_seconds;
-      if (typeof f.viz_host === "string") updates.viz_host = f.viz_host;
-      if (typeof f.viz_port === "number") updates.viz_port = f.viz_port;
+      }
+      if (typeof f.viz_host === "string") {
+        if (!f.viz_host.trim()) throw new Error("save-config: viz_host cannot be empty");
+        updates.viz_host = f.viz_host;
+      }
+      if (typeof f.viz_port === "number") {
+        if (f.viz_port < 1 || f.viz_port > 65535)
+          throw new Error("save-config: viz_port must be between 1 and 65535");
+        updates.viz_port = f.viz_port;
+      }
       if (typeof f.viz_scene_path === "string") updates.viz_scene_path = f.viz_scene_path;
-      if (typeof f.viz_scroll_speed === "number") updates.viz_scroll_speed = f.viz_scroll_speed;
+      if (typeof f.viz_scroll_speed === "number") {
+        if (f.viz_scroll_speed < 0.1 || f.viz_scroll_speed > 1.0)
+          throw new Error("save-config: viz_scroll_speed must be between 0.1 and 1.0");
+        updates.viz_scroll_speed = f.viz_scroll_speed;
+      }
       if (typeof f.viz_auto_pause_on_idle === "boolean")
         updates.viz_auto_pause_on_idle = f.viz_auto_pause_on_idle;
-      if (typeof f.viz_auto_pause_on_idle_seconds === "number")
+      if (typeof f.viz_auto_pause_on_idle_seconds === "number") {
+        if (f.viz_auto_pause_on_idle_seconds < 1)
+          throw new Error("save-config: viz_auto_pause_on_idle_seconds must be at least 1");
         updates.viz_auto_pause_on_idle_seconds = f.viz_auto_pause_on_idle_seconds;
+      }
       if (typeof f.viz_auto_pause_on_edit === "boolean")
         updates.viz_auto_pause_on_edit = f.viz_auto_pause_on_edit;
       const result = saveConfigFields(updates);

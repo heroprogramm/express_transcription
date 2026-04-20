@@ -1,8 +1,16 @@
-import { createSignal, createEffect, on } from "solid-js";
+import { createSignal, createEffect, on, For } from "solid-js";
 import { createStore } from "solid-js/store";
-import { Settings as SettingsIcon, X, Save, Mic, MonitorPlay, FileOutput } from "lucide-solid";
+import {
+  Settings as SettingsIcon,
+  X,
+  Save,
+  Mic,
+  MonitorPlay,
+  FileOutput,
+  LoaderCircle,
+} from "lucide-solid";
 import type { AppConfig } from "@/lib/types";
-import { hasApiKey, saveApiKey, saveConfig } from "@/lib/ipc";
+import { hasApiKey, saveApiKey, saveConfig, getModels } from "@/lib/ipc";
 import { reportError } from "@/lib/errors";
 import Button from "@/components/Button";
 
@@ -39,6 +47,8 @@ export default function SettingsModal(props: Props) {
   const [error, setError] = createSignal("");
   const [saving, setSaving] = createSignal(false);
   const [contentHeight, setContentHeight] = createSignal<number | undefined>();
+  const [models, setModels] = createSignal<Array<{ id: string; name: string }>>([]);
+  const [modelsLoading, setModelsLoading] = createSignal(false);
   const tabRefs: Partial<Record<Tab, HTMLDivElement>> = {};
 
   function measureTab(t: Tab): void {
@@ -50,7 +60,24 @@ export default function SettingsModal(props: Props) {
 
   hasApiKey()
     .then(setKeyExists)
-    .catch(() => {});
+    .catch((err) => reportError("config", "Failed to check API key status", err));
+
+  function fetchModels(): void {
+    setModelsLoading(true);
+    getModels()
+      .then((m) => {
+        setModels(m);
+        setModelsLoading(false);
+        // Re-measure after model list renders
+        requestAnimationFrame(() => measureTab(tab()));
+      })
+      .catch((err) => {
+        setModelsLoading(false);
+        reportError("config", "Failed to fetch models", err);
+      });
+  }
+
+  fetchModels();
 
   async function handleSave() {
     const modelValue = fields.model.trim();
@@ -200,15 +227,41 @@ export default function SettingsModal(props: Props) {
                 <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
                   Model
                 </label>
-                <input
-                  type="text"
-                  placeholder="stt-rt-v4"
-                  class={INPUT}
-                  ref={(el) => requestAnimationFrame(() => el.focus())}
-                  value={fields.model}
-                  onInput={(e) => setFields("model", e.currentTarget.value)}
-                  onKeyDown={handleKeyDown}
-                />
+                {modelsLoading() ? (
+                  <div class="flex items-center gap-2 text-tx-3 text-sm py-2.5 px-3.5">
+                    <LoaderCircle size={14} class="animate-spin" />
+                    Loading models…
+                  </div>
+                ) : models().length > 0 ? (
+                  <select
+                    class={`${INPUT} appearance-none cursor-pointer`}
+                    ref={(el) => requestAnimationFrame(() => el.focus())}
+                    value={fields.model}
+                    onChange={(e) => setFields("model", e.currentTarget.value)}
+                    onKeyDown={handleKeyDown}
+                  >
+                    <For each={models()}>
+                      {(m) => (
+                        <option value={m.id}>
+                          {m.name} ({m.id})
+                        </option>
+                      )}
+                    </For>
+                    {!models().some((m) => m.id === fields.model) && (
+                      <option value={fields.model}>{fields.model} (current)</option>
+                    )}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    placeholder="stt-rt-v4"
+                    class={INPUT}
+                    ref={(el) => requestAnimationFrame(() => el.focus())}
+                    value={fields.model}
+                    onInput={(e) => setFields("model", e.currentTarget.value)}
+                    onKeyDown={handleKeyDown}
+                  />
+                )}
               </div>
 
               <div>

@@ -14,6 +14,7 @@ import {
 import type { AppConfig } from "@/lib/types";
 import { getApiKey, logTranslationsBatch } from "@/lib/ipc";
 import { reportError } from "@/lib/errors";
+import { SONIOX_BASE_DELAY_MS, LOG_FLUSH_INTERVAL_MS } from "@shared/timings";
 
 /** Callbacks invoked by the Soniox recording lifecycle. */
 export interface SonioxCallbacks {
@@ -53,7 +54,6 @@ let firstTranslatedStartMs: number | undefined;
 
 // ── Reconnection state ──
 const MAX_RETRIES = 5;
-const BASE_DELAY_MS = 1000;
 let retryCount = 0;
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
 let activeConfig: AppConfig | null = null;
@@ -63,7 +63,6 @@ let activeMicDeviceId: string | undefined;
 // ── IPC batching ──
 let logQueue: { ts: string; text: string }[] = [];
 let logFlushTimer: ReturnType<typeof setTimeout> | null = null;
-const LOG_FLUSH_INTERVAL_MS = 200;
 
 /** Queue a translation entry for batched IPC logging (flushes every 200ms). */
 export function queueLogTranslation(ts: string, text: string): void {
@@ -111,11 +110,11 @@ function isTransientError(err: Error): boolean {
 }
 
 function retryDelayMs(): number {
-  return Math.min(BASE_DELAY_MS * 2 ** retryCount, 16000);
+  return Math.min(SONIOX_BASE_DELAY_MS * 2 ** retryCount, 16000);
 }
 
 function attemptReconnect(): void {
-  if (isInactive() || !activeConfig || !activeCallbacks) return;
+  if (isInactive() || !activeConfig || !activeCallbacks || retryTimer) return;
   if (retryCount >= MAX_RETRIES) {
     activeCallbacks.onError(`Connection lost after ${MAX_RETRIES} reconnection attempts`, false);
     state = SonioxState.Idle;

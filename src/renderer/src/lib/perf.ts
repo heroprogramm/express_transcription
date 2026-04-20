@@ -1,6 +1,7 @@
 import { createSignal, onCleanup } from "solid-js";
 import type { PerfSnapshot } from "@/lib/types";
 import { perfStart, perfStop, perfPing, onPerfSnapshot } from "@/lib/ipc";
+import { reportError } from "@/lib/errors";
 
 /**
  * Reactive performance monitor tracking FPS, IPC round-trip, CPU, memory, and event-loop lag.
@@ -60,20 +61,24 @@ export function createPerfMonitor() {
 
   function start(): void {
     setEnabled(true);
-    perfStart().catch(() => {});
+    perfStart().catch((err) => reportError("session", "Failed to start perf collection", err));
     cleanupSnapshot = onPerfSnapshot(handleSnapshot);
 
     lastFpsTime = performance.now();
     frameCount = 0;
     rafId = requestAnimationFrame(countFrames);
 
-    measureIpcRtt().catch(() => {});
-    pingInterval = setInterval(() => measureIpcRtt().catch(() => {}), 10_000);
+    measureIpcRtt().catch((err) => reportError("session", "IPC RTT measurement failed", err));
+    pingInterval = setInterval(
+      () =>
+        measureIpcRtt().catch((err) => reportError("session", "IPC RTT measurement failed", err)),
+      10_000,
+    );
   }
 
   function stop(): void {
     setEnabled(false);
-    perfStop().catch(() => {});
+    perfStop().catch((err) => reportError("session", "Failed to stop perf collection", err));
     if (cleanupSnapshot) {
       cleanupSnapshot();
       cleanupSnapshot = null;

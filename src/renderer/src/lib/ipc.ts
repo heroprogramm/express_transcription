@@ -7,6 +7,7 @@ declare global {
       saveApiKey: (key: string) => Promise<void>;
       hasApiKey: () => Promise<boolean>;
       getConfig: () => Promise<{ config: AppConfig; warnings: string[] }>;
+      getModels: () => Promise<Array<{ id: string; name: string }>>;
       saveConfig: (
         fields: Record<string, unknown>,
       ) => Promise<{ config: AppConfig; warnings: string[] }>;
@@ -55,6 +56,11 @@ export async function saveApiKey(key: string): Promise<void> {
 /** Check whether a Soniox API key is configured. */
 export async function hasApiKey(): Promise<boolean> {
   return getApi().hasApiKey();
+}
+
+/** Fetch available real-time models from the Soniox API. */
+export async function getModels(): Promise<Array<{ id: string; name: string }>> {
+  return getApi().getModels();
 }
 
 /** Load the current application config from disk. */

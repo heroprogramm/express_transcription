@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
-import type { ConfigResult, PerfSnapshot, VizStatus } from "../shared/types";
+import type { ConfigResult, PerfSnapshot, VizStatus } from "@shared/types";
 
 /** Exposes a safe, typed API surface to the renderer process via `window.electronAPI`. */
 contextBridge.exposeInMainWorld("electronAPI", {
@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   saveApiKey: (key: string): Promise<void> => ipcRenderer.invoke("save-api-key", key),
   hasApiKey: (): Promise<boolean> => ipcRenderer.invoke("has-api-key"),
   getConfig: (): Promise<ConfigResult> => ipcRenderer.invoke("get-config"),
+  getModels: (): Promise<Array<{ id: string; name: string }>> => ipcRenderer.invoke("get-models"),
   saveConfig: (fields: Record<string, unknown>): Promise<ConfigResult> =>
     ipcRenderer.invoke("save-config", fields),
   startSession: (): Promise<void> => ipcRenderer.invoke("start-session"),

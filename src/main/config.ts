@@ -1,5 +1,5 @@
 import { getStoredConfig, saveStoredConfig } from "./store";
-import type { AppConfig, ConfigResult } from "../shared/types";
+import type { AppConfig, ConfigResult } from "@shared/types";
 
 export type { AppConfig, ConfigResult };
 

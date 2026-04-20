@@ -1,7 +1,13 @@
 import net from "net";
 import type { BrowserWindow } from "electron";
-import type { AppConfig, VizConnection, VizLogEntry, VizStatus } from "../shared/types";
-import { secondsToMs } from "../shared/utils";
+import type { AppConfig, VizConnection, VizLogEntry, VizStatus } from "@shared/types";
+import { secondsToMs } from "@shared/utils";
+import {
+  VIZ_SCROLL_INTERVAL_MS,
+  VIZ_CMD_TIMEOUT_MS,
+  VIZ_CONNECT_TIMEOUT_MS,
+  VIZ_RECONNECT_DELAY_MS,
+} from "@shared/timings";
 import { log, LogLevel } from "./logger";
 
 // ── Module state ──
@@ -32,10 +38,6 @@ let idlePauseMs = 10_000;
 
 const MAX_HISTORY = 30;
 const SLOT_COUNT = 15;
-const SCROLL_INTERVAL_MS = 30;
-const CMD_TIMEOUT_MS = 500;
-const CONNECT_TIMEOUT_MS = 5_000;
-const RECONNECT_DELAY_MS = 5_000;
 
 let history: VizLogEntry[] = [];
 
@@ -87,7 +89,7 @@ function connectCmdSocket(): Promise<net.Socket> {
   return new Promise((resolve, reject) => {
     const socket = new net.Socket();
     socket.setKeepAlive(true);
-    socket.setTimeout(CONNECT_TIMEOUT_MS, () => {
+    socket.setTimeout(VIZ_CONNECT_TIMEOUT_MS, () => {
       socket.destroy(new Error("Connection timed out"));
     });
 
@@ -136,7 +138,7 @@ function scheduleCmdReconnect(): void {
       pushStatus();
       connectCmdSocket().catch(() => {});
     }
-  }, RECONNECT_DELAY_MS);
+  }, VIZ_RECONNECT_DELAY_MS);
 }
 
 // ── TCP communication (uses persistent socket) ──
@@ -154,7 +156,7 @@ function vizTalk(cmd: string): Promise<string> {
             responded = true;
             reject(new Error("Viz Engine command timed out"));
           }
-        }, CMD_TIMEOUT_MS);
+        }, VIZ_CMD_TIMEOUT_MS);
 
         const onData = (data: Buffer) => {
           if (!responded) {
@@ -196,7 +198,7 @@ function connectScrollSocket(): Promise<void> {
   return new Promise((resolve, reject) => {
     const socket = new net.Socket();
     socket.setKeepAlive(true);
-    socket.setTimeout(CONNECT_TIMEOUT_MS, () => {
+    socket.setTimeout(VIZ_CONNECT_TIMEOUT_MS, () => {
       socket.destroy(new Error("Connection timed out"));
     });
 
@@ -227,7 +229,7 @@ function scheduleScrollReconnect(): void {
     connectScrollSocket()
       .then(() => startScrollLoop())
       .catch(() => {});
-  }, RECONNECT_DELAY_MS);
+  }, VIZ_RECONNECT_DELAY_MS);
 }
 
 function startScrollLoop(): void {
@@ -241,10 +243,10 @@ function startScrollLoop(): void {
     const elapsed = now - lastTickTime;
     lastTickTime = now;
 
-    yPos += scrollSpeed * (elapsed / SCROLL_INTERVAL_MS);
+    yPos += scrollSpeed * (elapsed / VIZ_SCROLL_INTERVAL_MS);
     const cmd = `0 MAIN_SCENE*FUNCTION*DataPool*Data SET ScrollY=${yPos.toFixed(2)};\0`;
     scrollSocket.write(Buffer.from(cmd, "utf-8"));
-  }, SCROLL_INTERVAL_MS);
+  }, VIZ_SCROLL_INTERVAL_MS);
 }
 
 function stopScrollLoop(): void {

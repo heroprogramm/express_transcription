@@ -1,5 +1,6 @@
 import { app, type BrowserWindow } from "electron";
 import { log, LogLevel } from "./logger";
+import { METRICS_COLLECTION_INTERVAL_MS } from "@shared/timings";
 
 /** Point-in-time snapshot of CPU, memory, and event-loop metrics for all Electron processes. */
 export interface PerfSnapshot {
@@ -18,8 +19,6 @@ export interface PerfSnapshot {
   };
   eventLoopLagMs: number;
 }
-
-const COLLECTION_INTERVAL_MS = 2000;
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
 let peakRss = 0;
@@ -83,7 +82,7 @@ export function startMetricsCollection(win: BrowserWindow): void {
   collectionStartTime = Date.now();
 
   collectAndSend(win);
-  intervalId = setInterval(() => collectAndSend(win), COLLECTION_INTERVAL_MS);
+  intervalId = setInterval(() => collectAndSend(win), METRICS_COLLECTION_INTERVAL_MS);
 }
 
 /** Stops metrics collection and logs a summary of peak memory, average CPU, and event-loop lag. */

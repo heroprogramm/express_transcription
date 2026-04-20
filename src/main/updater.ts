@@ -3,10 +3,9 @@ const { autoUpdater } = pkg;
 import { is } from "@electron-toolkit/utils";
 import { getMainWindow } from "./window";
 import { log, LogLevel } from "./logger";
+import { UPDATE_CHECK_INTERVAL_MS } from "@shared/timings";
 
 declare const __GH_TOKEN__: string;
-
-const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 hours
 let isManualCheck = false;
 
 function sendStatus(status: string, version?: string): void {
@@ -64,7 +63,7 @@ export function initAutoUpdater(): void {
     autoUpdater.checkForUpdates().catch((err: Error) => {
       log(LogLevel.Error, "updater:periodic-check-failed", { message: err.message });
     });
-  }, CHECK_INTERVAL_MS);
+  }, UPDATE_CHECK_INTERVAL_MS);
 }
 
 /** Trigger a manual update check (sends all statuses including up-to-date). */
