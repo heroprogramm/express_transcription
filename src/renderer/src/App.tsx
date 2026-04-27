@@ -157,18 +157,18 @@ export default function App() {
 
   const cleanupSettingsListener = onOpenSettings(() => setShowSettings(true));
 
-  const cleanupUpdateListener = onUpdateStatus((status, version) => {
+  const cleanupUpdateListener = onUpdateStatus((status, detail) => {
     if (status === "downloading") {
-      showToast(`Downloading update${version ? ` v${version}` : ""}\u2026`, "info");
+      showToast(`Downloading update${detail ? ` v${detail}` : ""}\u2026`, "info");
     } else if (status === "ready") {
-      showToast(`Update${version ? ` v${version}` : ""} ready \u2014 restart to apply`, "info", {
+      showToast(`Update${detail ? ` v${detail}` : ""} ready \u2014 restart to apply`, "info", {
         label: "Restart",
         onClick: () => restartForUpdate(),
       });
     } else if (status === "up-to-date") {
       showToast("You\u2019re on the latest version", "info");
     } else if (status === "error") {
-      showToast("Update check failed", "error");
+      showToast(`Update check failed${detail ? `: ${detail}` : ""}`, "error");
     }
   });
 
