@@ -15,7 +15,7 @@ export const UPDATE_CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 // ── Viz Engine ──
 export const VIZ_SCROLL_INTERVAL_MS = 30;
-export const VIZ_CMD_TIMEOUT_MS = 500;
+export const VIZ_CMD_TIMEOUT_MS = 2000;
 export const VIZ_CONNECT_TIMEOUT_MS = 5_000;
 export const VIZ_RECONNECT_DELAY_MS = 5_000;
 
