@@ -1,6 +1,7 @@
 import { createSignal, onMount, onCleanup, Show, type Accessor } from "solid-js";
 import { Play, Square, ChevronDown, Trash2, Mic, Copy, Check } from "lucide-solid";
 import Button from "@/components/Button";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { reportError } from "@/lib/errors";
 
 /** Props for the {@link Controls} component. */
@@ -18,7 +19,19 @@ export default function Controls(props: Props) {
   const [selectedMic, setSelectedMic] = createSignal("");
   const [open, setOpen] = createSignal(false);
   const [copied, setCopied] = createSignal(false);
+  const [showStopConfirm, setShowStopConfirm] = createSignal(false);
+  const [showClearConfirm, setShowClearConfirm] = createSignal(false);
   let dropdownRef!: HTMLDivElement;
+
+  function confirmStop() {
+    setShowStopConfirm(false);
+    props.onStop();
+  }
+
+  function confirmClear() {
+    setShowClearConfirm(false);
+    props.onClear();
+  }
 
   const selectedLabel = () => {
     const id = selectedMic();
@@ -113,7 +126,7 @@ export default function Controls(props: Props) {
           variant={props.running() ? "danger" : "ghost"}
           size="lg"
           disabled={!props.running()}
-          onClick={props.onStop}
+          onClick={() => setShowStopConfirm(true)}
           title="Stop transcription (Space)"
         >
           <Square size={14} fill="currentColor" />
@@ -123,7 +136,7 @@ export default function Controls(props: Props) {
         <Button
           variant={props.running() ? "ghost-danger" : "ghost"}
           size="lg"
-          onClick={props.onClear}
+          onClick={() => setShowClearConfirm(true)}
         >
           <Trash2 size={14} />
           Clear
@@ -145,6 +158,24 @@ export default function Controls(props: Props) {
           {copied() ? "Copied!" : "Copy All"}
         </Button>
       </div>
+
+      <ConfirmDialog
+        open={showStopConfirm()}
+        title="Stop Session"
+        message="End the current transcription session?"
+        confirmLabel="Stop"
+        onConfirm={confirmStop}
+        onCancel={() => setShowStopConfirm(false)}
+      />
+
+      <ConfirmDialog
+        open={showClearConfirm()}
+        title="Clear Transcript"
+        message="All speech and translation entries will be removed."
+        confirmLabel="Clear"
+        onConfirm={confirmClear}
+        onCancel={() => setShowClearConfirm(false)}
+      />
     </div>
   );
 }
