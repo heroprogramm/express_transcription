@@ -337,6 +337,27 @@ body.theme-transitioning h2 {
   animation: blink 1s step-end infinite;
 }
 
+/* ── Scene-state warning chips ──────────────────────────────────
+   Soft tinted border + neutral text; the colored icon alone carries
+   the severity cue, so these read as informational without competing
+   with the live connection badge.                                  */
+.chip-warning {
+  border: 1px solid rgba(212, 160, 23, 0.38);
+  background: rgba(212, 160, 23, 0.06);
+  color: var(--text-2);
+}
+.chip-warning .chip-icon {
+  color: var(--yellow, #d4a017);
+}
+.chip-error {
+  border: 1px solid rgba(192, 57, 43, 0.4);
+  background: rgba(192, 57, 43, 0.06);
+  color: var(--text-2);
+}
+.chip-error .chip-icon {
+  color: var(--red);
+}
+
 /* ── Pending Progress Fill ───────────────────────────────────── */
 @keyframes pendingFill {
   from {

@@ -328,7 +328,7 @@ export default function App() {
           <div class="w-px h-6 bg-border" />
 
           <div
-            class={`flex items-center gap-1.5 py-1.5 pl-3 pr-3.5 border rounded-full text-[12px] font-bold tracking-wider transition-all duration-300 ${badgeClass()}`}
+            class={`flex items-center justify-center gap-1.5 shrink-0 min-w-[135px] py-1.5 pl-3 pr-3.5 border rounded-full text-[12px] font-bold tracking-wider transition-all duration-300 ${badgeClass()}`}
           >
             <span class="status-dot w-[7px] h-[7px] rounded-full shrink-0 transition-all duration-300" />
             <span>{statusText()}</span>
