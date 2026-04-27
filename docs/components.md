@@ -319,7 +319,7 @@ Toggles `data-theme` between `"dark"` and `"light"` on `<html>`. Persists choice
 **Behavior:**
 - Pointer-event based drag handling (works with mouse and touch)
 - Visual feedback: changes cursor, shows active state while dragging
-- Two instances in the layout: one between SpeechPane/TranslationPane (horizontal), one between the panes row and OutputPane (vertical)
+- Two instances in the layout: one between SpeechPane/TranslationPane (horizontal), one between the panes row and VizPane (vertical)
 
 ---
 

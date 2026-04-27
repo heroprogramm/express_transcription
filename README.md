@@ -6,13 +6,16 @@ Real-time speech transcription and translation desktop app. ExpressText captures
 
 - **Real-time transcription** -- streams audio from any connected microphone and displays partial and final results as they arrive (default source language: Urdu).
 - **Live translation** -- translates transcribed speech into a target language in real time (default target: English).
-- **Split-pane UI** -- side-by-side view with the original transcript on the left and the translated output on the right, using virtual scrolling for large sessions.
+- **Three-pane UI** -- the original transcript (Speech), the translated output (Translation), and a Viz Engine control surface, with resizable horizontal and vertical splits.
+- **Translation review window** -- each translated line shows a configurable countdown (default 10 s) during which the operator can click to inline-edit the text before it is committed and forwarded.
+- **Viz Engine integration** -- pushes confirmed translations to a Vizrt graphics engine over TCP (15 text slots, scroll animation, idle/edit auto-pause, Ctrl+Space toggle, hard reset).
 - **Feed file output** -- writes the latest translated line to a text file (`feed.txt`) using atomic writes, consumable by external tools (e.g., OBS, broadcast graphics).
 - **Session logging** -- every session is saved to a timestamped log file for archival.
-- **Microphone selection** -- choose from any available audio input device with live device-change detection.
+- **Microphone selection** -- choose from any available audio input device with live device-change detection and a per-pane audio waveform visualizer.
 - **Dark and light themes** -- toggle between themes; preference is persisted across sessions.
 - **Performance monitoring overlay** -- toggle with `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS) to view CPU usage, FPS, memory, event loop lag, and IPC round-trip time.
-- **Secure API key storage** -- the Soniox API key is stored locally using `electron-store` (or read from the `SONIOX_API_KEY` environment variable).
+- **Auto-updates** -- background update checks via `electron-updater` (GitHub releases) with a toast prompt to restart when a new version is downloaded.
+- **Secure API key storage** -- the Soniox API key is encrypted with the OS keychain via Electron's `safeStorage` and persisted with `electron-store`.
 - **Single instance enforcement** -- prevents multiple instances of the app from running simultaneously.
 - **Renderer crash recovery** -- the app automatically recovers from renderer process crashes.
 
@@ -24,9 +27,11 @@ Real-time speech transcription and translation desktop app. ExpressText captures
 | Tooling         | [electron-vite](https://electron-vite.org/) 5                                |
 | UI Framework    | [SolidJS](https://www.solidjs.com/) 1.9                                      |
 | Styling         | [Tailwind CSS](https://tailwindcss.com/) 4                                   |
+| Icons           | [lucide-solid](https://lucide.dev/)                                          |
 | Language        | [TypeScript](https://www.typescriptlang.org/) 6                              |
 | Speech-to-Text  | [Soniox Web SDK](https://soniox.com/)                                        |
 | Persistence     | [electron-store](https://github.com/sindresorhus/electron-store)             |
+| Auto-updates    | [electron-updater](https://www.electron.build/auto-update)                   |
 | Packaging       | [electron-builder](https://www.electron.build/)                              |
 | Package Manager | [Bun](https://bun.sh/)                                                       |
 | Linting         | [oxlint](https://oxc-project.github.io/)                                     |
@@ -90,14 +95,22 @@ This compiles the app and runs electron-builder, producing platform-specific ins
 
 Settings are managed via `electron-store` with sensible defaults. Configurable values:
 
-| Key                          | Default      | Description                                                 |
-| ---------------------------- | ------------ | ----------------------------------------------------------- |
-| `soniox.language`            | `ur`         | Source language code (e.g., `ur` for Urdu)                  |
-| `soniox.model`               | `stt-rt-v4`  | Soniox model identifier                                     |
-| `soniox.translate_to`        | `en`         | Target translation language code (e.g., `en` for English)   |
-| `output.feed_file`           | `feed.txt`   | Name of the rolling feed file written to the app data dir   |
-| `output.session_log_dir`     | `sessions`   | Subdirectory (under app data) where session logs are stored |
-| `output.review_time_seconds` | `10`         | Time in seconds to review translations before auto-confirm  |
+| Key                                | Default                                          | Description                                                                     |
+| ---------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `soniox.language`                  | `ur`                                             | Source language code (e.g., `ur` for Urdu)                                     |
+| `soniox.model`                     | `stt-rt-v4`                                      | Soniox model identifier                                                         |
+| `soniox.translate_to`              | `en`                                             | Target translation language code (e.g., `en` for English)                       |
+| `soniox.endpoint_detection`        | `false`                                          | Enable Soniox endpoint detection for finalising utterances                      |
+| `output.feed_file`                 | `feed.txt`                                       | Name of the rolling feed file written to the app data dir                       |
+| `output.session_log_dir`           | `sessions`                                       | Subdirectory (under app data) where session logs are stored                     |
+| `output.review_time_seconds`       | `10`                                             | Time in seconds to review translations before auto-confirm                      |
+| `viz.host`                         | `127.0.0.1`                                      | Viz Engine hostname or IP                                                       |
+| `viz.port`                         | `6100`                                           | Viz Engine TCP port                                                             |
+| `viz.scene_path`                   | `EXPRESS_24_7/TRANSLATION_BB/Translation_BB`     | Scene object path to load on the engine                                         |
+| `viz.scroll_speed`                 | `0.3`                                            | Default scroll velocity per frame (0.1–1.0)                                     |
+| `viz.auto_pause_on_idle`           | `true`                                           | Pause scroll when no new text arrives                                           |
+| `viz.auto_pause_on_idle_seconds`   | `10`                                             | Seconds of inactivity before idle pause triggers                                |
+| `viz.auto_pause_on_edit`           | `true`                                           | Pause scroll when the operator is editing a pending translation                 |
 
 Output files are written to the Electron `userData` directory:
 
@@ -111,36 +124,60 @@ Output files are written to the Electron `userData` directory:
 src/
   main/
     index.ts            # Electron main process entry point
-    config.ts           # Configuration loading
+    config.ts           # Configuration loading and validation
     ipc.ts              # IPC handler registration
     logger.ts           # Session and feed file logging
     metrics.ts          # Performance metrics collection
     session.ts          # Session lifecycle management
     store.ts            # electron-store setup
+    updater.ts          # Auto-update lifecycle (electron-updater)
+    viz-engine.ts       # Viz Engine TCP controller (command + scroll sockets)
     window.ts           # Window creation and crash recovery
   preload/
     index.ts            # Context bridge (main <-> renderer)
+  shared/
+    timings.ts          # Shared timing constants
+    types.ts            # Shared TypeScript types (AppConfig, VizStatus, …)
+    utils.ts            # Cross-process utilities
   renderer/
     index.html          # Entry HTML
+    public/
+      theme-init.js     # Pre-paint theme bootstrap
     src/
       App.tsx           # Root SolidJS component
+      index.tsx         # Renderer entry point
+      assets/           # Logos and Urdu/Latin web fonts
       components/
+        AudioWaveform.tsx   # Live mic waveform visualiser
         Button.tsx          # Reusable button component
+        ConfirmDialog.tsx   # Modal confirm prompt (Stop, Clear, Hard Reset)
         Controls.tsx        # Mic selector, start/stop/clear buttons
-        PerfOverlay.tsx     # Performance monitoring overlay
-        SettingsModal.tsx   # API key input modal
-        StatsBar.tsx        # Latency, word count, uptime display
+        PerfOverlay.tsx     # Performance monitoring overlay (lazy)
+        ResizeHandle.tsx    # Horizontal/vertical pane resize handle
+        SettingsModal.tsx   # Settings modal (Soniox / Output / Viz Engine tabs, lazy)
+        SpeechPane.tsx      # STT (Urdu) transcript pane
+        StatsBar.tsx        # Latency, lines, uptime, signal indicator
         ThemeToggle.tsx     # Dark/light theme toggle
-        Toast.tsx           # Toast notification component
-        TranscriptPane.tsx  # Transcript and translation panes
+        Toast.tsx           # Toast notification container
+        TranslationPane.tsx # Translated entries with review/edit lifecycle
+        VizPane.tsx         # Viz Engine control surface and history log
       lib/
-        ipc.ts          # Electron IPC wrapper
-        perf.ts         # Client-side performance utilities
-        soniox.ts       # Soniox SDK integration
-        types.ts        # Shared TypeScript types
+        audio-level.ts      # Double-buffered audio level tracking
+        entry-manager.ts    # Entry lifecycle (pending → editing → confirmed → sent)
+        errors.ts           # Toast-based user error reporting
+        ipc.ts              # Typed Electron IPC wrapper
+        perf.ts             # Renderer-side performance utilities
+        soniox.ts           # Soniox SDK integration (audio + auto-reconnect)
+        types.ts            # Renderer-only TypeScript types
+        use-auto-scroll.ts  # Auto-scroll pinning hook
       styles/
         app.css         # Global styles
-electron.vite.config.ts # electron-vite configuration
+docs/
+  architecture.md       # High-level architecture, data flow, lifecycle
+  components.md         # Component tree and responsibilities
+  ipc-protocol.md       # Full IPC channel reference
+  viz-engine.md         # Viz Engine TCP protocol and integration
+electron.vite.config.ts # electron-vite configuration (path aliases @/ and @shared/)
 package.json
 ```
 

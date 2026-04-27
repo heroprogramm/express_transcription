@@ -18,6 +18,7 @@ All IPC communication between the main and renderer processes passes through the
 |---|---|---|---|
 | `get-config` | none | `{ config: AppConfig; warnings: string[] }` | Returns the current config merged with defaults, plus any validation warnings |
 | `save-config` | `fields: { model?: string; endpoint_detection?: boolean; review_time_seconds?: number; viz_host?: string; viz_port?: number; viz_scene_path?: string; viz_scroll_speed?: number; viz_auto_pause_on_idle?: boolean; viz_auto_pause_on_idle_seconds?: number; viz_auto_pause_on_edit?: boolean }` | `{ config: AppConfig; warnings: string[] }` | Merges provided fields into stored config, validates, reloads, and returns the result |
+| `get-models` | none | `Array<{ id: string; name: string }>` | Returns the list of Soniox models available for selection in Settings |
 
 ### Session Management
 
@@ -80,16 +81,19 @@ interface AppConfig {
 ### VizStatus
 
 ```typescript
+type VizConnection = "idle" | "connecting" | "connected" | "reconnecting" | "failed";
+
 interface VizStatus {
-  connected: boolean;
-  isAnimating: boolean;
-  isLoaded: boolean;
-  hasData: boolean;
-  autoPaused: boolean;
-  currentIdx: number;
-  yPos: number;
-  scrollSpeed: number;
-  history: VizLogEntry[];
+  connection: VizConnection;        // Command socket lifecycle state
+  isAnimating: boolean;             // Scroll loop active
+  isLoaded: boolean;                // Local flag: scene was loaded this session
+  loadedScenePath: string | null;   // Authoritative scene path reported by the engine (null if unknown)
+  hasData: boolean;                 // At least one text slot has been written
+  autoPaused: boolean;              // Scroll auto-paused (idle or edit)
+  currentIdx: number;               // Next slot index (1–15)
+  yPos: number;                     // Current scroll position
+  scrollSpeed: number;              // Active scroll speed
+  history: VizLogEntry[];           // Recent action/event log (max 30 entries)
 }
 
 interface VizLogEntry {
@@ -119,6 +123,12 @@ interface PerfSnapshot {
   eventLoopLagMs: number;
 }
 ```
+
+## One-Way Sends (Renderer -> Main)
+
+| Channel | Parameters | Description |
+|---|---|---|
+| `restart-for-update` | none | Triggers `autoUpdater.quitAndInstall()` to restart the app and apply a downloaded update |
 
 ## Renderer-Side Wrapper
 
