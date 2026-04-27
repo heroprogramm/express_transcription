@@ -116,7 +116,7 @@ export default function App() {
       e.preventDefault();
       vizGetStatus()
         .then((s) => {
-          if (s.isLoaded && s.hasData) vizToggleScroll(!s.isAnimating).catch(() => {});
+          if (s.hasData) vizToggleScroll(!s.isAnimating).catch(() => {});
         })
         .catch(() => {});
       return;

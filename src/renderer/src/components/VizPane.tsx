@@ -125,7 +125,7 @@ export default function VizPane() {
   const loaded = () => status().isLoaded;
   const animating = () => status().isAnimating;
   const paused = () => status().autoPaused;
-  const canScroll = () => loaded() && status().hasData;
+  const canScroll = () => status().hasData;
 
   return (
     <div class="flex flex-col min-h-0 flex-1 overflow-hidden">
