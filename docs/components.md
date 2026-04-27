@@ -139,6 +139,7 @@ Renders a single translation entry row within the TranslationPane. Manages its o
 - **Controls:** Load Scene, IN/OUT (continue), Scroll/Stop toggle (Ctrl+Space), speed slider (0.1–1.0), Hard Reset
 - Connection status indicator (green dot = connected, gray = disconnected)
 - Slot counter shows current text index out of 15 slots when scene is loaded
+- Scene-state chips driven by the `SceneState` enum (`Unknown` / `Missing` / `Wrong` / `Ok` / `Loose`): centered yellow "Wrong scene" and red "No scene loaded" warnings on mismatch, neutral chip with the loaded scene name when matched — see [viz-engine.md](./viz-engine.md#scene-detection-loadedscenepath)
 - History log with auto-scroll (`useAutoScroll`) displaying timestamped action/info entries
 - Hard Reset protected by a `ConfirmDialog` prompt
 - Empty state prompts user to load a scene
