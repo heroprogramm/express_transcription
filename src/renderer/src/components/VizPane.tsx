@@ -8,6 +8,7 @@ import {
   ArrowRightLeft,
   LoaderCircle,
   WifiOff,
+  TriangleAlert,
 } from "lucide-solid";
 import type { VizStatus } from "@/lib/types";
 import { useAutoScroll } from "@/lib/use-auto-scroll";
@@ -28,6 +29,7 @@ const DEFAULT_STATUS: VizStatus = {
   connection: "idle",
   isAnimating: false,
   isLoaded: false,
+  loadedScenePath: null,
   hasData: false,
   autoPaused: false,
   currentIdx: 1,
@@ -36,8 +38,13 @@ const DEFAULT_STATUS: VizStatus = {
   history: [],
 };
 
+interface Props {
+  /** Configured scene path; used to detect when a different (or no) scene is loaded on the engine. */
+  expectedScenePath?: () => string;
+}
+
 /** Viz Engine control panel — replaces the old read-only OutputPane. */
-export default function VizPane() {
+export default function VizPane(props: Props) {
   const [status, setStatus] = createSignal<VizStatus>(DEFAULT_STATUS);
   const [busy, setBusy] = createSignal(false);
   const [scrollBusy, setScrollBusy] = createSignal(false);
@@ -127,6 +134,29 @@ export default function VizPane() {
   const paused = () => status().autoPaused;
   const canScroll = () => status().hasData;
 
+  /**
+   * Scene detection state derived from the engine's reported scene path:
+   *  - "unknown": not connected, or we haven't queried yet — don't show a warning.
+   *  - "missing": connected, but no scene is loaded on the engine.
+   *  - "wrong":   connected, scene loaded, but it isn't the configured one.
+   *  - "ok":      loaded scene matches configured scene.
+   *  - "loose":   loaded scene exists, but no expected path is configured to compare against.
+   */
+  const sceneState = (): "unknown" | "missing" | "wrong" | "ok" | "loose" => {
+    if (status().connection !== "connected") return "unknown";
+    const actual = status().loadedScenePath;
+    const expected = (props.expectedScenePath?.() ?? "").trim();
+    if (!actual) return "missing";
+    if (!expected) return "loose";
+    return actual === expected ? "ok" : "wrong";
+  };
+
+  const sceneName = (path: string | null): string => {
+    if (!path) return "";
+    const last = path.split("/").pop();
+    return last && last.length > 0 ? last : path;
+  };
+
   return (
     <div class="flex flex-col min-h-0 flex-1 overflow-hidden">
       {/* Header + Controls (single row) */}
@@ -203,6 +233,46 @@ export default function VizPane() {
             {status().scrollSpeed.toFixed(1)}
           </span>
         </div>
+
+        <Show when={sceneState() === "ok"}>
+          <span
+            class="flex items-center gap-1.5 text-[12px] text-tx-3 font-mono bg-hover border border-border-lit rounded-full px-2.5 py-0.5 shrink-0 max-w-[200px] truncate"
+            title={status().loadedScenePath ?? ""}
+          >
+            <Layers size={11} class="shrink-0" />
+            <span class="truncate">{sceneName(status().loadedScenePath)}</span>
+          </span>
+        </Show>
+
+        <Show when={sceneState() === "loose"}>
+          <span
+            class="flex items-center gap-1.5 text-[12px] text-tx-3 font-mono bg-hover border border-border-lit rounded-full px-2.5 py-0.5 shrink-0 max-w-[200px] truncate"
+            title={`Loaded: ${status().loadedScenePath ?? ""}\n(no scene_path configured to compare)`}
+          >
+            <Layers size={11} class="shrink-0" />
+            <span class="truncate">{sceneName(status().loadedScenePath)}</span>
+          </span>
+        </Show>
+
+        <Show when={sceneState() === "wrong"}>
+          <span
+            class="flex items-center gap-1.5 text-[12px] text-yellow font-ui font-medium bg-yellow/10 border border-yellow/40 rounded-full px-2.5 py-0.5 shrink-0 max-w-[260px]"
+            title={`Loaded scene: ${status().loadedScenePath}\nExpected: ${props.expectedScenePath?.() ?? ""}`}
+          >
+            <TriangleAlert size={12} class="shrink-0" />
+            <span class="truncate">Wrong scene: {sceneName(status().loadedScenePath)}</span>
+          </span>
+        </Show>
+
+        <Show when={sceneState() === "missing"}>
+          <span
+            class="flex items-center gap-1.5 text-[12px] text-red font-ui font-medium bg-red/10 border border-red/40 rounded-full px-2.5 py-0.5 shrink-0"
+            title="Click Load Scene to load the configured scene on the Viz Engine."
+          >
+            <TriangleAlert size={12} class="shrink-0" />
+            <span>No scene loaded</span>
+          </span>
+        </Show>
 
         <Show when={loaded()}>
           <span class="text-[12px] text-tx-3 font-mono tabular-nums bg-hover border border-border-lit rounded-full px-2.5 py-0.5 shrink-0">

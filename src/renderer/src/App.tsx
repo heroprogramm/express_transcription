@@ -404,7 +404,7 @@ export default function App() {
         <ResizeHandle direction="vertical" onResize={onVResize} />
 
         <div style={{ flex: String(100 - vSplit()) }} class="min-h-0 flex flex-col">
-          <VizPane />
+          <VizPane expectedScenePath={() => config()?.viz.scene_path ?? ""} />
         </div>
 
         <span

@@ -50,6 +50,12 @@ All commands are null-terminated (`\0`) UTF-8 strings sent over raw TCP. The Viz
 -1 RENDERER*MAIN_LAYER SET_OBJECT SCENE*{scene_path}
 ```
 
+**Scene Query (used to detect what's actually loaded):**
+```
+-1 RENDERER*MAIN_LAYER GET_OBJECT
+```
+Response is parsed for `SCENE*<path>`; an empty/missing match means no scene is loaded.
+
 **Animation Control (Director IN/OUT):**
 ```
 -1 RENDERER*MAIN_LAYER*STAGE*DIRECTOR*Default CONTINUE
@@ -138,19 +144,41 @@ The `viz:status` push event sends a `VizStatus` snapshot to the renderer after e
 
 ```typescript
 interface VizStatus {
-  connected: boolean;      // Command socket connected
-  isAnimating: boolean;    // Scroll loop active
-  isLoaded: boolean;       // Scene has been loaded
-  hasData: boolean;        // At least one text slot has been written
-  autoPaused: boolean;     // Scroll auto-paused (idle or edit)
-  currentIdx: number;      // Next slot index (1–15)
-  yPos: number;            // Current scroll position
-  scrollSpeed: number;     // Active scroll speed
-  history: VizLogEntry[];  // Recent action/event log (max 30 entries)
+  connection: VizConnection;       // Command socket lifecycle state
+  isAnimating: boolean;            // Scroll loop active
+  isLoaded: boolean;               // Local flag: scene was loaded this session
+  loadedScenePath: string | null;  // Authoritative scene path reported by the engine
+  hasData: boolean;                // At least one text slot has been written
+  autoPaused: boolean;             // Scroll auto-paused (idle or edit)
+  currentIdx: number;              // Next slot index (1–15)
+  yPos: number;                    // Current scroll position
+  scrollSpeed: number;             // Active scroll speed
+  history: VizLogEntry[];          // Recent action/event log (max 30 entries)
 }
 ```
 
 The VizPane subscribes to this on mount and also polls `viz:get-status` once for the initial state.
+
+### Scene Detection (`loadedScenePath`)
+
+`isLoaded` is a local session flag — it only tells you whether *this* renderer has loaded a scene. `loadedScenePath` is the ground-truth path reported by the engine itself, used to detect external loads, mismatched scenes, or "nothing loaded" states.
+
+It is reconciled in two places:
+
+1. **On every successful command-socket (re)connect**, the main process sends `-1 RENDERER*MAIN_LAYER GET_OBJECT` and parses the response.
+2. **After a successful `vizLoadScene()`**, it is set to `vizConfig.scene_path` directly (since we just told the engine to load it).
+
+Note: `vizHardReset()` does **not** clear `loadedScenePath` — a hard reset only zeros the DataPool slots; the scene itself remains loaded on the engine.
+
+The VizPane uses this field to render warnings:
+
+| State | UI |
+|---|---|
+| Not connected | (no chip — state unknown) |
+| Loaded scene matches `viz.scene_path` | Neutral chip with scene name |
+| Loaded scene differs from `viz.scene_path` | Yellow "Wrong scene: …" warning |
+| No scene loaded on engine | Red "No scene loaded" warning |
+| Loaded but no `viz.scene_path` configured | Neutral chip (cannot compare) |
 
 ## Configuration
 

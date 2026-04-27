@@ -28,6 +28,7 @@ let yPos = 0.0;
 let scrollSpeed = 0.3;
 let isAnimating = false;
 let isLoaded = false;
+let loadedScenePath: string | null = null;
 let hasData = false;
 let connection: VizConnection = "idle";
 let reconnectFailures = 0;
@@ -102,6 +103,7 @@ function connectCmdSocket(): Promise<net.Socket> {
       log(LogLevel.Info, "viz:cmd-connected");
       pushStatus();
       resolve(socket);
+      reconcileLoadedScene().catch(() => {});
     });
 
     socket.on("error", (err: Error) => {
@@ -188,6 +190,36 @@ function vizSend(cmd: string): void {
 function batchDataPool(pairs: Array<[string, string]>): string {
   const sets = pairs.map(([v, val]) => `${v}=${val}`).join(";");
   return `0 MAIN_SCENE*FUNCTION*DataPool*Data SET ${sets};`;
+}
+
+// ── Scene detection ──
+
+/** Extract the scene path from a Viz GET_OBJECT response, e.g. "-1 SCENE*FOO/BAR" → "FOO/BAR". */
+function parseSceneResponse(resp: string): string | null {
+  const m = resp.match(/SCENE\*(\S+)/);
+  if (!m) return null;
+  const path = m[1].trim();
+  return path.length > 0 ? path : null;
+}
+
+/** Query Viz for the actual scene loaded on MAIN_LAYER and update local state if changed. */
+async function reconcileLoadedScene(): Promise<void> {
+  try {
+    const resp = await vizTalk("-1 RENDERER*MAIN_LAYER GET_OBJECT");
+    const path = parseSceneResponse(resp);
+    if (path !== loadedScenePath) {
+      loadedScenePath = path;
+      addLog(
+        path ? `LOAD: Detected scene "${path}" on engine.` : "LOAD: No scene currently loaded.",
+        "info",
+      );
+      pushStatus();
+    }
+  } catch (err) {
+    log(LogLevel.Warn, "viz:scene-query-failed", {
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
 
 // ── Scroll engine ──
@@ -326,6 +358,7 @@ export async function vizLoadScene(): Promise<void> {
   await vizTalk(`-1 RENDERER*MAIN_LAYER SET_OBJECT SCENE*${vizConfig.scene_path}`);
   resetLogic();
   isLoaded = true;
+  loadedScenePath = vizConfig.scene_path || null;
   history = [];
   addLog("LOAD: Scene loaded. Translations will auto-send.", "action");
   pushStatus();
@@ -455,6 +488,7 @@ export function getVizStatus(): VizStatus {
     connection,
     isAnimating,
     isLoaded,
+    loadedScenePath,
     hasData,
     autoPaused,
     currentIdx,
