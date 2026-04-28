@@ -7,6 +7,7 @@ import {
   VIZ_CMD_TIMEOUT_MS,
   VIZ_CONNECT_TIMEOUT_MS,
   VIZ_RECONNECT_DELAY_MS,
+  VIZ_SCENE_POLL_INTERVAL_MS,
 } from "@shared/timings";
 import { log, LogLevel } from "./logger";
 
@@ -18,6 +19,8 @@ let win: BrowserWindow | null = null;
 let cmdSocket: net.Socket | null = null;
 let cmdConnecting = false;
 let cmdReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let scenePollTimer: ReturnType<typeof setInterval> | null = null;
+let focusHandler: (() => void) | null = null;
 
 let scrollSocket: net.Socket | null = null;
 let scrollInterval: ReturnType<typeof setInterval> | null = null;
@@ -108,6 +111,7 @@ function connectCmdSocket(): Promise<net.Socket> {
       pushStatus();
       resolve(socket);
       reconcileLoadedScene().catch(() => {});
+      startScenePolling();
     });
 
     socket.on("error", (err: Error) => {
@@ -119,6 +123,7 @@ function connectCmdSocket(): Promise<net.Socket> {
         connection = "failed";
         pushStatus();
       }
+      stopScenePolling();
       scheduleCmdReconnect();
       reject(err);
     });
@@ -130,6 +135,7 @@ function connectCmdSocket(): Promise<net.Socket> {
         connection = "reconnecting";
         pushStatus();
       }
+      stopScenePolling();
       scheduleCmdReconnect();
     });
   });
@@ -225,6 +231,20 @@ function parseSceneResponse(resp: string): string | null {
 function sceneLeaf(path: string): string | null {
   const last = path.split("/").pop();
   return last && last.length > 0 ? last : null;
+}
+
+function startScenePolling(): void {
+  if (scenePollTimer) return;
+  scenePollTimer = setInterval(() => {
+    reconcileLoadedScene().catch(() => {});
+  }, VIZ_SCENE_POLL_INTERVAL_MS);
+}
+
+function stopScenePolling(): void {
+  if (scenePollTimer) {
+    clearInterval(scenePollTimer);
+    scenePollTimer = null;
+  }
 }
 
 /** Query Viz for the loaded scene name and update local state if changed. */
@@ -346,6 +366,16 @@ export function vizInit(config: AppConfig["viz"], browserWindow: BrowserWindow):
   win = browserWindow;
   scrollSpeed = config.scroll_speed;
   idlePauseMs = secondsToMs(config.auto_pause_on_idle_seconds);
+
+  // Re-check the loaded scene whenever the window regains focus, so swaps
+  // made directly in the Viz Engine UI while the app was backgrounded
+  // surface promptly without waiting for the next poll tick.
+  focusHandler = () => {
+    if (connection === "connected") {
+      reconcileLoadedScene().catch(() => {});
+    }
+  };
+  browserWindow.on("focus", focusHandler);
 }
 
 /** Update config at runtime (e.g. after settings save). */
@@ -358,6 +388,7 @@ export function vizUpdateConfig(config: AppConfig["viz"]): void {
 /** Clean up all sockets and intervals on app quit. */
 export function vizCleanup(): void {
   stopScrollLoop();
+  stopScenePolling();
   if (idleTimer) {
     clearTimeout(idleTimer);
     idleTimer = null;
@@ -373,6 +404,10 @@ export function vizCleanup(): void {
   if (scrollSocket) {
     scrollSocket.destroy();
     scrollSocket = null;
+  }
+  if (focusHandler && win) {
+    win.removeListener("focus", focusHandler);
+    focusHandler = null;
   }
   connection = "idle";
 }
