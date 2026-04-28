@@ -3,6 +3,7 @@ import {
   ChevronsDown,
   Square,
   RotateCcw,
+  RotateCw,
   MonitorPlay,
   Layers,
   ArrowRightLeft,
@@ -21,6 +22,7 @@ import {
   vizToggleScroll,
   vizSetSpeed,
   vizHardReset,
+  vizReconnect,
   vizGetStatus,
   onVizStatus,
 } from "@/lib/ipc";
@@ -130,6 +132,14 @@ export default function VizPane(props: Props) {
       setStatus((prev) => ({ ...prev, scrollSpeed: value }));
     } catch (err) {
       toastError("Set Speed", err);
+    }
+  }
+
+  async function handleReconnect() {
+    try {
+      await vizReconnect();
+    } catch (err) {
+      toastError("Reconnect", err);
     }
   }
 
@@ -318,6 +328,22 @@ export default function VizPane(props: Props) {
         </Button>
 
         <div class="w-px h-5 bg-border shrink-0" />
+
+        <Show when={status().connection !== VizConnection.Connected}>
+          <Button
+            variant="ghost"
+            size="md"
+            onClick={handleReconnect}
+            disabled={
+              status().connection === VizConnection.Connecting ||
+              status().connection === VizConnection.Reconnecting
+            }
+            title="Reconnect to Viz Engine"
+          >
+            <RotateCw size={14} />
+            Reconnect
+          </Button>
+        </Show>
 
         <div
           class={`flex items-center justify-center gap-1.5 shrink-0 min-w-[135px] py-1.5 pl-3 pr-3.5 border rounded-full text-[12px] font-bold tracking-wider transition-all duration-300 badge-viz-${status().connection}`}

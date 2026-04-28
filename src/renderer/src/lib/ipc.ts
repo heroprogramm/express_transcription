@@ -31,6 +31,7 @@ declare global {
       vizEditPause: () => Promise<void>;
       vizSetSpeed: (speed: number) => Promise<void>;
       vizHardReset: () => Promise<void>;
+      vizReconnect: () => Promise<void>;
       vizGetStatus: () => Promise<VizStatus>;
       onVizStatus: (cb: (status: VizStatus) => void) => () => void;
     };
@@ -170,6 +171,10 @@ export function vizSetSpeed(speed: number): Promise<void> {
 
 export function vizHardReset(): Promise<void> {
   return getApi().vizHardReset();
+}
+
+export function vizReconnect(): Promise<void> {
+  return getApi().vizReconnect();
 }
 
 export function vizGetStatus(): Promise<VizStatus> {

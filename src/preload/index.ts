@@ -55,6 +55,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   vizEditPause: (): Promise<void> => ipcRenderer.invoke("viz:edit-pause"),
   vizSetSpeed: (speed: number): Promise<void> => ipcRenderer.invoke("viz:set-speed", speed),
   vizHardReset: (): Promise<void> => ipcRenderer.invoke("viz:hard-reset"),
+  vizReconnect: (): Promise<void> => ipcRenderer.invoke("viz:reconnect"),
   vizGetStatus: (): Promise<VizStatus> => ipcRenderer.invoke("viz:get-status"),
   onVizStatus: (cb: (status: VizStatus) => void): (() => void) => {
     const handler = (_event: IpcRendererEvent, status: VizStatus) => cb(status);

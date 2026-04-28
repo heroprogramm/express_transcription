@@ -422,6 +422,32 @@ export function vizCleanup(): void {
   connection = VizConnection.Idle;
 }
 
+/**
+ * Force an immediate cmd-socket reconnect attempt. Cancels any pending
+ * auto-reconnect timer, destroys a stale socket if present, resets the
+ * failure counter so the user gets a fresh "connecting" state, and
+ * kicks off a connect. No-op while a connect is already in flight.
+ */
+export function vizReconnect(): void {
+  if (!vizConfig) return;
+  if (cmdReconnectTimer) {
+    clearTimeout(cmdReconnectTimer);
+    cmdReconnectTimer = null;
+  }
+  if (cmdConnecting) return;
+  if (cmdSocket) {
+    cmdSocket.destroy();
+    cmdSocket = null;
+  }
+  reconnectFailures = 0;
+  // Surface "Reconnecting…" on the badge immediately so it matches the
+  // button the user just clicked. connectCmdSocket() preserves the
+  // Reconnecting state on its first push because wasConnected is true.
+  connection = VizConnection.Reconnecting;
+  pushStatus();
+  connectCmdSocket().catch(() => {});
+}
+
 /** Load the configured scene into Viz Engine. */
 export async function vizLoadScene(): Promise<void> {
   if (!vizConfig) return;

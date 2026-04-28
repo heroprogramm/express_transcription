@@ -13,6 +13,7 @@ import {
   vizEditPause,
   vizSetSpeed,
   vizHardReset,
+  vizReconnect,
   getVizStatus,
 } from "./viz-engine";
 
@@ -214,5 +215,6 @@ export function registerIpcHandlers(
   });
 
   ipcMain.handle("viz:hard-reset", () => vizHardReset());
+  ipcMain.handle("viz:reconnect", () => vizReconnect());
   ipcMain.handle("viz:get-status", () => getVizStatus());
 }

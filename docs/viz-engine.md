@@ -19,7 +19,7 @@ The renderer communicates with `viz-engine.ts` via IPC only. Two independent TCP
 
 | Socket | Purpose | Lifecycle |
 |---|---|---|
-| **Command socket** | Scene loading, text slot writes, animation control, reset | Persistent with auto-reconnect (5 s backoff) |
+| **Command socket** | Scene loading, text slot writes, animation control, reset | Persistent with auto-reconnect (2 s backoff) |
 | **Scroll socket** | High-frequency `ScrollY` updates (~30 ms interval) | Created on scroll start, destroyed on stop |
 
 ## Connection Management
@@ -28,7 +28,7 @@ The renderer communicates with `viz-engine.ts` via IPC only. Two independent TCP
 
 - Opened eagerly from `vizInit()` at app startup so the connection badge reflects real engine state from the first frame
 - Kept alive (`setKeepAlive: true`) for the app's lifetime
-- On disconnect: auto-reconnects after 5 seconds (`VIZ_RECONNECT_DELAY_MS`)
+- On disconnect: auto-reconnects after 2 seconds (`VIZ_RECONNECT_DELAY_MS`)
 - On error: logs warning, marks the connection state, pushes status to renderer
 - Commands use request/response with a 2 s timeout (`VIZ_CMD_TIMEOUT_MS`)
 
@@ -36,7 +36,7 @@ The renderer communicates with `viz-engine.ts` via IPC only. Two independent TCP
 
 - Separate socket to avoid blocking command responses with high-frequency writes
 - Created only when scroll animation starts
-- If disconnected during animation: reconnects after 5 s and resumes the scroll loop
+- If disconnected during animation: reconnects after 2 s and resumes the scroll loop
 - Destroyed when scroll stops or on hard reset
 
 ## Protocol
