@@ -222,8 +222,8 @@ export default function VizPane(props: Props) {
         <div class="flex items-center gap-2 shrink-0">
           <Show when={sceneState() === SceneState.Ok}>
             <span
-              class="flex items-center gap-2 text-[15px] font-ui font-semibold text-tx-1 bg-hover border border-border-lit rounded-full px-3.5 py-1 shrink-0 max-w-[360px]"
-              title={status().loadedSceneName ?? ""}
+              class="chip-tooltip flex items-center gap-2 text-[15px] font-ui font-semibold text-tx-1 bg-hover border border-border-lit rounded-full px-3.5 py-1 shrink-0 max-w-[360px]"
+              data-tooltip={status().loadedSceneName ?? ""}
             >
               <Layers size={15} class="shrink-0 text-tx-3" />
               <span class="truncate">{status().loadedSceneName ?? ""}</span>
@@ -232,8 +232,8 @@ export default function VizPane(props: Props) {
 
           <Show when={sceneState() === SceneState.Loose}>
             <span
-              class="flex items-center gap-2 text-[15px] font-ui font-semibold text-tx-1 bg-hover border border-border-lit rounded-full px-3.5 py-1 shrink-0 max-w-[360px]"
-              title={`Loaded: ${status().loadedSceneName ?? ""}\n(no scene_path configured to compare)`}
+              class="chip-tooltip flex items-center gap-2 text-[15px] font-ui font-semibold text-tx-1 bg-hover border border-border-lit rounded-full px-3.5 py-1 shrink-0 max-w-[360px]"
+              data-tooltip={`Loaded: ${status().loadedSceneName ?? ""}\n(no scene_path configured to compare)`}
             >
               <Layers size={15} class="shrink-0 text-tx-3" />
               <span class="truncate">{status().loadedSceneName ?? ""}</span>
@@ -242,8 +242,8 @@ export default function VizPane(props: Props) {
 
           <Show when={sceneState() === SceneState.Wrong}>
             <span
-              class="chip-warning flex items-center gap-2 text-[13px] font-ui font-medium rounded-full px-3 py-1 shrink-0 max-w-[280px]"
-              title={`Loaded scene: ${status().loadedSceneName ?? "(none)"}\nExpected: ${props.expectedScenePath?.() ?? "(unset)"}`}
+              class="chip-tooltip chip-warning flex items-center gap-2 text-[13px] font-ui font-medium rounded-full px-3 py-1 shrink-0 max-w-[280px]"
+              data-tooltip={`Loaded scene: ${status().loadedSceneName ?? "(none)"}\nExpected: ${props.expectedScenePath?.() ?? "(unset)"}`}
             >
               <TriangleAlert size={14} class="shrink-0 chip-icon" />
               <span class="truncate">
@@ -256,8 +256,8 @@ export default function VizPane(props: Props) {
 
           <Show when={sceneState() === SceneState.Missing}>
             <span
-              class="chip-error flex items-center gap-2 text-[13px] font-ui font-medium rounded-full px-3 py-1 shrink-0"
-              title="Click Load Scene to load the configured scene on the Viz Engine."
+              class="chip-tooltip chip-error flex items-center gap-2 text-[13px] font-ui font-medium rounded-full px-3 py-1 shrink-0"
+              data-tooltip="Click Load Scene to load the configured scene on the Viz Engine."
             >
               <TriangleAlert size={14} class="shrink-0 chip-icon" />
               <span>No scene loaded</span>

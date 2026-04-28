@@ -358,6 +358,43 @@ body.theme-transitioning h2 {
   color: var(--red);
 }
 
+/* Themed hover tooltip (replaces native `title` which is unreliable
+   in this renderer). Uses CSS anchor positioning + position:fixed so
+   the tooltip escapes overflow:hidden ancestors. Reads from
+   `data-tooltip`; empty values render nothing and `\n` produces line
+   breaks. Only one scene-state chip renders at a time, so reusing
+   the same anchor-name across them is safe. */
+.chip-tooltip {
+  anchor-name: --chip-tooltip;
+}
+.chip-tooltip[data-tooltip]:not([data-tooltip=""])::after {
+  content: attr(data-tooltip);
+  position: fixed;
+  position-anchor: --chip-tooltip;
+  bottom: anchor(top);
+  left: anchor(center);
+  translate: -50% -6px;
+  z-index: 50;
+  max-width: 480px;
+  padding: 5px 9px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-lit);
+  color: var(--text);
+  border-radius: 6px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: pre-line;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 80ms ease 200ms;
+}
+.chip-tooltip[data-tooltip]:not([data-tooltip=""]):hover::after {
+  opacity: 1;
+}
+
 /* ── Pending Progress Fill ───────────────────────────────────── */
 @keyframes pendingFill {
   from {
