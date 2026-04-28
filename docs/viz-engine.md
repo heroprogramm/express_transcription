@@ -19,24 +19,24 @@ The renderer communicates with `viz-engine.ts` via IPC only. Two independent TCP
 
 | Socket | Purpose | Lifecycle |
 |---|---|---|
-| **Command socket** | Scene loading, text slot writes, animation control, reset | Persistent with auto-reconnect (2 s backoff) |
+| **Command socket** | Scene loading, text slot writes, animation control, reset | Persistent with auto-reconnect (5 s backoff) |
 | **Scroll socket** | High-frequency `ScrollY` updates (~30 ms interval) | Created on scroll start, destroyed on stop |
 
 ## Connection Management
 
 ### Command Socket
 
-- Created lazily on the first Viz command (not on app startup)
+- Opened eagerly from `vizInit()` at app startup so the connection badge reflects real engine state from the first frame
 - Kept alive (`setKeepAlive: true`) for the app's lifetime
-- On disconnect: auto-reconnects after 2 seconds
-- On error: logs warning, marks `connected = false`, pushes status to renderer
-- Commands use request/response with a 500 ms timeout
+- On disconnect: auto-reconnects after 5 seconds (`VIZ_RECONNECT_DELAY_MS`)
+- On error: logs warning, marks the connection state, pushes status to renderer
+- Commands use request/response with a 2 s timeout (`VIZ_CMD_TIMEOUT_MS`)
 
 ### Scroll Socket
 
 - Separate socket to avoid blocking command responses with high-frequency writes
 - Created only when scroll animation starts
-- If disconnected during animation: reconnects after 2 s and resumes the scroll loop
+- If disconnected during animation: reconnects after 5 s and resumes the scroll loop
 - Destroyed when scroll stops or on hard reset
 
 ## Protocol
@@ -163,10 +163,12 @@ The VizPane subscribes to this on mount and also polls `viz:get-status` once for
 
 `isLoaded` is a local session flag — it only tells you whether *this* renderer has loaded a scene. `loadedSceneName` is the ground-truth scene name reported by the engine itself, used to detect external loads, mismatched scenes, or "nothing loaded" states.
 
-It is reconciled in two places:
+It is reconciled in four places:
 
 1. **On every successful command-socket (re)connect**, the main process sends `3 MAIN_SCENE*NAME GET` and parses the response (e.g. `3 Translation_BB` → `Translation_BB`).
-2. **After a successful `vizLoadScene()`**, it is set to the leaf segment of `vizConfig.scene_path` (since we just told the engine to load it).
+2. **On a periodic poll while the cmd socket is connected** (`VIZ_SCENE_POLL_INTERVAL_MS`, currently 5 s) — picks up scene swaps made directly in the Viz Engine UI without requiring a reconnect. The poll starts in the cmd-socket `connect` handler and stops on `close`/`error` and in `vizCleanup()`.
+3. **When the main window regains focus**, an immediate reconcile fires (gated on `connection === "connected"`) so external swaps surface promptly when the user alt-tabs back into the app instead of waiting up to one poll interval.
+4. **After a successful `vizLoadScene()`**, it is set to the leaf segment of `vizConfig.scene_path` (since we just told the engine to load it). The next poll tick verifies the engine actually loaded that scene.
 
 Note: `vizHardReset()` does **not** clear `loadedSceneName` — a hard reset only zeros the DataPool slots; the scene itself remains loaded on the engine.
 
