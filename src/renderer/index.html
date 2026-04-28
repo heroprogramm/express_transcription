@@ -94,7 +94,7 @@
 
       /* ── Panels ── */
       .sk-main {
-        flex: 1;
+        flex: 60;
         display: flex;
         gap: 0;
         padding: 8px 8px 0;
@@ -144,23 +144,43 @@
         flex-shrink: 0;
       }
 
-      /* ── Viz bar ── */
-      .sk-viz {
-        height: 44px;
+      /* ── Viz pane (toolbar + history) ── */
+      .sk-vizpane {
+        flex: 40;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
         background: var(--bg, #080a10);
         border-top: 1px solid var(--border, #1a1f2e);
+      }
+      .sk-viz-toolbar {
+        height: 52px;
         display: flex;
         align-items: center;
         padding: 0 16px;
         gap: 12px;
         flex-shrink: 0;
+        border-bottom: 1px solid var(--border, #1a1f2e);
       }
-
-      /* ── Bottom area ── */
-      .sk-bottom {
-        flex: 0 0 120px;
-        background: var(--bg, #080a10);
-        min-height: 0;
+      .sk-viz-spacer {
+        flex: 1;
+      }
+      .sk-viz-history {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+      }
+      .sk-viz-history::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.02) 50%,
+          transparent 100%
+        );
+        animation: shimmer 2s ease-in-out infinite;
       }
 
       /* ── Animations ── */
@@ -217,18 +237,19 @@
       }
       [data-theme="light"] .sk-controls,
       [data-theme="light"] .sk-main,
-      [data-theme="light"] .sk-bottom,
-      [data-theme="light"] .sk-viz {
+      [data-theme="light"] .sk-vizpane {
         background: #f2f3f6;
       }
       [data-theme="light"] .sk-panel-header,
-      [data-theme="light"] .sk-viz {
+      [data-theme="light"] .sk-vizpane,
+      [data-theme="light"] .sk-viz-toolbar {
         border-color: #d4d6dc;
       }
       [data-theme="light"] .sk-divider {
         background: #d4d6dc;
       }
-      [data-theme="light"] .sk-panel-body::after {
+      [data-theme="light"] .sk-panel-body::after,
+      [data-theme="light"] .sk-viz-history::after {
         background: linear-gradient(
           90deg,
           transparent 0%,
@@ -274,11 +295,12 @@
         <!-- Controls bar -->
         <div class="sk-controls">
           <div class="sk-controls-left">
-            <div class="sk-btn" style="width: 240px; border-radius: 10px"></div>
+            <div class="sk-btn" style="width: 420px; border-radius: 10px"></div>
           </div>
           <div class="sk-controls-right">
-            <div class="sk-btn" style="width: 100px"></div>
+            <div class="sk-btn" style="width: 90px"></div>
             <div class="sk-btn" style="width: 80px"></div>
+            <div class="sk-btn" style="width: 90px"></div>
             <div class="sk-btn" style="width: 80px"></div>
           </div>
         </div>
@@ -300,16 +322,24 @@
           </div>
         </div>
 
-        <!-- Viz Engine bar -->
-        <div class="sk-viz">
-          <div class="sk-pill" style="width: 90px; height: 20px"></div>
-          <div class="sk-pill" style="width: 80px; height: 28px"></div>
-          <div class="sk-pill" style="width: 64px; height: 28px"></div>
-          <div class="sk-pill" style="width: 72px; height: 28px"></div>
+        <!-- Viz pane: toolbar (top) + history log (shimmer below) -->
+        <div class="sk-vizpane">
+          <div class="sk-viz-toolbar">
+            <div class="sk-pill" style="width: 90px; height: 18px"></div>
+            <div class="sk-divider"></div>
+            <div class="sk-btn" style="width: 110px; height: 32px"></div>
+            <div class="sk-btn" style="width: 90px; height: 32px"></div>
+            <div class="sk-btn" style="width: 90px; height: 32px"></div>
+            <div class="sk-viz-spacer"></div>
+            <div class="sk-pill" style="width: 200px; height: 28px; border-radius: 999px"></div>
+            <div class="sk-viz-spacer"></div>
+            <div class="sk-pill" style="width: 140px; height: 24px"></div>
+            <div class="sk-btn" style="width: 80px; height: 32px"></div>
+            <div class="sk-divider"></div>
+            <div class="sk-badge"></div>
+          </div>
+          <div class="sk-viz-history"></div>
         </div>
-
-        <!-- Bottom area (viz history) -->
-        <div class="sk-bottom"></div>
       </div>
     </div>
     <script type="module" src="./src/index.tsx"></script>
