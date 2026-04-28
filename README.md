@@ -181,9 +181,45 @@ electron.vite.config.ts # electron-vite configuration (path aliases @/ and @shar
 package.json
 ```
 
-## CI/CD
+## Release Flow
 
-The project uses GitHub Actions for automated builds and releases. Pushing a version tag (e.g., `v0.1.8`) triggers a cross-platform build on macOS, Windows, and Linux, uploads the artifacts, and creates a GitHub Release with the packaged installers.
+Releases are produced by [`.github/workflows/build.yml`](.github/workflows/build.yml) via GitHub Actions. The workflow runs whenever a tag matching `v*` is pushed (or it can be invoked manually with `workflow_dispatch`).
+
+### Cutting a release
+
+1. Bump the `version` field in `package.json` (this drives the artifact filenames and the auto-updater).
+2. Commit the bump on `main` -- e.g., `chore: bump version to 0.1.23`.
+3. Create and push a matching tag:
+
+   ```bash
+   git tag v0.1.23
+   git push origin v0.1.23
+   ```
+
+   The tag must use the `v` prefix to satisfy both the workflow's `tags: ["v*"]` filter and electron-builder's `vPrefixedTagName: true` setting. The GitHub Release name itself is unprefixed (e.g., `0.1.23`).
+
+### What the workflow does
+
+For each push of a `v*` tag, the workflow fans out across a three-row matrix (`macos-latest`, `windows-latest`, `ubuntu-latest`) and on every runner:
+
+1. Checks out the tagged commit.
+2. Sets up Bun and installs dependencies with `bun install --frozen-lockfile`.
+3. Compiles main, preload, and renderer with `bun run build`.
+4. Packages the app with `bunx electron-builder --<platform> --publish onTagOrDraft`, which both produces the installers and uploads them to the GitHub Release for that tag.
+
+`GH_TOKEN` is set to a `PAT_TOKEN` secret during the build step (used by `electron-updater` metadata) and to the workflow's `GITHUB_TOKEN` during the package step (used to publish to the private repo). On failure, `dist/*.log` is uploaded as a `build-logs-<platform>` artifact for 3 days.
+
+### Generated targets
+
+Artifacts are named by the `artifactName` template in `package.json` -- `${productName}-${version}-${os}-${arch}.${ext}` -- so `v0.1.23` produces files such as `ExpressText-0.1.23-mac-arm64.dmg`.
+
+| Platform | Targets             |
+| -------- | ------------------- |
+| macOS    | `.dmg`              |
+| Windows  | `.exe` (NSIS)       |
+| Linux    | `.deb`, `.AppImage` |
+
+Alongside the installers, electron-builder uploads the `latest*.yml` channel files (`latest-mac.yml`, `latest.yml`, `latest-linux.yml`) and accompanying blockmaps. The auto-updater (`electron-updater`) reads these from the GitHub Release feed to detect and download new versions in the background.
 
 ## Author
 
