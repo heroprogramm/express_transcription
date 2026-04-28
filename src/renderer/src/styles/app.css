@@ -757,7 +757,7 @@ body.theme-transitioning h2 {
   appearance: none;
   background: transparent;
   outline: none;
-  cursor: pointer;
+  cursor: ew-resize;
   margin: 0;
 }
 .capsule-slider:disabled {
@@ -773,6 +773,7 @@ body.theme-transitioning h2 {
   border-radius: 7px;
   background: #fff;
   box-shadow: 0 0.5px 2px rgba(0, 0, 0, 0.25);
+  cursor: ew-resize;
 }
 .capsule-slider:disabled::-webkit-slider-thumb {
   cursor: not-allowed;
