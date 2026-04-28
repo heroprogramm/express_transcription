@@ -218,8 +218,28 @@ export default function VizPane(props: Props) {
 
         <div class="flex-1" />
 
-        {/* Scene-mismatch warnings — centered. Hardcoded ON for now; restore the Show predicates to return to dynamic detection. */}
+        {/* Centered scene status — loaded scene name (OK/Loose) or warning chip (Wrong/Missing). All four states are mutually exclusive on sceneState(). */}
         <div class="flex items-center gap-2 shrink-0">
+          <Show when={sceneState() === SceneState.Ok}>
+            <span
+              class="flex items-center gap-2 text-[15px] font-ui font-semibold text-tx-1 bg-hover border border-border-lit rounded-full px-3.5 py-1 shrink-0 max-w-[360px]"
+              title={status().loadedSceneName ?? ""}
+            >
+              <Layers size={15} class="shrink-0 text-tx-3" />
+              <span class="truncate">{status().loadedSceneName ?? ""}</span>
+            </span>
+          </Show>
+
+          <Show when={sceneState() === SceneState.Loose}>
+            <span
+              class="flex items-center gap-2 text-[15px] font-ui font-semibold text-tx-1 bg-hover border border-border-lit rounded-full px-3.5 py-1 shrink-0 max-w-[360px]"
+              title={`Loaded: ${status().loadedSceneName ?? ""}\n(no scene_path configured to compare)`}
+            >
+              <Layers size={15} class="shrink-0 text-tx-3" />
+              <span class="truncate">{status().loadedSceneName ?? ""}</span>
+            </span>
+          </Show>
+
           <Show when={sceneState() === SceneState.Wrong}>
             <span
               class="chip-warning flex items-center gap-2 text-[13px] font-ui font-medium rounded-full px-3 py-1 shrink-0 max-w-[280px]"
@@ -270,26 +290,6 @@ export default function VizPane(props: Props) {
             {status().scrollSpeed.toFixed(1)}
           </span>
         </div>
-
-        <Show when={sceneState() === SceneState.Ok}>
-          <span
-            class="flex items-center gap-1.5 text-[12px] text-tx-3 font-mono bg-hover border border-border-lit rounded-full px-2.5 py-0.5 shrink-0 max-w-[200px] truncate"
-            title={status().loadedSceneName ?? ""}
-          >
-            <Layers size={11} class="shrink-0" />
-            <span class="truncate">{status().loadedSceneName ?? ""}</span>
-          </span>
-        </Show>
-
-        <Show when={sceneState() === SceneState.Loose}>
-          <span
-            class="flex items-center gap-1.5 text-[12px] text-tx-3 font-mono bg-hover border border-border-lit rounded-full px-2.5 py-0.5 shrink-0 max-w-[200px] truncate"
-            title={`Loaded: ${status().loadedSceneName ?? ""}\n(no scene_path configured to compare)`}
-          >
-            <Layers size={11} class="shrink-0" />
-            <span class="truncate">{status().loadedSceneName ?? ""}</span>
-          </span>
-        </Show>
 
         <Show when={loaded()}>
           <span class="text-[12px] text-tx-3 font-mono tabular-nums bg-hover border border-border-lit rounded-full px-2.5 py-0.5 shrink-0">
