@@ -20,7 +20,7 @@ export const VIZ_CONNECT_TIMEOUT_MS = 5_000;
 export const VIZ_RECONNECT_DELAY_MS = 5_000;
 // Poll the loaded-scene name on this cadence while connected, so swaps made
 // directly in the Viz Engine UI surface in the chip without a reconnect.
-export const VIZ_SCENE_POLL_INTERVAL_MS = 30_000;
+export const VIZ_SCENE_POLL_INTERVAL_MS = 5_000;
 
 // ── Soniox reconnection ──
 export const SONIOX_BASE_DELAY_MS = 1000;

@@ -376,6 +376,12 @@ export function vizInit(config: AppConfig["viz"], browserWindow: BrowserWindow):
     }
   };
   browserWindow.on("focus", focusHandler);
+
+  // Eagerly open the cmd socket so the connection badge reflects real
+  // engine state from launch instead of staying "Disconnected" until the
+  // user triggers a Viz action. Failures funnel into the existing
+  // reconnect loop, so an unreachable engine is harmless.
+  connectCmdSocket().catch(() => {});
 }
 
 /** Update config at runtime (e.g. after settings save). */
