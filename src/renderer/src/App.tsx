@@ -9,7 +9,7 @@ import {
   ErrorBoundary,
 } from "solid-js";
 import { Settings } from "lucide-solid";
-import { secondsToMs, type AppConfig } from "@/lib/types";
+import { secondsToMs, type AppConfig, VizConnection } from "@/lib/types";
 import {
   hasApiKey,
   getConfig,
@@ -116,7 +116,9 @@ export default function App() {
       e.preventDefault();
       vizGetStatus()
         .then((s) => {
-          if (s.hasData) vizToggleScroll(!s.isAnimating).catch(() => {});
+          if (s.connection === VizConnection.Connected && s.hasData) {
+            vizToggleScroll(!s.isAnimating).catch(() => {});
+          }
         })
         .catch(() => {});
       return;

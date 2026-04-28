@@ -14,7 +14,14 @@ export interface AppConfig {
 }
 
 /** Viz Engine TCP connection lifecycle state. */
-export type VizConnection = "idle" | "connecting" | "connected" | "reconnecting" | "failed";
+export const VizConnection = {
+  Idle: "idle",
+  Connecting: "connecting",
+  Connected: "connected",
+  Reconnecting: "reconnecting",
+  Failed: "failed",
+} as const;
+export type VizConnection = (typeof VizConnection)[keyof typeof VizConnection];
 
 /** Point-in-time snapshot of the Viz Engine controller state, pushed to the renderer via IPC. */
 export interface VizStatus {

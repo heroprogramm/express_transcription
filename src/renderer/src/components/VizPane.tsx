@@ -10,7 +10,7 @@ import {
   WifiOff,
   TriangleAlert,
 } from "lucide-solid";
-import type { VizStatus } from "@/lib/types";
+import { type VizStatus, VizConnection } from "@/lib/types";
 import { useAutoScroll } from "@/lib/use-auto-scroll";
 import { showToast } from "@/components/Toast";
 import Button from "@/components/Button";
@@ -26,7 +26,7 @@ import {
 } from "@/lib/ipc";
 
 const DEFAULT_STATUS: VizStatus = {
-  connection: "idle",
+  connection: VizConnection.Idle,
   isAnimating: false,
   isLoaded: false,
   loadedSceneName: null,
@@ -148,6 +148,7 @@ export default function VizPane(props: Props) {
   const animating = () => status().isAnimating;
   const paused = () => status().autoPaused;
   const canScroll = () => status().hasData;
+  const connected = () => status().connection === VizConnection.Connected;
 
   const sceneName = (path: string | null): string => {
     if (!path) return "";
@@ -157,7 +158,7 @@ export default function VizPane(props: Props) {
 
   /** Scene detection state derived from the engine's reported scene name; see SceneState for cases. */
   const sceneState = (): SceneState => {
-    if (status().connection !== "connected") return SceneState.Unknown;
+    if (status().connection !== VizConnection.Connected) return SceneState.Unknown;
     const actual = status().loadedSceneName;
     const expected = (props.expectedScenePath?.() ?? "").trim();
     if (!actual) return SceneState.Missing;
@@ -174,13 +175,18 @@ export default function VizPane(props: Props) {
 
         <div class="w-px h-5 bg-border shrink-0" />
 
-        <Button variant="ghost" size="md" onClick={handleLoadScene} disabled={busy()}>
+        <Button
+          variant="ghost"
+          size="md"
+          onClick={handleLoadScene}
+          disabled={!connected() || busy()}
+        >
           <Show when={!busy()} fallback={<LoaderCircle size={14} class="animate-spin" />}>
             <Layers size={14} />
           </Show>
           {busy() ? "Loading…" : "Load Scene"}
         </Button>
-        <Button variant="ghost" size="md" onClick={handleContinue}>
+        <Button variant="ghost" size="md" onClick={handleContinue} disabled={!connected()}>
           <ArrowRightLeft size={14} />
           IN / OUT
         </Button>
@@ -189,7 +195,7 @@ export default function VizPane(props: Props) {
           variant={animating() ? "danger" : "primary"}
           size="md"
           onClick={handleToggleScroll}
-          disabled={!canScroll() || scrollBusy()}
+          disabled={!connected() || !canScroll() || scrollBusy()}
           title="Toggle scroll (Ctrl+Space)"
         >
           <Show
@@ -267,7 +273,10 @@ export default function VizPane(props: Props) {
 
         <div class="flex-1" />
 
-        <div class="flex items-center gap-2 shrink-0">
+        <div
+          class="flex items-center gap-2 shrink-0 transition-opacity"
+          classList={{ "opacity-25": !connected() }}
+        >
           <span class="text-[14px] text-tx-3 font-ui">Speed</span>
           <div class="relative w-24 h-6 flex items-center">
             <div class="absolute left-0 right-0 h-1 rounded-full bg-border-lit">
@@ -282,6 +291,7 @@ export default function VizPane(props: Props) {
               max="1.0"
               step="0.05"
               value={status().scrollSpeed}
+              disabled={!connected()}
               onInput={(e) => handleSpeedChange(Number(e.currentTarget.value))}
               class="capsule-slider absolute inset-0 w-full"
             />
@@ -297,7 +307,12 @@ export default function VizPane(props: Props) {
           </span>
         </Show>
 
-        <Button variant="ghost-danger" size="md" onClick={() => setShowResetConfirm(true)}>
+        <Button
+          variant="ghost-danger"
+          size="md"
+          onClick={() => setShowResetConfirm(true)}
+          disabled={!connected()}
+        >
           <RotateCcw size={14} />
           Reset
         </Button>
@@ -308,7 +323,7 @@ export default function VizPane(props: Props) {
           class={`flex items-center justify-center gap-1.5 shrink-0 min-w-[135px] py-1.5 pl-3 pr-3.5 border rounded-full text-[12px] font-bold tracking-wider transition-all duration-300 badge-viz-${status().connection}`}
         >
           <Show
-            when={status().connection !== "failed"}
+            when={status().connection !== VizConnection.Failed}
             fallback={<WifiOff size={12} class="shrink-0" />}
           >
             <span class="status-dot w-[7px] h-[7px] rounded-full shrink-0 transition-all duration-300" />

@@ -760,6 +760,9 @@ body.theme-transitioning h2 {
   cursor: pointer;
   margin: 0;
 }
+.capsule-slider:disabled {
+  cursor: not-allowed;
+}
 .capsule-slider::-webkit-slider-runnable-track {
   background: transparent;
 }
@@ -770,6 +773,9 @@ body.theme-transitioning h2 {
   border-radius: 7px;
   background: #fff;
   box-shadow: 0 0.5px 2px rgba(0, 0, 0, 0.25);
+}
+.capsule-slider:disabled::-webkit-slider-thumb {
+  cursor: not-allowed;
 }
 
 /* ── Reduced Motion ──────────────────────────────────────────── */

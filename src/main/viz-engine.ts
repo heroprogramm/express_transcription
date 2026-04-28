@@ -1,6 +1,6 @@
 import net from "net";
 import type { BrowserWindow } from "electron";
-import type { AppConfig, VizConnection, VizLogEntry, VizStatus } from "@shared/types";
+import { type AppConfig, type VizLogEntry, type VizStatus, VizConnection } from "@shared/types";
 import { secondsToMs } from "@shared/utils";
 import {
   VIZ_SCROLL_INTERVAL_MS,
@@ -33,7 +33,7 @@ let isAnimating = false;
 let isLoaded = false;
 let loadedSceneName: string | null = null;
 let hasData = false;
-let connection: VizConnection = "idle";
+let connection: VizConnection = VizConnection.Idle;
 let reconnectFailures = 0;
 const RECONNECT_FAIL_THRESHOLD = 3;
 let autoPaused = false;
@@ -90,8 +90,9 @@ function connectCmdSocket(): Promise<net.Socket> {
   if (!vizConfig) return Promise.reject(new Error("No viz config"));
   cmdConnecting = true;
 
-  const wasConnected = connection === "reconnecting" || connection === "connected";
-  connection = wasConnected ? "reconnecting" : "connecting";
+  const wasConnected =
+    connection === VizConnection.Reconnecting || connection === VizConnection.Connected;
+  connection = wasConnected ? VizConnection.Reconnecting : VizConnection.Connecting;
   pushStatus();
 
   return new Promise((resolve, reject) => {
@@ -106,7 +107,7 @@ function connectCmdSocket(): Promise<net.Socket> {
       cmdSocket = socket;
       cmdConnecting = false;
       reconnectFailures = 0;
-      connection = "connected";
+      connection = VizConnection.Connected;
       log(LogLevel.Info, "viz:cmd-connected");
       pushStatus();
       resolve(socket);
@@ -119,8 +120,11 @@ function connectCmdSocket(): Promise<net.Socket> {
       cmdConnecting = false;
       cmdSocket = null;
       reconnectFailures++;
-      if (reconnectFailures >= RECONNECT_FAIL_THRESHOLD || connection === "connecting") {
-        connection = "failed";
+      if (
+        reconnectFailures >= RECONNECT_FAIL_THRESHOLD ||
+        connection === VizConnection.Connecting
+      ) {
+        connection = VizConnection.Failed;
         pushStatus();
       }
       stopScenePolling();
@@ -131,8 +135,8 @@ function connectCmdSocket(): Promise<net.Socket> {
     socket.on("close", () => {
       cmdConnecting = false;
       cmdSocket = null;
-      if (connection === "connected") {
-        connection = "reconnecting";
+      if (connection === VizConnection.Connected) {
+        connection = VizConnection.Reconnecting;
         pushStatus();
       }
       stopScenePolling();
@@ -146,7 +150,7 @@ function scheduleCmdReconnect(): void {
   cmdReconnectTimer = setTimeout(() => {
     cmdReconnectTimer = null;
     if (!cmdSocket && vizConfig) {
-      connection = "reconnecting";
+      connection = VizConnection.Reconnecting;
       pushStatus();
       connectCmdSocket().catch(() => {});
     }
@@ -371,7 +375,7 @@ export function vizInit(config: AppConfig["viz"], browserWindow: BrowserWindow):
   // made directly in the Viz Engine UI while the app was backgrounded
   // surface promptly without waiting for the next poll tick.
   focusHandler = () => {
-    if (connection === "connected") {
+    if (connection === VizConnection.Connected) {
       reconcileLoadedScene().catch(() => {});
     }
   };
@@ -415,7 +419,7 @@ export function vizCleanup(): void {
     win.removeListener("focus", focusHandler);
     focusHandler = null;
   }
-  connection = "idle";
+  connection = VizConnection.Idle;
 }
 
 /** Load the configured scene into Viz Engine. */
