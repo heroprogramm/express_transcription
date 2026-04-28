@@ -87,7 +87,7 @@ interface VizStatus {
   connection: VizConnection;        // Command socket lifecycle state
   isAnimating: boolean;             // Scroll loop active
   isLoaded: boolean;                // Local flag: scene was loaded this session
-  loadedScenePath: string | null;   // Authoritative scene path reported by the engine (null if unknown)
+  loadedSceneName: string | null;   // Authoritative scene name reported by the engine (null if unknown)
   hasData: boolean;                 // At least one text slot has been written
   autoPaused: boolean;              // Scroll auto-paused (idle or edit)
   currentIdx: number;               // Next slot index (1–15)

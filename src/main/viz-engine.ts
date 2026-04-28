@@ -28,7 +28,7 @@ let yPos = 0.0;
 let scrollSpeed = 0.3;
 let isAnimating = false;
 let isLoaded = false;
-let loadedScenePath: string | null = null;
+let loadedSceneName: string | null = null;
 let hasData = false;
 let connection: VizConnection = "idle";
 let reconnectFailures = 0;
@@ -39,6 +39,10 @@ let idlePauseMs = 10_000;
 
 const MAX_HISTORY = 30;
 const SLOT_COUNT = 15;
+
+// Viz command-protocol cmd_id: any non-negative integer requests a response
+// (the engine echoes it back for correlation); -1 signals fire-and-forget.
+const CMD_ID_SCENE_QUERY = 1;
 
 let history: VizLogEntry[] = [];
 
@@ -151,26 +155,39 @@ function vizTalk(cmd: string): Promise<string> {
   return ensureCmdSocket().then(
     (socket) =>
       new Promise((resolve, reject) => {
-        let responded = false;
+        let buf = Buffer.alloc(0);
+        let done = false;
 
-        const timeout = setTimeout(() => {
-          if (!responded) {
-            responded = true;
-            reject(new Error("Viz Engine command timed out"));
-          }
-        }, VIZ_CMD_TIMEOUT_MS);
+        const onData = (chunk: Buffer) => {
+          if (done) return;
+          buf = Buffer.concat([buf, chunk]);
+          if (buf.length === 0 || buf[buf.length - 1] !== 0) return;
+          done = true;
+          socket.removeListener("data", onData);
+          socket.removeListener("close", onClose);
+          let end = buf.length;
+          while (end > 0 && buf[end - 1] === 0) end--;
+          resolve(buf.subarray(0, end).toString("utf-8"));
+        };
 
-        const onData = (data: Buffer) => {
-          if (!responded) {
-            responded = true;
-            clearTimeout(timeout);
-            socket.removeListener("data", onData);
-            resolve(data.toString("utf-8").trim());
-          }
+        const onClose = () => {
+          if (done) return;
+          done = true;
+          socket.removeListener("data", onData);
+          reject(new Error("Viz Engine connection closed before response"));
         };
 
         socket.on("data", onData);
+        socket.once("close", onClose);
         socket.write(Buffer.from(terminated, "utf-8"));
+
+        setTimeout(() => {
+          if (done) return;
+          done = true;
+          socket.removeListener("data", onData);
+          socket.removeListener("close", onClose);
+          reject(new Error("Viz Engine command timed out"));
+        }, VIZ_CMD_TIMEOUT_MS);
       }),
     () => {
       throw new Error("Viz Engine not connected");
@@ -194,23 +211,31 @@ function batchDataPool(pairs: Array<[string, string]>): string {
 
 // ── Scene detection ──
 
-/** Extract the scene path from a Viz GET_OBJECT response, e.g. "-1 SCENE*FOO/BAR" → "FOO/BAR". */
+/** Extract scene name from a Viz `MAIN_SCENE*NAME GET` response, e.g. "3 Translation_BB" → "Translation_BB". */
 function parseSceneResponse(resp: string): string | null {
-  const m = resp.match(/SCENE\*(\S+)/);
-  if (!m) return null;
-  const path = m[1].trim();
-  return path.length > 0 ? path : null;
+  const trimmed = resp.trim();
+  if (!trimmed) return null;
+  const m = trimmed.match(/^-?\d+\s+([\s\S]*)$/);
+  const value = (m ? m[1] : trimmed).trim();
+  if (!value || value.toUpperCase().startsWith("ERROR")) return null;
+  return value;
 }
 
-/** Query Viz for the actual scene loaded on MAIN_LAYER and update local state if changed. */
+/** Last segment of a slash-delimited Viz scene path. */
+function sceneLeaf(path: string): string | null {
+  const last = path.split("/").pop();
+  return last && last.length > 0 ? last : null;
+}
+
+/** Query Viz for the loaded scene name and update local state if changed. */
 async function reconcileLoadedScene(): Promise<void> {
   try {
-    const resp = await vizTalk("-1 RENDERER*MAIN_LAYER GET_OBJECT");
-    const path = parseSceneResponse(resp);
-    if (path !== loadedScenePath) {
-      loadedScenePath = path;
+    const resp = await vizTalk(`${CMD_ID_SCENE_QUERY} MAIN_SCENE*NAME GET`);
+    const name = parseSceneResponse(resp);
+    if (name !== loadedSceneName) {
+      loadedSceneName = name;
       addLog(
-        path ? `LOAD: Detected scene "${path}" on engine.` : "LOAD: No scene currently loaded.",
+        name ? `LOAD: Detected scene "${name}" on engine.` : "LOAD: No scene currently loaded.",
         "info",
       );
       pushStatus();
@@ -358,7 +383,7 @@ export async function vizLoadScene(): Promise<void> {
   await vizTalk(`-1 RENDERER*MAIN_LAYER SET_OBJECT SCENE*${vizConfig.scene_path}`);
   resetLogic();
   isLoaded = true;
-  loadedScenePath = vizConfig.scene_path || null;
+  loadedSceneName = vizConfig.scene_path ? sceneLeaf(vizConfig.scene_path) : null;
   history = [];
   addLog("LOAD: Scene loaded. Translations will auto-send.", "action");
   pushStatus();
@@ -488,7 +513,7 @@ export function getVizStatus(): VizStatus {
     connection,
     isAnimating,
     isLoaded,
-    loadedScenePath,
+    loadedSceneName,
     hasData,
     autoPaused,
     currentIdx,

@@ -29,7 +29,7 @@ const DEFAULT_STATUS: VizStatus = {
   connection: "idle",
   isAnimating: false,
   isLoaded: false,
-  loadedScenePath: null,
+  loadedSceneName: null,
   hasData: false,
   autoPaused: false,
   currentIdx: 1,
@@ -149,20 +149,20 @@ export default function VizPane(props: Props) {
   const paused = () => status().autoPaused;
   const canScroll = () => status().hasData;
 
-  /** Scene detection state derived from the engine's reported scene path; see SceneState for cases. */
-  const sceneState = (): SceneState => {
-    if (status().connection !== "connected") return SceneState.Unknown;
-    const actual = status().loadedScenePath;
-    const expected = (props.expectedScenePath?.() ?? "").trim();
-    if (!actual) return SceneState.Missing;
-    if (!expected) return SceneState.Loose;
-    return actual === expected ? SceneState.Ok : SceneState.Wrong;
-  };
-
   const sceneName = (path: string | null): string => {
     if (!path) return "";
     const last = path.split("/").pop();
     return last && last.length > 0 ? last : path;
+  };
+
+  /** Scene detection state derived from the engine's reported scene name; see SceneState for cases. */
+  const sceneState = (): SceneState => {
+    if (status().connection !== "connected") return SceneState.Unknown;
+    const actual = status().loadedSceneName;
+    const expected = (props.expectedScenePath?.() ?? "").trim();
+    if (!actual) return SceneState.Missing;
+    if (!expected) return SceneState.Loose;
+    return actual === sceneName(expected) ? SceneState.Ok : SceneState.Wrong;
   };
 
   return (
@@ -223,12 +223,12 @@ export default function VizPane(props: Props) {
           <Show when={sceneState() === SceneState.Wrong}>
             <span
               class="chip-warning flex items-center gap-2 text-[13px] font-ui font-medium rounded-full px-3 py-1 shrink-0 max-w-[280px]"
-              title={`Loaded scene: ${status().loadedScenePath ?? "(none)"}\nExpected: ${props.expectedScenePath?.() ?? "(unset)"}`}
+              title={`Loaded scene: ${status().loadedSceneName ?? "(none)"}\nExpected: ${props.expectedScenePath?.() ?? "(unset)"}`}
             >
               <TriangleAlert size={14} class="shrink-0 chip-icon" />
               <span class="truncate">
-                {status().loadedScenePath
-                  ? `Wrong scene: ${sceneName(status().loadedScenePath)}`
+                {status().loadedSceneName
+                  ? `Wrong scene: ${status().loadedSceneName}`
                   : "Wrong scene"}
               </span>
             </span>
@@ -274,20 +274,20 @@ export default function VizPane(props: Props) {
         <Show when={sceneState() === SceneState.Ok}>
           <span
             class="flex items-center gap-1.5 text-[12px] text-tx-3 font-mono bg-hover border border-border-lit rounded-full px-2.5 py-0.5 shrink-0 max-w-[200px] truncate"
-            title={status().loadedScenePath ?? ""}
+            title={status().loadedSceneName ?? ""}
           >
             <Layers size={11} class="shrink-0" />
-            <span class="truncate">{sceneName(status().loadedScenePath)}</span>
+            <span class="truncate">{status().loadedSceneName ?? ""}</span>
           </span>
         </Show>
 
         <Show when={sceneState() === SceneState.Loose}>
           <span
             class="flex items-center gap-1.5 text-[12px] text-tx-3 font-mono bg-hover border border-border-lit rounded-full px-2.5 py-0.5 shrink-0 max-w-[200px] truncate"
-            title={`Loaded: ${status().loadedScenePath ?? ""}\n(no scene_path configured to compare)`}
+            title={`Loaded: ${status().loadedSceneName ?? ""}\n(no scene_path configured to compare)`}
           >
             <Layers size={11} class="shrink-0" />
-            <span class="truncate">{sceneName(status().loadedScenePath)}</span>
+            <span class="truncate">{status().loadedSceneName ?? ""}</span>
           </span>
         </Show>
 

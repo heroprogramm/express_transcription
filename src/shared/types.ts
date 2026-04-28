@@ -21,8 +21,8 @@ export interface VizStatus {
   connection: VizConnection;
   isAnimating: boolean;
   isLoaded: boolean;
-  /** Authoritative scene path reported by the Viz Engine (null if nothing is loaded or unknown). */
-  loadedScenePath: string | null;
+  /** Authoritative scene name reported by the Viz Engine (null if nothing is loaded or unknown). */
+  loadedSceneName: string | null;
   hasData: boolean;
   autoPaused: boolean;
   currentIdx: number;
