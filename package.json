@@ -17,6 +17,7 @@
     "preview": "electron-vite preview",
     "dist": "electron-vite build && electron-builder",
     "lint": "oxlint src/",
+    "typecheck": "tsc --build",
     "fmt": "oxfmt --write src/",
     "fmt:check": "oxfmt --check src/",
     "prepare": "lefthook install"

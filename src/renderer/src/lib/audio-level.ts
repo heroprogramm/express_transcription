@@ -1,7 +1,7 @@
 let audioCtx: AudioContext | null = null;
 let analyser: AnalyserNode | null = null;
 let sourceNode: MediaStreamAudioSourceNode | null = null;
-let timeDomainData: Float32Array | null = null;
+let timeDomainData: Float32Array<ArrayBuffer> | null = null;
 
 const SILENCE_THRESHOLD = 0.015;
 
@@ -33,7 +33,9 @@ export async function startAudioLevel(deviceId: string | undefined): Promise<voi
   sourceNode = audioCtx.createMediaStreamSource(stream);
   sourceNode.connect(analyser);
 
-  timeDomainData = new Float32Array(analyser.fftSize);
+  timeDomainData = new Float32Array(
+    new ArrayBuffer(analyser.fftSize * Float32Array.BYTES_PER_ELEMENT),
+  );
 }
 
 /** Stop capturing audio levels and release the microphone stream. */
