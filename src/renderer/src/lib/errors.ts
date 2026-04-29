@@ -1,7 +1,14 @@
 import { showToast } from "@/components/Toast";
 
 /** Broad classification of application errors for routing and display. */
-export type ErrorCategory = "mic" | "api-key" | "session" | "config" | "network" | "unknown";
+export type ErrorCategory =
+  | "mic"
+  | "api-key"
+  | "session"
+  | "config"
+  | "network"
+  | "viz"
+  | "unknown";
 
 interface AppError {
   category: ErrorCategory;
