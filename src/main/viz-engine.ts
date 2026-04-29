@@ -165,16 +165,17 @@ function vizTalk(cmd: string): Promise<string> {
   return ensureCmdSocket().then(
     (socket) =>
       new Promise((resolve, reject) => {
-        let buf = Buffer.alloc(0);
+        const chunks: Buffer[] = [];
         let done = false;
 
         const onData = (chunk: Buffer) => {
           if (done) return;
-          buf = Buffer.concat([buf, chunk]);
-          if (buf.length === 0 || buf[buf.length - 1] !== 0) return;
+          chunks.push(chunk);
+          if (chunk.length === 0 || chunk[chunk.length - 1] !== 0) return;
           done = true;
           socket.removeListener("data", onData);
           socket.removeListener("close", onClose);
+          const buf = chunks.length === 1 ? chunks[0] : Buffer.concat(chunks);
           let end = buf.length;
           while (end > 0 && buf[end - 1] === 0) end--;
           resolve(buf.subarray(0, end).toString("utf-8"));
