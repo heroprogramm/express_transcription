@@ -21,7 +21,6 @@ import {
   restartForUpdate,
   vizSendText,
   vizToggleScroll,
-  vizEditPause,
   vizGetStatus,
   copyToClipboard,
 } from "@/lib/ipc";
@@ -69,12 +68,6 @@ export default function App() {
 
   const entries = createEntryManager(reviewTimeMs);
   const perf = createPerfMonitor();
-
-  // ── Viz: pause scroll when user starts editing ──
-  function handleStartEdit(id: number): void {
-    entries.startEdit(id);
-    vizEditPause().catch(() => {});
-  }
 
   // ── Viz Engine auto-send ──
   let lastVizSentCount = 0;
@@ -380,7 +373,7 @@ export default function App() {
               live={running}
               tickForEntry={entries.tickForEntry}
               reviewTimeMs={entries.reviewTimeMs}
-              onStartEdit={handleStartEdit}
+              onStartEdit={entries.startEdit}
               onSaveEdit={entries.saveEdit}
               onCancelEdit={entries.cancelEdit}
               onEditChange={entries.onEditChange}

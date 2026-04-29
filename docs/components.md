@@ -186,7 +186,7 @@ Renders a single translation entry row within the TranslationPane. Manages its o
 - Three tabs: **Soniox**, **Output**, **Viz Engine**
 - **Soniox tab:** model (text), endpoint detection (checkbox), API key (password, leave empty to keep current)
 - **Output tab:** review time (numeric, seconds)
-- **Viz Engine tab:** host (text), port (numeric, 1–65535), scene path (text), default scroll speed (0.1–1.0), auto-pause on idle (checkbox + seconds), auto-pause on edit (checkbox)
+- **Viz Engine tab:** host (text), port (numeric, 1–65535), scene path (text), default scroll speed (0.1–1.0), auto-pause on idle (checkbox + seconds)
 - Validates model non-empty, review time non-negative, port valid, scroll speed in range before saving
 - Enter saves, Escape closes; clicking backdrop closes
 - Saves API key and config via separate IPC calls

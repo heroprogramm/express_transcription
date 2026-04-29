@@ -9,7 +9,6 @@ export interface AppConfig {
     scroll_speed: number;
     auto_pause_on_idle: boolean;
     auto_pause_on_idle_seconds: number;
-    auto_pause_on_edit: boolean;
   };
 }
 

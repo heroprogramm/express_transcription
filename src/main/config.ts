@@ -13,7 +13,6 @@ const DEFAULT_CONFIG: AppConfig = {
     scroll_speed: 0.3,
     auto_pause_on_idle: true,
     auto_pause_on_idle_seconds: 10,
-    auto_pause_on_edit: true,
   },
 };
 
@@ -62,9 +61,6 @@ function validateConfig(config: AppConfig): string[] {
   if (typeof viz.auto_pause_on_idle_seconds !== "number" || viz.auto_pause_on_idle_seconds < 1) {
     errors.push("viz.auto_pause_on_idle_seconds must be a number >= 1");
   }
-  if (typeof viz.auto_pause_on_edit !== "boolean") {
-    errors.push("viz.auto_pause_on_edit must be a boolean");
-  }
 
   return errors;
 }
@@ -104,7 +100,6 @@ export function saveConfigFields(
     viz_scroll_speed: number;
     viz_auto_pause_on_idle: boolean;
     viz_auto_pause_on_idle_seconds: number;
-    viz_auto_pause_on_edit: boolean;
   }>,
 ): ConfigResult {
   const { config } = loadConfig();
@@ -138,9 +133,6 @@ export function saveConfigFields(
       ...config.viz,
       auto_pause_on_idle_seconds: fields.viz_auto_pause_on_idle_seconds,
     };
-  }
-  if (fields.viz_auto_pause_on_edit !== undefined) {
-    config.viz = { ...config.viz, auto_pause_on_edit: fields.viz_auto_pause_on_edit };
   }
 
   saveStoredConfig(config);

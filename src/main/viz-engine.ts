@@ -549,21 +549,6 @@ export async function vizToggleScroll(start: boolean): Promise<void> {
   pushStatus();
 }
 
-/** Pause scroll due to editing — resumes automatically when new text arrives. */
-export function vizEditPause(): void {
-  if (!isAnimating || !vizConfig?.auto_pause_on_edit) return;
-  autoPaused = true;
-  isAnimating = false;
-  if (idleTimer) {
-    clearTimeout(idleTimer);
-    idleTimer = null;
-  }
-  stopScrollLoop();
-  vizSend(batchDataPool([["SHOW_WAIT", "1"]]));
-  addLog("SCROLL: Paused (editing)", "action");
-  pushStatus();
-}
-
 /** Update the scroll speed. */
 export function vizSetSpeed(speed: number): void {
   scrollSpeed = Math.max(0.1, Math.min(1.0, speed));

@@ -46,7 +46,6 @@ All IPC flows through `contextBridge.exposeInMainWorld("electronAPI", ...)` in t
 | `viz:continue`                     | Send IN/OUT (continue) command to Viz Engine      |
 | `viz:send-text`                    | Push a translation line to a Viz Engine text slot  |
 | `viz:toggle-scroll`                | Start or stop Viz Engine scroll animation         |
-| `viz:edit-pause`                   | Pause scroll because user is editing a translation |
 | `viz:set-speed`                    | Set Viz Engine scroll speed                       |
 | `viz:hard-reset`                   | Stop scroll and clear all Viz Engine text slots   |
 | `viz:get-status`                   | Get current Viz Engine controller state           |

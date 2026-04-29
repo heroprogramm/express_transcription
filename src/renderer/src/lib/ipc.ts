@@ -28,7 +28,6 @@ declare global {
       vizContinue: () => Promise<void>;
       vizSendText: (text: string) => Promise<void>;
       vizToggleScroll: (start: boolean) => Promise<void>;
-      vizEditPause: () => Promise<void>;
       vizSetSpeed: (speed: number) => Promise<void>;
       vizHardReset: () => Promise<void>;
       vizReconnect: () => Promise<void>;
@@ -159,10 +158,6 @@ export function vizSendText(text: string): Promise<void> {
 
 export function vizToggleScroll(start: boolean): Promise<void> {
   return getApi().vizToggleScroll(start);
-}
-
-export function vizEditPause(): Promise<void> {
-  return getApi().vizEditPause();
 }
 
 export function vizSetSpeed(speed: number): Promise<void> {

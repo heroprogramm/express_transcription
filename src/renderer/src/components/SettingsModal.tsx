@@ -42,7 +42,6 @@ export default function SettingsModal(props: Props) {
     vizScrollSpeed: String(props.config?.viz.scroll_speed ?? 0.3),
     autoPauseOnIdle: props.config?.viz.auto_pause_on_idle ?? true,
     autoPauseOnIdleSeconds: String(props.config?.viz.auto_pause_on_idle_seconds ?? 10),
-    autoPauseOnEdit: props.config?.viz.auto_pause_on_edit ?? true,
   });
   const [error, setError] = createSignal("");
   const [saving, setSaving] = createSignal(false);
@@ -133,7 +132,6 @@ export default function SettingsModal(props: Props) {
         viz_scroll_speed: speedNum,
         viz_auto_pause_on_idle: fields.autoPauseOnIdle,
         viz_auto_pause_on_idle_seconds: idleSecondsNum,
-        viz_auto_pause_on_edit: fields.autoPauseOnEdit,
       });
 
       props.onSaved(result.config);
@@ -416,23 +414,6 @@ export default function SettingsModal(props: Props) {
                     disabled={!fields.autoPauseOnIdle}
                   />
                 </div>
-              </div>
-              <div>
-                <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
-                  Auto-Pause on Edit
-                </label>
-                <label class="flex items-center gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={fields.autoPauseOnEdit}
-                    onChange={(e) => setFields("autoPauseOnEdit", e.currentTarget.checked)}
-                    class="w-4 h-4 rounded border border-border bg-surface accent-[var(--blue)] cursor-pointer"
-                  />
-                  <span class="text-sm text-tx">Enabled</span>
-                </label>
-                <p class="text-[10px] text-tx-3 mt-1">
-                  Pause viz scroll when editing a translation
-                </p>
               </div>
             </div>
           </div>

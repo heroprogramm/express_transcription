@@ -8,7 +8,7 @@ Real-time speech transcription and translation desktop app. ExpressText captures
 - **Live translation** -- translates transcribed speech into a target language in real time (default target: English).
 - **Three-pane UI** -- the original transcript (Speech), the translated output (Translation), and a Viz Engine control surface, with resizable horizontal and vertical splits.
 - **Translation review window** -- each translated line shows a configurable countdown (default 10 s) during which the operator can click to inline-edit the text before it is committed and forwarded.
-- **Viz Engine integration** -- pushes confirmed translations to a Vizrt graphics engine over TCP (15 text slots, scroll animation, idle/edit auto-pause, Ctrl+Space toggle, hard reset).
+- **Viz Engine integration** -- pushes confirmed translations to a Vizrt graphics engine over TCP (15 text slots, scroll animation, idle auto-pause, Ctrl+Space toggle, hard reset).
 - **Feed file output** -- writes the latest translated line to a text file (`feed.txt`) using atomic writes, consumable by external tools (e.g., OBS, broadcast graphics).
 - **Session logging** -- every session is saved to a timestamped log file for archival.
 - **Microphone selection** -- choose from any available audio input device with live device-change detection and a per-pane audio waveform visualizer.
@@ -110,7 +110,6 @@ Settings are managed via `electron-store` with sensible defaults. Configurable v
 | `viz.scroll_speed`                 | `0.3`                                            | Default scroll velocity per frame (0.1–1.0)                                     |
 | `viz.auto_pause_on_idle`           | `true`                                           | Pause scroll when no new text arrives                                           |
 | `viz.auto_pause_on_idle_seconds`   | `10`                                             | Seconds of inactivity before idle pause triggers                                |
-| `viz.auto_pause_on_edit`           | `true`                                           | Pause scroll when the operator is editing a pending translation                 |
 
 Output files are written to the Electron `userData` directory:
 

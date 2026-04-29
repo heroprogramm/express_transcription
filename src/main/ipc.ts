@@ -10,7 +10,6 @@ import {
   vizContinue,
   vizSendText,
   vizToggleScroll,
-  vizEditPause,
   vizSetSpeed,
   vizHardReset,
   vizReconnect,
@@ -76,7 +75,6 @@ export function registerIpcHandlers(
         viz_scroll_speed: number;
         viz_auto_pause_on_idle: boolean;
         viz_auto_pause_on_idle_seconds: number;
-        viz_auto_pause_on_edit: boolean;
       }> = {};
       if (typeof f.model === "string") {
         if (!f.model.trim()) throw new Error("save-config: model cannot be empty");
@@ -111,8 +109,6 @@ export function registerIpcHandlers(
           throw new Error("save-config: viz_auto_pause_on_idle_seconds must be at least 1");
         updates.viz_auto_pause_on_idle_seconds = f.viz_auto_pause_on_idle_seconds;
       }
-      if (typeof f.viz_auto_pause_on_edit === "boolean")
-        updates.viz_auto_pause_on_edit = f.viz_auto_pause_on_edit;
       const result = saveConfigFields(updates);
       setConfig(result.config);
       return result;
@@ -206,8 +202,6 @@ export function registerIpcHandlers(
     if (typeof start !== "boolean") throw new Error("viz:toggle-scroll: start must be a boolean");
     return vizToggleScroll(start);
   });
-
-  ipcMain.handle("viz:edit-pause", () => vizEditPause());
 
   ipcMain.handle("viz:set-speed", (_event, speed: unknown) => {
     if (typeof speed !== "number") throw new Error("viz:set-speed: speed must be a number");
