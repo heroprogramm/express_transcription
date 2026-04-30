@@ -1,4 +1,11 @@
-export type { AppConfig, ConfigResult, PerfSnapshot, VizStatus, VizLogEntry } from "@shared/types";
+export type {
+  AppConfig,
+  ConfigResult,
+  PerfSnapshot,
+  VizStatus,
+  VizLogEntry,
+  VizTestResult,
+} from "@shared/types";
 export { VizConnection } from "@shared/types";
 export { secondsToMs } from "@shared/utils";
 

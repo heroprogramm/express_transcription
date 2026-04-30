@@ -54,6 +54,8 @@ All IPC communication between the main and renderer processes passes through the
 | `viz:toggle-scroll` | `start: boolean` | `void` | Starts or stops the Viz Engine scroll animation |
 | `viz:set-speed` | `speed: number` | `void` | Sets the scroll speed (0.1–1.0) |
 | `viz:hard-reset` | none | `void` | Stops scroll animation and clears all text slots |
+| `viz:reconnect` | none | `void` | Forces an immediate cmd-socket reconnect attempt |
+| `viz:test-connection` | `host: string, port: number` | `VizTestResult` | One-shot TCP probe to the given host/port; does not affect the persistent cmd socket |
 | `viz:get-status` | none | `VizStatus` | Returns the current Viz Engine controller state |
 
 ## Push Events (Main -> Renderer)
@@ -100,6 +102,10 @@ interface VizLogEntry {
   msg: string;
   type: "info" | "action";
 }
+
+type VizTestResult =
+  | { ok: true; elapsedMs: number }
+  | { ok: false; error: string };
 ```
 
 ### PerfSnapshot

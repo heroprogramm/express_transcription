@@ -1,4 +1,4 @@
-import type { AppConfig, PerfSnapshot, VizStatus } from "@/lib/types";
+import type { AppConfig, PerfSnapshot, VizStatus, VizTestResult } from "@/lib/types";
 
 declare global {
   interface Window {
@@ -31,6 +31,7 @@ declare global {
       vizSetSpeed: (speed: number) => Promise<void>;
       vizHardReset: () => Promise<void>;
       vizReconnect: () => Promise<void>;
+      vizTestConnection: (host: string, port: number) => Promise<VizTestResult>;
       vizGetStatus: () => Promise<VizStatus>;
       onVizStatus: (cb: (status: VizStatus) => void) => () => void;
     };
@@ -170,6 +171,10 @@ export function vizHardReset(): Promise<void> {
 
 export function vizReconnect(): Promise<void> {
   return getApi().vizReconnect();
+}
+
+export function vizTestConnection(host: string, port: number): Promise<VizTestResult> {
+  return getApi().vizTestConnection(host, port);
 }
 
 export function vizGetStatus(): Promise<VizStatus> {

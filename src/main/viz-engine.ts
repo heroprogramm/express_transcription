@@ -1,6 +1,12 @@
 import net from "net";
 import type { BrowserWindow } from "electron";
-import { type AppConfig, type VizLogEntry, type VizStatus, VizConnection } from "@shared/types";
+import {
+  type AppConfig,
+  type VizLogEntry,
+  type VizStatus,
+  type VizTestResult,
+  VizConnection,
+} from "@shared/types";
 import { secondsToMs } from "@shared/utils";
 import {
   VIZ_SCROLL_INTERVAL_MS,
@@ -447,6 +453,38 @@ export function vizReconnect(): void {
   connection = VizConnection.Reconnecting;
   pushStatus();
   connectCmdSocket().catch(() => {});
+}
+
+/**
+ * One-shot TCP probe to the given host/port. Used by Settings to verify
+ * the user's input before saving, without disturbing the persistent cmd
+ * socket. Times out after VIZ_CONNECT_TIMEOUT_MS.
+ */
+export function vizTestConnection(host: string, port: number): Promise<VizTestResult> {
+  return new Promise((resolve) => {
+    const start = performance.now();
+    const socket = new net.Socket();
+    let settled = false;
+
+    const finish = (result: VizTestResult) => {
+      if (settled) return;
+      settled = true;
+      socket.destroy();
+      resolve(result);
+    };
+
+    socket.setTimeout(VIZ_CONNECT_TIMEOUT_MS, () => {
+      finish({ ok: false, error: "Connection timed out" });
+    });
+    socket.once("connect", () => {
+      finish({ ok: true, elapsedMs: Math.round(performance.now() - start) });
+    });
+    socket.once("error", (err: Error) => {
+      finish({ ok: false, error: err.message });
+    });
+
+    socket.connect(port, host);
+  });
 }
 
 /** Load the configured scene into Viz Engine. */

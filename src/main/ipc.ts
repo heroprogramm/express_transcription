@@ -13,6 +13,7 @@ import {
   vizSetSpeed,
   vizHardReset,
   vizReconnect,
+  vizTestConnection,
   getVizStatus,
 } from "./viz-engine";
 
@@ -210,5 +211,14 @@ export function registerIpcHandlers(
 
   ipcMain.handle("viz:hard-reset", () => vizHardReset());
   ipcMain.handle("viz:reconnect", () => vizReconnect());
+  ipcMain.handle("viz:test-connection", (_event, host: unknown, port: unknown) => {
+    if (typeof host !== "string" || !host.trim()) {
+      throw new Error("viz:test-connection: host must be a non-empty string");
+    }
+    if (typeof port !== "number" || port < 1 || port > 65535) {
+      throw new Error("viz:test-connection: port must be between 1 and 65535");
+    }
+    return vizTestConnection(host.trim(), port);
+  });
   ipcMain.handle("viz:get-status", () => getVizStatus());
 }

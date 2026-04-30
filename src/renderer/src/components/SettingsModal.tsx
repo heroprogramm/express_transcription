@@ -8,11 +8,20 @@ import {
   MonitorPlay,
   FileOutput,
   LoaderCircle,
+  Plug,
+  CircleCheck,
+  CircleX,
 } from "lucide-solid";
 import type { AppConfig } from "@/lib/types";
-import { hasApiKey, saveApiKey, saveConfig, getModels } from "@/lib/ipc";
+import { hasApiKey, saveApiKey, saveConfig, getModels, vizTestConnection } from "@/lib/ipc";
 import { reportError } from "@/lib/errors";
 import Button from "@/components/Button";
+
+type TestState =
+  | { kind: "idle" }
+  | { kind: "testing" }
+  | { kind: "success"; elapsedMs: number }
+  | { kind: "error"; message: string };
 
 /** Props for the {@link SettingsModal} component. */
 interface Props {
@@ -48,7 +57,24 @@ export default function SettingsModal(props: Props) {
   const [contentHeight, setContentHeight] = createSignal<number | undefined>();
   const [models, setModels] = createSignal<Array<{ id: string; name: string }>>([]);
   const [modelsLoading, setModelsLoading] = createSignal(false);
+  const [testState, setTestState] = createSignal<TestState>({ kind: "idle" });
   const tabRefs: Partial<Record<Tab, HTMLDivElement>> = {};
+
+  // Reset the test result whenever host or port changes so a stale badge
+  // doesn't suggest the latest input is verified.
+  createEffect(
+    on(
+      () => [fields.vizHost, fields.vizPort],
+      () => setTestState({ kind: "idle" }),
+      { defer: true },
+    ),
+  );
+
+  // Re-measure the Viz tab when the result badge appears/disappears,
+  // since the explicit height is what drives scroll vs. natural fit.
+  createEffect(
+    on(testState, () => requestAnimationFrame(() => measureTab(tab())), { defer: true }),
+  );
 
   function measureTab(t: Tab): void {
     const el = tabRefs[t];
@@ -148,6 +174,32 @@ export default function SettingsModal(props: Props) {
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === "Enter") handleSave();
     if (e.key === "Escape") props.onClose();
+  }
+
+  async function handleTestConnection() {
+    const host = fields.vizHost.trim();
+    if (!host) {
+      setTestState({ kind: "error", message: "Host cannot be empty" });
+      return;
+    }
+    const portNum = Number(fields.vizPort);
+    if (!fields.vizPort.trim() || Number.isNaN(portNum) || portNum < 1 || portNum > 65535) {
+      setTestState({ kind: "error", message: "Port must be between 1 and 65535" });
+      return;
+    }
+
+    setTestState({ kind: "testing" });
+    try {
+      const result = await vizTestConnection(host, portNum);
+      if (result.ok) {
+        setTestState({ kind: "success", elapsedMs: result.elapsedMs });
+      } else {
+        setTestState({ kind: "error", message: result.error });
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setTestState({ kind: "error", message: msg });
+    }
   }
 
   const tabIcon = (t: Tab) =>
@@ -358,6 +410,40 @@ export default function SettingsModal(props: Props) {
                     onKeyDown={handleKeyDown}
                   />
                 </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  onClick={handleTestConnection}
+                  disabled={testState().kind === "testing"}
+                >
+                  {testState().kind === "testing" ? (
+                    <LoaderCircle size={14} class="animate-spin" />
+                  ) : (
+                    <Plug size={14} />
+                  )}
+                  {testState().kind === "testing" ? "Testing…" : "Test Connection"}
+                </Button>
+                {(() => {
+                  const s = testState();
+                  if (s.kind === "success") {
+                    return (
+                      <span class="flex items-center gap-1.5 text-[13px] text-green font-medium">
+                        <CircleCheck size={14} />
+                        Connected ({s.elapsedMs} ms)
+                      </span>
+                    );
+                  }
+                  if (s.kind === "error") {
+                    return (
+                      <span class="flex items-center gap-1.5 text-[13px] text-red font-medium">
+                        <CircleX size={14} />
+                        {s.message}
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
               <div>
                 <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">

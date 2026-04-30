@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
-import type { ConfigResult, PerfSnapshot, VizStatus } from "@shared/types";
+import type { ConfigResult, PerfSnapshot, VizStatus, VizTestResult } from "@shared/types";
 
 /** Exposes a safe, typed API surface to the renderer process via `window.electronAPI`. */
 contextBridge.exposeInMainWorld("electronAPI", {
@@ -55,6 +55,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   vizSetSpeed: (speed: number): Promise<void> => ipcRenderer.invoke("viz:set-speed", speed),
   vizHardReset: (): Promise<void> => ipcRenderer.invoke("viz:hard-reset"),
   vizReconnect: (): Promise<void> => ipcRenderer.invoke("viz:reconnect"),
+  vizTestConnection: (host: string, port: number): Promise<VizTestResult> =>
+    ipcRenderer.invoke("viz:test-connection", host, port),
   vizGetStatus: (): Promise<VizStatus> => ipcRenderer.invoke("viz:get-status"),
   onVizStatus: (cb: (status: VizStatus) => void): (() => void) => {
     const handler = (_event: IpcRendererEvent, status: VizStatus) => cb(status);

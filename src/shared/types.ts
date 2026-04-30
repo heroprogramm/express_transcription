@@ -12,6 +12,9 @@ export interface AppConfig {
   };
 }
 
+/** Result of a one-shot Viz Engine connection probe issued from Settings. */
+export type VizTestResult = { ok: true; elapsedMs: number } | { ok: false; error: string };
+
 /** Viz Engine TCP connection lifecycle state. */
 export const VizConnection = {
   Idle: "idle",
