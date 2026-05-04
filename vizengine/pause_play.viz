@@ -1,0 +1,24 @@
+' Script on WAIT_MESSAGE container
+Dim waitProxy As Container
+
+Sub OnInit()
+    ' We will read the SHOW_WAIT variable directly from DataPool via a proxy or command
+    waitProxy = Scene.FindContainer("READY_HOLDER$WAIT_FLAG")
+End Sub
+
+Sub OnExecPerField()
+    ' Smoothly fade the message in and out
+    If waitProxy <> Null Then
+        If waitProxy.Geometry.Text == "1" Then
+            ' Fade In
+            If Alpha.Value < 100.0 Then
+                Alpha.Value = Alpha.Value + 5.0 ' Adjust for fade speed
+            End If
+        Else
+            ' Fade Out
+            If Alpha.Value > 0.0 Then
+                Alpha.Value = Alpha.Value - 10.0 ' Adjust for fade speed
+            End If
+        End If
+    End If
+End Sub

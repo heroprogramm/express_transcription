@@ -1,0 +1,73 @@
+' Script on SCROLL_ROOT - V5.3
+Sub OnExecPerField()
+    Dim resetProxy As Container
+    resetProxy = Scene.FindContainer("READY_HOLDER$RESET_FLAG")
+    
+    If resetProxy <> Null Then
+        If resetProxy.Geometry.Text = "1" Then
+            ResetHierarchy()
+            resetProxy.Geometry.Text = "0"
+            System.SendCommand("0 MAIN_SCENE*FUNCTION*DataPool*Data SET DO_RESET=0;")
+        End If
+    End If
+
+    Dim vMin, vMax As Vertex
+    Dim totalH As Double
+    this.GetBoundingBox(vMin, vMax)
+    totalH = vMax.y - vMin.y
+    System.SendCommand("0 MAIN_SCENE*FUNCTION*DataPool*Data SET TOTAL_H=" & totalH & ";")
+
+    Dim topChild As Container
+    topChild = this.ChildContainer
+    
+    If topChild <> Null Then
+        topChild.GetTransformedBoundingBox(vMin, vMax)
+        
+        ' Recycle if the top box passes Y=150
+        If vMin.y > 150.0 Then 
+            Dim boxName As String = topChild.Name
+            Dim boxNum As String = boxName.GetSubstring(1, boxName.Length - 1)
+            
+            Dim readyProxy As Container = Scene.FindContainer("READY_HOLDER$R" & boxNum)
+            
+            If readyProxy <> Null Then
+                If readyProxy.Geometry.Text = "1" Then
+                    Dim lastChild As Container = GetLastChild(this)
+                    If lastChild <> topChild Then
+                        topChild.MoveTo(lastChild, TL_NEXT)
+                        readyProxy.Geometry.Text = "0" 
+                        System.SendCommand("0 MAIN_SCENE*FUNCTION*DataPool*Data SET READY" & boxNum & "=0;")
+                        System.SendCommand("0 MAIN_SCENE*FUNCTION*DataPool*Data SET TXT" & boxNum & "= ;")
+                    End If
+                End If
+            End If
+        End If
+    End If
+End Sub
+
+Function GetLastChild(parent As Container) As Container
+    Dim current As Container = parent.ChildContainer
+    Dim last As Container = current
+    Do While current <> Null
+        last = current
+        current = current.NextContainer
+    Loop
+    GetLastChild = last
+End Function
+
+Sub ResetHierarchy()
+    Dim i As Integer
+    Dim anchor As Container = Scene.FindContainer("B1")
+    If anchor <> Null Then
+        anchor.MoveTo(this, TL_DOWN)
+        anchor.Position.y = 0.0
+        For i = 2 To 15
+            Dim nextBox As Container = Scene.FindContainer("B" & i)
+            If nextBox <> Null Then
+                nextBox.MoveTo(anchor, TL_NEXT)
+                nextBox.Position.y = 0.0 
+                anchor = nextBox 
+            End If
+        Next
+    End If
+End Sub
