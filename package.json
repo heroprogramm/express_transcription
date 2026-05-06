@@ -12,8 +12,10 @@
   "type": "module",
   "main": "./out/main/index.js",
   "scripts": {
+    "predev": "node node_modules/electron/install.js",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
+    "prepreview": "node node_modules/electron/install.js",
     "preview": "electron-vite preview",
     "dist": "electron-vite build && electron-builder",
     "lint": "oxlint src/",
