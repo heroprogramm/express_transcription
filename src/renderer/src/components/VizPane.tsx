@@ -303,7 +303,7 @@ export default function VizPane(props: Props) {
             type="button"
             onClick={() => bumpSpeed(-SPEED_STEP)}
             disabled={!connected() || status().scrollSpeed <= SPEED_MIN + 1e-6}
-            class="flex items-center justify-center w-6 h-6 rounded-md border border-border-lit bg-surface text-tx-2 hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            class="flex items-center justify-center w-6 h-6 rounded-md border border-border-lit bg-surface text-tx-2 hover:bg-hover disabled:opacity-40 disabled:pointer-events-none transition-colors"
             title="Decrease speed"
           >
             <Minus size={12} />
@@ -332,12 +332,12 @@ export default function VizPane(props: Props) {
             type="button"
             onClick={() => bumpSpeed(SPEED_STEP)}
             disabled={!connected() || status().scrollSpeed >= SPEED_MAX - 1e-6}
-            class="flex items-center justify-center w-6 h-6 rounded-md border border-border-lit bg-surface text-tx-2 hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            class="flex items-center justify-center w-6 h-6 rounded-md border border-border-lit bg-surface text-tx-2 hover:bg-hover disabled:opacity-40 disabled:pointer-events-none transition-colors"
             title="Increase speed"
           >
             <Plus size={12} />
           </button>
-          <span class="text-[15px] text-tx-2 font-mono font-semibold tabular-nums w-8 text-right">
+          <span class="text-[15px] text-tx-2 font-mono font-semibold tabular-nums w-8 text-right cursor-default select-none">
             {status().scrollSpeed.toFixed(2)}
           </span>
         </div>

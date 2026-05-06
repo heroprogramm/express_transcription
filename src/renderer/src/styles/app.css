@@ -761,7 +761,8 @@ body.theme-transitioning h2 {
   margin: 0;
 }
 .capsule-slider:disabled {
-  cursor: not-allowed;
+  cursor: default;
+  pointer-events: none;
 }
 .capsule-slider::-webkit-slider-runnable-track {
   background: transparent;
@@ -776,7 +777,7 @@ body.theme-transitioning h2 {
   cursor: ew-resize;
 }
 .capsule-slider:disabled::-webkit-slider-thumb {
-  cursor: not-allowed;
+  cursor: default;
 }
 
 /* ── Reduced Motion ──────────────────────────────────────────── */
