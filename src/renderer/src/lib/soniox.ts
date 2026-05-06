@@ -298,10 +298,10 @@ export async function startTranscription(
   activeMicDeviceId = micDeviceId;
 
   client = new SonioxClient({
-    api_key: async () => {
-      const key = await getApiKey();
-      if (!key) throw new Error("No Soniox API key configured");
-      return key;
+    config: async () => {
+      const api_key = await getApiKey();
+      if (!api_key) throw new Error("No Soniox API key configured");
+      return { api_key };
     },
     permissions: new BrowserPermissionResolver(),
   });
