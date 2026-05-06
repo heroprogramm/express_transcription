@@ -46,7 +46,7 @@ export default function PerfOverlay(props: Props) {
   const audio = () => getAudioHealth();
 
   return (
-    <div class="fixed bottom-4 right-4 z-[9998] w-[300px] rounded-md border border-border bg-raised/90 backdrop-blur-md shadow-xl font-ui">
+    <div class="fixed bottom-4 right-4 z-[9998] w-[300px] rounded-lg border border-border bg-raised/90 backdrop-blur-md shadow-xl font-ui">
       <div class="flex items-center justify-between px-3 py-2 border-b border-border">
         <span class="text-[10px] font-bold text-tx-3 tracking-widest uppercase">
           Performance Monitor

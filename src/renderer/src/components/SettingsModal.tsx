@@ -233,7 +233,7 @@ export default function SettingsModal(props: Props) {
         if (e.target === e.currentTarget) props.onClose();
       }}
     >
-      <div class="animate-modal bg-raised border border-border rounded-md w-[600px] max-w-[90vw] shadow-[0_20px_60px_var(--bg)] flex flex-col max-h-[85vh]">
+      <div class="animate-modal bg-raised border border-border rounded-lg w-[600px] max-w-[90vw] shadow-[0_20px_60px_var(--bg)] flex flex-col max-h-[85vh]">
         {/* Header */}
         <div class="flex items-center gap-3 px-7 pt-6 pb-4 shrink-0">
           <div class="w-9 h-9 rounded-md bg-surface flex items-center justify-center shrink-0">

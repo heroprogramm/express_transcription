@@ -23,7 +23,7 @@ export default function ConfirmDialog(props: Props) {
           if (e.target === e.currentTarget) props.onCancel();
         }}
       >
-        <div class="animate-modal bg-raised border border-border rounded-md w-[380px] max-w-[90vw] shadow-[0_20px_60px_var(--bg)] p-6">
+        <div class="animate-modal bg-raised border border-border rounded-lg w-[380px] max-w-[90vw] shadow-[0_20px_60px_var(--bg)] p-6">
           <h3 class="text-[15px] font-bold text-tx font-ui">{props.title}</h3>
           <p class="text-[13px] text-tx-3 mt-2 font-ui leading-relaxed">{props.message}</p>
           <div class="flex justify-end gap-2 mt-5">
