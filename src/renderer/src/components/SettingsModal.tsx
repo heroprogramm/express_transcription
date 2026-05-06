@@ -1,4 +1,4 @@
-import { createSignal, createEffect, on, For } from "solid-js";
+import { createSignal, createEffect, on, onCleanup, For, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import {
   Settings as SettingsIcon,
@@ -11,6 +11,7 @@ import {
   Plug,
   CircleCheck,
   CircleX,
+  ChevronDown,
 } from "lucide-solid";
 import type { AppConfig } from "@/lib/types";
 import { hasApiKey, saveApiKey, saveConfig, getModels, vizTestConnection } from "@/lib/ipc";
@@ -58,6 +59,17 @@ export default function SettingsModal(props: Props) {
   const [models, setModels] = createSignal<Array<{ id: string; name: string }>>([]);
   const [modelsLoading, setModelsLoading] = createSignal(false);
   const [testState, setTestState] = createSignal<TestState>({ kind: "idle" });
+  const [modelMenuOpen, setModelMenuOpen] = createSignal(false);
+  let modelMenuRef: HTMLDivElement | undefined;
+
+  function onDocClick(e: MouseEvent) {
+    if (!modelMenuOpen()) return;
+    if (modelMenuRef && !modelMenuRef.contains(e.target as Node)) {
+      setModelMenuOpen(false);
+    }
+  }
+  document.addEventListener("mousedown", onDocClick);
+  onCleanup(() => document.removeEventListener("mousedown", onDocClick));
   const tabRefs: Partial<Record<Tab, HTMLDivElement>> = {};
 
   // Reset the test result whenever host or port changes so a stale badge
@@ -283,24 +295,74 @@ export default function SettingsModal(props: Props) {
                     Loading models…
                   </div>
                 ) : models().length > 0 ? (
-                  <select
-                    class={`${INPUT} appearance-none cursor-pointer`}
-                    ref={(el) => requestAnimationFrame(() => el.focus())}
-                    value={fields.model}
-                    onChange={(e) => setFields("model", e.currentTarget.value)}
-                    onKeyDown={handleKeyDown}
-                  >
-                    <For each={models()}>
-                      {(m) => (
-                        <option value={m.id}>
-                          {m.name} ({m.id})
-                        </option>
-                      )}
-                    </For>
-                    {!models().some((m) => m.id === fields.model) && (
-                      <option value={fields.model}>{fields.model} (current)</option>
-                    )}
-                  </select>
+                  <div class="relative" ref={modelMenuRef}>
+                    <button
+                      type="button"
+                      ref={(el) => requestAnimationFrame(() => el.focus())}
+                      onClick={() => setModelMenuOpen((v) => !v)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape" && modelMenuOpen()) {
+                          e.stopPropagation();
+                          setModelMenuOpen(false);
+                          return;
+                        }
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setModelMenuOpen((v) => !v);
+                          return;
+                        }
+                        handleKeyDown(e);
+                      }}
+                      class={`${INPUT} appearance-none cursor-pointer pr-9 text-left flex items-center`}
+                    >
+                      <span class="truncate">
+                        {(() => {
+                          const m = models().find((x) => x.id === fields.model);
+                          return m ? `${m.name} (${m.id})` : `${fields.model} (current)`;
+                        })()}
+                      </span>
+                      <ChevronDown
+                        size={16}
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-tx-3 pointer-events-none transition-transform"
+                        classList={{ "rotate-180": modelMenuOpen() }}
+                      />
+                    </button>
+                    <Show when={modelMenuOpen()}>
+                      <div
+                        role="listbox"
+                        class="absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-60 overflow-y-auto rounded-lg border border-border-lit bg-surface shadow-lg py-1.5"
+                      >
+                        <For each={models()}>
+                          {(m) => (
+                            <div
+                              role="option"
+                              aria-selected={fields.model === m.id}
+                              onClick={() => {
+                                setFields("model", m.id);
+                                setModelMenuOpen(false);
+                              }}
+                              class="px-4 py-2.5 text-[14px] font-ui cursor-pointer transition-colors hover:bg-hover"
+                              classList={{
+                                "text-blue font-semibold": fields.model === m.id,
+                                "text-tx": fields.model !== m.id,
+                              }}
+                            >
+                              {m.name} ({m.id})
+                            </div>
+                          )}
+                        </For>
+                        <Show when={!models().some((m) => m.id === fields.model)}>
+                          <div
+                            role="option"
+                            aria-selected={true}
+                            class="px-4 py-2.5 text-[14px] font-ui text-blue font-semibold"
+                          >
+                            {fields.model} (current)
+                          </div>
+                        </Show>
+                      </div>
+                    </Show>
+                  </div>
                 ) : (
                   <input
                     type="text"

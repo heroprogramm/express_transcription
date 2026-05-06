@@ -10,7 +10,13 @@ import {
   LoaderCircle,
   WifiOff,
   TriangleAlert,
+  Minus,
+  Plus,
 } from "lucide-solid";
+
+const SPEED_MIN = 0.1;
+const SPEED_MAX = 1.0;
+const SPEED_STEP = 0.05;
 import { type VizStatus, VizConnection } from "@/lib/types";
 import { useAutoScroll } from "@/lib/use-auto-scroll";
 import { showToast } from "@/components/Toast";
@@ -127,12 +133,17 @@ export default function VizPane(props: Props) {
   }
 
   async function handleSpeedChange(value: number) {
+    const clamped = Math.min(SPEED_MAX, Math.max(SPEED_MIN, Math.round(value * 100) / 100));
     try {
-      await vizSetSpeed(value);
-      setStatus((prev) => ({ ...prev, scrollSpeed: value }));
+      await vizSetSpeed(clamped);
+      setStatus((prev) => ({ ...prev, scrollSpeed: clamped }));
     } catch (err) {
       toastError("Set Speed", err);
     }
+  }
+
+  function bumpSpeed(delta: number) {
+    handleSpeedChange(status().scrollSpeed + delta);
   }
 
   async function handleReconnect() {
@@ -288,26 +299,46 @@ export default function VizPane(props: Props) {
           classList={{ "opacity-25": !connected() }}
         >
           <span class="text-[14px] text-tx-3 font-ui">Speed</span>
+          <button
+            type="button"
+            onClick={() => bumpSpeed(-SPEED_STEP)}
+            disabled={!connected() || status().scrollSpeed <= SPEED_MIN + 1e-6}
+            class="flex items-center justify-center w-6 h-6 rounded-md border border-border-lit bg-surface text-tx-2 hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            title="Decrease speed"
+          >
+            <Minus size={12} />
+          </button>
           <div class="relative w-24 h-6 flex items-center">
             <div class="absolute left-0 right-0 h-1 rounded-full bg-border-lit">
               <div
                 class="h-full rounded-full bg-blue"
-                style={{ width: `${((status().scrollSpeed - 0.1) / 0.9) * 100}%` }}
+                style={{
+                  width: `${((status().scrollSpeed - SPEED_MIN) / (SPEED_MAX - SPEED_MIN)) * 100}%`,
+                }}
               />
             </div>
             <input
               type="range"
-              min="0.1"
-              max="1.0"
-              step="0.05"
+              min={SPEED_MIN}
+              max={SPEED_MAX}
+              step={SPEED_STEP}
               value={status().scrollSpeed}
               disabled={!connected()}
               onInput={(e) => handleSpeedChange(Number(e.currentTarget.value))}
               class="capsule-slider absolute inset-0 w-full"
             />
           </div>
-          <span class="text-[15px] text-tx-2 font-mono font-semibold tabular-nums w-6 text-right">
-            {status().scrollSpeed.toFixed(1)}
+          <button
+            type="button"
+            onClick={() => bumpSpeed(SPEED_STEP)}
+            disabled={!connected() || status().scrollSpeed >= SPEED_MAX - 1e-6}
+            class="flex items-center justify-center w-6 h-6 rounded-md border border-border-lit bg-surface text-tx-2 hover:bg-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            title="Increase speed"
+          >
+            <Plus size={12} />
+          </button>
+          <span class="text-[15px] text-tx-2 font-mono font-semibold tabular-nums w-8 text-right">
+            {status().scrollSpeed.toFixed(2)}
           </span>
         </div>
 
