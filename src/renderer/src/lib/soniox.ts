@@ -29,6 +29,8 @@ export interface SonioxCallbacks {
   onStateChange: (state: "started" | "stopped" | "loading" | "reconnecting") => void;
 }
 
+const MAX_RECONNECT_ATTEMPTS = 5;
+
 // ── State machine ──
 const SonioxState = {
   Idle: "idle",
@@ -51,14 +53,6 @@ let finalTranslatedParts: string[] = [];
 let firstOriginalStartMs: number | undefined;
 let lastOriginalEndMs: number | undefined;
 let firstTranslatedStartMs: number | undefined;
-
-// ── Reconnection state ──
-const MAX_RETRIES = 5;
-let retryCount = 0;
-let retryTimer: ReturnType<typeof setTimeout> | null = null;
-let activeConfig: AppConfig | null = null;
-let activeCallbacks: SonioxCallbacks | null = null;
-let activeMicDeviceId: string | undefined;
 
 // ── IPC batching ──
 let logQueue: { ts: string; text: string }[] = [];
@@ -103,45 +97,6 @@ export function getWordCount(): number {
   return wordCount;
 }
 
-function isTransientError(err: Error): boolean {
-  if (err instanceof ConnectionError || err instanceof NetworkError) return true;
-  // 503: server-side early termination — "Cannot continue request (code N)"
-  return /cannot continue request/i.test(err.message);
-}
-
-function retryDelayMs(): number {
-  return Math.min(SONIOX_BASE_DELAY_MS * 2 ** retryCount, 16000);
-}
-
-function attemptReconnect(): void {
-  if (isInactive() || !activeConfig || !activeCallbacks || retryTimer) return;
-  if (retryCount >= MAX_RETRIES) {
-    activeCallbacks.onError(`Connection lost after ${MAX_RETRIES} reconnection attempts`, false);
-    state = SonioxState.Idle;
-    activeCallbacks.onStateChange("stopped");
-    resetRetryState();
-    return;
-  }
-
-  const delay = retryDelayMs();
-  retryCount++;
-  activeCallbacks.onStateChange("reconnecting");
-
-  retryTimer = setTimeout(() => {
-    retryTimer = null;
-    if (isInactive() || !activeConfig || !activeCallbacks) return;
-    connectRecording(activeConfig, activeCallbacks, activeMicDeviceId);
-  }, delay);
-}
-
-function resetRetryState(): void {
-  retryCount = 0;
-  if (retryTimer) {
-    clearTimeout(retryTimer);
-    retryTimer = null;
-  }
-}
-
 function userFacingErrorMessage(err: Error): string {
   if (/no soniox api key/i.test(err.message)) return "No Soniox API key configured.";
   if (err instanceof AuthError) return "Invalid or expired API key. Please update it in Settings.";
@@ -162,12 +117,32 @@ function userFacingErrorMessage(err: Error): string {
   return err.message;
 }
 
-function connectRecording(
+/**
+ * Initialize the Soniox client and begin real-time transcription.
+ * The SDK handles automatic reconnection on transient network errors via
+ * the `auto_reconnect` option; the `error` event only fires after retries
+ * are exhausted or for non-retriable errors.
+ */
+export async function startTranscription(
   config: AppConfig,
   callbacks: SonioxCallbacks,
   micDeviceId?: string,
-): void {
-  if (!client) return;
+): Promise<void> {
+  if (state !== SonioxState.Idle) return;
+  state = SonioxState.Connecting;
+  callbacks.onStateChange("loading");
+  wordCount = 0;
+  startTime = 0;
+  resetTokenAccumulators();
+
+  client = new SonioxClient({
+    config: async () => {
+      const api_key = await getApiKey();
+      if (!api_key) throw new Error("No Soniox API key configured");
+      return { api_key };
+    },
+    permissions: new BrowserPermissionResolver(),
+  });
 
   const source = new MicrophoneSource(
     micDeviceId ? { constraints: { deviceId: { exact: micDeviceId } } } : undefined,
@@ -233,17 +208,10 @@ function connectRecording(
 
   function handleError(err: Error): void {
     if (isInactive()) return;
-
-    if (isTransientError(err) && retryCount < MAX_RETRIES) {
-      attemptReconnect();
-      return;
-    }
-
     const isApiKeyError = err instanceof AuthError || /no soniox api key/i.test(err.message);
     callbacks.onError(userFacingErrorMessage(err), isApiKeyError);
     state = SonioxState.Idle;
     callbacks.onStateChange("stopped");
-    resetRetryState();
   }
 
   recording = client.realtime.record({
@@ -256,57 +224,28 @@ function connectRecording(
       target_language: config.soniox.translate_to,
     },
     source,
+    auto_reconnect: true,
+    max_reconnect_attempts: MAX_RECONNECT_ATTEMPTS,
+    reconnect_base_delay_ms: SONIOX_BASE_DELAY_MS,
   });
 
   recording.on("connected", () => {
-    if (retryCount > 0) {
-      retryCount = 0;
-    } else {
+    if (state === SonioxState.Connecting) {
       startTime = Date.now();
+      state = SonioxState.Recording;
+      callbacks.onStateChange("started");
     }
-    state = SonioxState.Recording;
-    callbacks.onStateChange("started");
   });
+  recording.on("reconnecting", () => callbacks.onStateChange("reconnecting"));
+  recording.on("reconnected", () => callbacks.onStateChange("started"));
   recording.on("result", handleResult);
   recording.on("finished", () => {
-    if (state === SonioxState.Recording && retryCount === 0) {
+    if (state === SonioxState.Recording) {
       state = SonioxState.Idle;
       callbacks.onStateChange("stopped");
     }
   });
   recording.on("error", handleError);
-}
-
-/**
- * Initialize the Soniox client and begin real-time transcription.
- * Handles automatic reconnection on transient network errors.
- */
-export async function startTranscription(
-  config: AppConfig,
-  callbacks: SonioxCallbacks,
-  micDeviceId?: string,
-): Promise<void> {
-  if (state !== SonioxState.Idle) return;
-  state = SonioxState.Connecting;
-  callbacks.onStateChange("loading");
-  wordCount = 0;
-  resetTokenAccumulators();
-  resetRetryState();
-
-  activeConfig = config;
-  activeCallbacks = callbacks;
-  activeMicDeviceId = micDeviceId;
-
-  client = new SonioxClient({
-    config: async () => {
-      const api_key = await getApiKey();
-      if (!api_key) throw new Error("No Soniox API key configured");
-      return { api_key };
-    },
-    permissions: new BrowserPermissionResolver(),
-  });
-
-  connectRecording(config, callbacks, micDeviceId);
 }
 
 function cleanup(): void {
@@ -316,10 +255,6 @@ function cleanup(): void {
   }
   flushLogQueue();
   resetTokenAccumulators();
-  resetRetryState();
-  activeConfig = null;
-  activeCallbacks = null;
-  activeMicDeviceId = undefined;
 }
 
 /** Gracefully stop the active recording and flush pending log entries. */
