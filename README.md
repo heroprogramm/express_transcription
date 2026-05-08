@@ -23,7 +23,7 @@ Real-time speech transcription and translation desktop app. ExpressText captures
 
 | Layer           | Technology                                                                    |
 | --------------- | ----------------------------------------------------------------------------- |
-| Desktop         | [Electron](https://www.electronjs.org/) 41                                   |
+| Desktop         | [Electron](https://www.electronjs.org/) 42                                   |
 | Tooling         | [electron-vite](https://electron-vite.org/) 5                                |
 | UI Framework    | [SolidJS](https://www.solidjs.com/) 1.9                                      |
 | Styling         | [Tailwind CSS](https://tailwindcss.com/) 4                                   |
