@@ -47,6 +47,18 @@ Real-time speech transcription and translation desktop app. ExpressText captures
 - [Bun](https://bun.sh/) (package manager and script runner)
 - A [Soniox API key](https://soniox.com/) for speech-to-text
 
+### Install Bun
+
+```bash
+# macOS / Linux
+curl -fsSL https://bun.sh/install | bash
+
+# Windows (PowerShell)
+powershell -c "irm bun.sh/install.ps1 | iex"
+```
+
+See the [Bun installation docs](https://bun.sh/docs/installation) for alternative methods (Homebrew, npm, Scoop).
+
 ### Install dependencies
 
 ```bash
