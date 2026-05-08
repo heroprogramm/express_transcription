@@ -117,6 +117,14 @@ Output files are written to the Electron `userData` directory:
 - **Windows** -- `%APPDATA%/express-text/`
 - **Linux** -- `~/.config/express-text/`
 
+## Documentation
+
+- [Architecture](docs/architecture.md) -- high-level architecture, data flow, and lifecycle
+- [Components](docs/components.md) -- component tree and responsibilities
+- [Files](docs/files.md) -- catalog of every source file's purpose
+- [IPC Protocol](docs/ipc-protocol.md) -- full IPC channel reference
+- [Viz Engine](docs/viz-engine.md) -- Viz Engine TCP protocol and integration
+
 ## Project Structure
 
 ```
