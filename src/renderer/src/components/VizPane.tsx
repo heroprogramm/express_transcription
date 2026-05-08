@@ -1,7 +1,7 @@
 import { createSignal, onMount, onCleanup, For, Show } from "solid-js";
 import {
   ChevronsDown,
-  Square,
+  Pause,
   RotateCcw,
   RotateCw,
   MonitorPlay,
@@ -231,7 +231,7 @@ export default function VizPane(props: Props) {
               when={!animating()}
               fallback={
                 <>
-                  <Square size={14} /> Stop
+                  <Pause size={14} fill="currentColor" /> Pause
                 </>
               }
             >
