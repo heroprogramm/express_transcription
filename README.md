@@ -23,20 +23,20 @@ Real-time speech transcription and translation desktop app. ExpressText captures
 
 | Layer           | Technology                                                                    |
 | --------------- | ----------------------------------------------------------------------------- |
-| Desktop         | [Electron](https://www.electronjs.org/) 42                                   |
-| Tooling         | [electron-vite](https://electron-vite.org/) 5                                |
-| UI Framework    | [SolidJS](https://www.solidjs.com/) 1.9                                      |
-| Styling         | [Tailwind CSS](https://tailwindcss.com/) 4                                   |
-| Icons           | [lucide-solid](https://lucide.dev/)                                          |
-| Language        | [TypeScript](https://www.typescriptlang.org/) 6                              |
-| Speech-to-Text  | [Soniox Web SDK](https://soniox.com/)                                        |
-| Persistence     | [electron-store](https://github.com/sindresorhus/electron-store)             |
-| Auto-updates    | [electron-updater](https://www.electron.build/auto-update)                   |
-| Packaging       | [electron-builder](https://www.electron.build/)                              |
-| Package Manager | [Bun](https://bun.sh/)                                                       |
-| Linting         | [oxlint](https://oxc-project.github.io/)                                     |
-| Formatting      | [oxfmt](https://oxc-project.github.io/)                                      |
-| Git Hooks       | [Lefthook](https://github.com/evilmartians/lefthook)                         |
+| Desktop         | [Electron](https://www.electronjs.org/) 42                                    |
+| Tooling         | [electron-vite](https://electron-vite.org/) 5                                 |
+| UI Framework    | [SolidJS](https://www.solidjs.com/) 1.9                                       |
+| Styling         | [Tailwind CSS](https://tailwindcss.com/) 4                                    |
+| Icons           | [lucide-solid](https://lucide.dev/)                                           |
+| Language        | [TypeScript](https://www.typescriptlang.org/) 6                               |
+| Speech-to-Text  | [Soniox Web SDK](https://soniox.com/)                                         |
+| Persistence     | [electron-store](https://github.com/sindresorhus/electron-store)              |
+| Auto-updates    | [electron-updater](https://www.electron.build/auto-update)                    |
+| Packaging       | [electron-builder](https://www.electron.build/)                               |
+| Package Manager | [Bun](https://bun.sh/)                                                        |
+| Linting         | [oxlint](https://oxc-project.github.io/)                                      |
+| Formatting      | [oxfmt](https://oxc-project.github.io/)                                       |
+| Git Hooks       | [Lefthook](https://github.com/evilmartians/lefthook)                          |
 | CI/CD           | GitHub Actions (cross-platform build and release)                             |
 
 ## Getting Started
@@ -97,7 +97,7 @@ Settings are managed via `electron-store` with sensible defaults. Configurable v
 
 | Key                                | Default                                          | Description                                                                     |
 | ---------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------- |
-| `soniox.language`                  | `ur`                                             | Source language code (e.g., `ur` for Urdu)                                     |
+| `soniox.language`                  | `ur`                                             | Source language code (e.g., `ur` for Urdu)                                      |
 | `soniox.model`                     | `stt-rt-v4`                                      | Soniox model identifier                                                         |
 | `soniox.translate_to`              | `en`                                             | Target translation language code (e.g., `en` for English)                       |
 | `soniox.endpoint_detection`        | `false`                                          | Enable Soniox endpoint detection for finalising utterances                      |
