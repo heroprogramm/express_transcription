@@ -136,7 +136,7 @@ Renders a single translation entry row within the TranslationPane. Manages its o
 **Behavior:**
 - Viz Engine control panel replacing the former read-only OutputPane
 - Polls `vizGetStatus` on mount and subscribes to `onVizStatus` push events for live state
-- **Controls:** Load Scene, IN/OUT (continue), Scroll/Stop toggle (Ctrl+Space), speed slider (0.1–1.0), Hard Reset
+- **Controls:** Load Scene, IN/OUT (continue), Scroll/Stop toggle (Ctrl+Space), speed slider with `−` / `+` step buttons (0.1–1.0), Reconnect, Hard Reset
 - Connection status indicator (green dot = connected, gray = disconnected)
 - Slot counter shows current text index out of 15 slots when scene is loaded
 - Scene-state chips driven by the `SceneState` enum (`Unknown` / `Missing` / `Wrong` / `Ok` / `Loose`), all rendered in a single centered slot before the speed control (the states are mutually exclusive): yellow "Wrong scene" and red "No scene loaded" warnings on mismatch, prominent neutral pill showing the loaded scene name on `Ok`/`Loose`. Each chip carries a custom `chip-tooltip` (data-tooltip + CSS-only hover popover via anchor positioning) that escapes the surrounding `overflow:hidden` containers — see [viz-engine.md](./viz-engine.md#scene-detection-loadedscenepath)
@@ -184,9 +184,9 @@ Renders a single translation entry row within the TranslationPane. Manages its o
 **Behavior:**
 - Lazy-loaded via `solid-js/lazy`
 - Three tabs: **Soniox**, **Output**, **Viz Engine**
-- **Soniox tab:** model (text), endpoint detection (checkbox), API key (password, leave empty to keep current)
+- **Soniox tab:** model (custom dropdown populated via the `get-models` IPC, with the current value preserved as a "(current)" entry if not in the fetched list), endpoint detection (checkbox), API key (password, leave empty to keep current)
 - **Output tab:** review time (numeric, seconds)
-- **Viz Engine tab:** host (text), port (numeric, 1–65535), scene path (text), default scroll speed (0.1–1.0), auto-pause on idle (checkbox + seconds)
+- **Viz Engine tab:** host (text), port (numeric, 1–65535), scene path (text), default scroll speed (0.1–1.0), auto-pause on idle (checkbox + seconds), **Test Connection** button — issues a one-shot TCP probe via `viz:test-connection` against the entered host/port and renders an inline ok/elapsed-ms or error result without touching the persistent cmd socket
 - Validates model non-empty, review time non-negative, port valid, scroll speed in range before saving
 - Enter saves, Escape closes; clicking backdrop closes
 - Saves API key and config via separate IPC calls

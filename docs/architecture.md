@@ -178,13 +178,15 @@ The feed file is written atomically (write to `feed.txt.tmp`, then `rename`) to 
 
 ## Auto-Reconnection Logic
 
-When the Soniox WebSocket connection drops with a transient error (`ConnectionError` or `NetworkError`), the client automatically attempts to reconnect:
+Reconnection is delegated to the Soniox SDK via the `auto_reconnect` recording option — there is no in-app retry loop. When `startTranscription` constructs the recording, it passes:
 
-1. The error handler checks `isTransientError()` — only `ConnectionError` and `NetworkError` qualify.
-2. If `retryCount < MAX_RETRIES` (5), `attemptReconnect()` is called.
-3. The delay follows exponential backoff: `min(1000 * 2^retryCount, 16000)` ms — so 1 s, 2 s, 4 s, 8 s, 16 s.
-4. The UI transitions to "Reconnecting..." status during retry.
-5. On successful reconnect, `retryCount` resets to 0 and the session timer continues from where it left off (not reset).
-6. If all 5 retries are exhausted, an error is reported and the session stops.
-7. `AuthError` or API key errors are never retried — they immediately stop the session and open the settings modal.
-8. User-initiated stop (`stopTranscription`) sets a `cancelled` flag that prevents any pending retry timers from firing.
+- `auto_reconnect: true`
+- `max_reconnect_attempts: MAX_RECONNECT_ATTEMPTS` (5)
+- `reconnect_base_delay_ms: SONIOX_BASE_DELAY_MS` (1000)
+
+The SDK handles transient WebSocket failures internally with exponential backoff and surfaces lifecycle events the app subscribes to:
+
+1. While retries are in flight, the recording emits `reconnecting` — the app forwards this to the UI as the `"reconnecting"` state.
+2. On a successful reconnect, the recording resumes streaming and emits `started`; the session timer continues uninterrupted.
+3. The `error` event only fires once retries are exhausted or for non-retriable errors (e.g. `AuthError`, `BadRequestError`, `QuotaError`). Auth/API-key errors immediately stop the session and open the Settings modal.
+4. User-initiated stop (`stopTranscription`) cancels the recording via the SDK, which also cancels any pending reconnect attempts.
