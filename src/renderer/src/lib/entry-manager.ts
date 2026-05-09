@@ -35,6 +35,11 @@ export function createEntryManager(reviewTimeMs: () => number) {
 
   let entryId = 0;
   let nextWriteIndex = 0;
+  // Stored index = "logical" position (current array index + indexOffset).
+  // On shift, indexOffset++ so existing stored indices still resolve to the
+  // correct (now-decremented) array index without rewriting the map.
+  const idToIndex = new Map<number, number>();
+  let indexOffset = 0;
   const entryTimers = new Map<number, ReturnType<typeof setTimeout>>();
   const editingText = new Map<number, string>();
   let editPauseStart: number | null = null;
@@ -46,7 +51,8 @@ export function createEntryManager(reviewTimeMs: () => number) {
   // ── Internal helpers ──
 
   function indexOfEntry(id: number): number {
-    return transEntries.findIndex((e) => e.id === id);
+    const stored = idToIndex.get(id);
+    return stored === undefined ? -1 : stored - indexOffset;
   }
 
   function updateEntryStatus(id: number, status: EntryStatus, text?: string): void {
@@ -189,9 +195,13 @@ export function createEntryManager(reviewTimeMs: () => number) {
       setTransEntries(
         produce((draft) => {
           if (draft.length >= MAX_ENTRIES) {
+            const removedId = draft[0].id;
             draft.shift();
+            idToIndex.delete(removedId);
+            indexOffset++;
             if (nextWriteIndex > 0) nextWriteIndex--;
           }
+          idToIndex.set(thisId, draft.length + indexOffset);
           draft.push({
             id: thisId,
             timestamp,
@@ -283,6 +293,8 @@ export function createEntryManager(reviewTimeMs: () => number) {
   function clear(): void {
     clearAllTimers();
     nextWriteIndex = 0;
+    idToIndex.clear();
+    indexOffset = 0;
     batch(() => {
       setSttEntries(reconcile([]));
       setSttPartial("");

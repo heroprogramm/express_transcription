@@ -280,6 +280,9 @@ async function reconcileLoadedScene(): Promise<void> {
 
 // ── Scroll engine ──
 
+const SCROLL_CMD_PREFIX = Buffer.from("0 MAIN_SCENE*FUNCTION*DataPool*Data SET ScrollY=", "utf-8");
+const SCROLL_CMD_SUFFIX = Buffer.from(";\0", "utf-8");
+
 function connectScrollSocket(): Promise<void> {
   if (!vizConfig) return Promise.reject(new Error("No viz config"));
 
@@ -320,6 +323,14 @@ function scheduleScrollReconnect(): void {
   }, VIZ_RECONNECT_DELAY_MS);
 }
 
+function writeScrollPosition(socket: net.Socket): void {
+  socket.cork();
+  socket.write(SCROLL_CMD_PREFIX);
+  socket.write(yPos.toFixed(2), "utf-8");
+  socket.write(SCROLL_CMD_SUFFIX);
+  socket.uncork();
+}
+
 function startScrollLoop(): void {
   if (scrollInterval) return;
   lastTickTime = performance.now();
@@ -332,8 +343,7 @@ function startScrollLoop(): void {
     lastTickTime = now;
 
     yPos += scrollSpeed * (elapsed / VIZ_SCROLL_INTERVAL_MS);
-    const cmd = `0 MAIN_SCENE*FUNCTION*DataPool*Data SET ScrollY=${yPos.toFixed(2)};\0`;
-    scrollSocket.write(Buffer.from(cmd, "utf-8"));
+    writeScrollPosition(scrollSocket);
   }, VIZ_SCROLL_INTERVAL_MS);
 }
 

@@ -1,6 +1,7 @@
 import { safeStorage } from "electron";
 import Store from "electron-store";
 import type { AppConfig } from "./config";
+import { log, LogLevel } from "./logger";
 
 const store = new Store();
 
@@ -9,11 +10,23 @@ const STORE_KEY_CONFIG = "app_config";
 
 // ── API Key (encrypted via OS keychain) ──
 
-/** Retrieves and decrypts the Soniox API key from the OS keychain. */
+/**
+ * Retrieves and decrypts the Soniox API key from the OS keychain.
+ * Returns null if no key is stored or if the stored ciphertext can't be
+ * decrypted (corrupted entry, OS keychain unavailable, encrypted by a
+ * different user/install). Callers treat null as "no key configured".
+ */
 export function getApiKey(): string | null {
   const stored = store.get(STORE_KEY_API) as string | undefined;
   if (!stored) return null;
-  return safeStorage.decryptString(Buffer.from(stored, "base64"));
+  try {
+    return safeStorage.decryptString(Buffer.from(stored, "base64"));
+  } catch (err) {
+    log(LogLevel.Error, "store:decrypt-api-key-failed", {
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
 }
 
 /** Encrypts and stores the Soniox API key via the OS keychain. Throws on empty or oversized keys. */

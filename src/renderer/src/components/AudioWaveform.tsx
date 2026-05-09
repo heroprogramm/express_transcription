@@ -9,6 +9,7 @@ const BAR_GAP = 1.5;
 const MIN_BAR_H = 3;
 const HEIGHT = 22;
 const TOTAL_W = BAR_COUNT * (BAR_WIDTH + BAR_GAP);
+const docStyle = getComputedStyle(document.documentElement);
 
 /** Props for the {@link AudioWaveform} component. */
 interface Props {
@@ -30,11 +31,13 @@ export default function AudioWaveform(props: Props) {
     if (!ctx) return;
     const dpr = window.devicePixelRatio || 1;
 
+    ctx.fillStyle = docStyle.getPropertyValue("--blue").trim() || "#50a0d0";
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const midY = (HEIGHT * dpr) / 2;
     const maxBarH = HEIGHT - 2;
 
+    ctx.beginPath();
     for (let i = 0; i < BAR_COUNT; i++) {
       const level = ring[(head + i) % BAR_COUNT];
       const barH = Math.max(MIN_BAR_H, level * maxBarH) * dpr;
@@ -42,10 +45,9 @@ export default function AudioWaveform(props: Props) {
       const y = midY - barH / 2;
       const w = BAR_WIDTH * dpr;
 
-      ctx.beginPath();
       ctx.roundRect(x, y, w, barH, w / 2);
-      ctx.fill();
     }
+    ctx.fill();
   }
 
   function tick() {
@@ -62,9 +64,6 @@ export default function AudioWaveform(props: Props) {
 
       ctx = canvas.getContext("2d");
       if (!ctx) return;
-
-      ctx.fillStyle =
-        getComputedStyle(document.documentElement).getPropertyValue("--blue").trim() || "#50a0d0";
 
       ring.fill(0);
       head = 0;
