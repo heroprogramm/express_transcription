@@ -45,13 +45,30 @@ const RECONNECT_FAIL_THRESHOLD = 3;
 let autoPaused = false;
 let idleTimer: ReturnType<typeof setTimeout> | null = null;
 let idlePauseMs = 10_000;
+let isEditing = false;
+
+// ── AUTO / MANUAL mode ──
+let autoScrollMode = true;
 
 const MAX_HISTORY = 30;
-const SLOT_COUNT = 15;
-
-// Viz command-protocol cmd_id: any non-negative integer requests a response
-// (the engine echoes it back for correlation); -1 signals fire-and-forget.
+const SLOT_COUNT = 30;
 const CMD_ID_SCENE_QUERY = 1;
+
+// ── Auto adjustment state ──
+let lastTextTime = 0;
+let avgTextIntervalMs = 2000;
+let manualSpeedOverride = false;
+let reviewTimeMs = 0;
+let autoDelayMs = 1000;
+
+// From Viz Artist measurements
+const BOX_SPACING_UNITS = 24.555;
+const FRAMES_PER_SECOND = 1000 / VIZ_SCROLL_INTERVAL_MS; // 50fps
+const SAFETY_FACTOR = 0.8;
+
+// ── Send queue ──
+let sendQueue: string[] = [];
+let isSending = false;
 
 let history: VizLogEntry[] = [];
 
@@ -59,7 +76,7 @@ let history: VizLogEntry[] = [];
 
 function timeStr(): string {
   const d = new Date();
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "00")}`;
 }
 
 function addLog(msg: string, type: VizLogEntry["type"] = "info"): void {
@@ -70,6 +87,67 @@ function addLog(msg: string, type: VizLogEntry["type"] = "info"): void {
 function pushStatus(): void {
   if (!win || win.isDestroyed()) return;
   win.webContents.send("viz:status", getVizStatus());
+}
+
+function getDelayMs(): number {
+  if (autoScrollMode) {
+    return autoDelayMs;
+  }
+  return vizConfig?.send_delay_ms ?? 1000;
+}
+
+function autoAdjustSpeed(): void {
+  if (!autoScrollMode) return;
+  if (manualSpeedOverride) return;
+
+  const now = Date.now();
+
+  if (lastTextTime > 0) {
+    const interval = now - lastTextTime;
+    const realInterval = Math.max(100, interval - reviewTimeMs);
+
+    if (realInterval >= 100 && realInterval <= 10000) {
+      if (realInterval < avgTextIntervalMs) {
+        avgTextIntervalMs = avgTextIntervalMs * 0.5 + realInterval * 0.5;
+      } else {
+        avgTextIntervalMs = avgTextIntervalMs * 0.8 + realInterval * 0.2;
+      }
+
+      // ── Auto adjust scroll speed ──
+      const idealUnitsPerSecond =
+        (BOX_SPACING_UNITS / (avgTextIntervalMs / 1000)) * SAFETY_FACTOR;
+      const idealSpeed = idealUnitsPerSecond / FRAMES_PER_SECOND;
+      const newSpeed = Math.min(1.0, Math.max(0.1, idealSpeed));
+
+      if (Math.abs(newSpeed - scrollSpeed) > 0.02) {
+        scrollSpeed = newSpeed;
+        addLog(
+          `Auto: speed=${scrollSpeed.toFixed(2)} interval=${Math.round(avgTextIntervalMs)}ms review=${Math.round(reviewTimeMs)}ms`,
+          "info",
+        );
+        pushStatus();
+      }
+
+      // ── Auto adjust send delay ──
+      const newDelay = Math.round(avgTextIntervalMs * 0.5);
+      const clampedDelay = Math.min(3000, Math.max(300, newDelay));
+      if (Math.abs(clampedDelay - autoDelayMs) > 50) {
+        autoDelayMs = clampedDelay;
+        addLog(`Auto: delay=${clampedDelay}ms`, "info");
+        pushStatus();
+      }
+
+      // ── Auto adjust idle timeout ──
+      const autoIdleMs = Math.round(avgTextIntervalMs * 2);
+      const clampedIdle = Math.min(10000, Math.max(2000, autoIdleMs));
+      if (Math.abs(clampedIdle - idlePauseMs) > 500) {
+        idlePauseMs = clampedIdle;
+        addLog(`Auto: idle=${Math.round(clampedIdle / 1000)}s`, "info");
+      }
+    }
+  }
+
+  lastTextTime = now;
 }
 
 // ── Persistent command socket ──
@@ -163,7 +241,7 @@ function scheduleCmdReconnect(): void {
   }, VIZ_RECONNECT_DELAY_MS);
 }
 
-// ── TCP communication (uses persistent socket) ──
+// ── TCP communication ──
 
 function vizTalk(cmd: string): Promise<string> {
   const terminated = cmd.endsWith("\0") ? cmd : `${cmd}\0`;
@@ -212,7 +290,6 @@ function vizTalk(cmd: string): Promise<string> {
   );
 }
 
-/** Send a fire-and-forget command — no waiting for response. */
 function vizSend(cmd: string): void {
   const terminated = cmd.endsWith("\0") ? cmd : `${cmd}\0`;
   ensureCmdSocket()
@@ -220,7 +297,6 @@ function vizSend(cmd: string): void {
     .catch(() => {});
 }
 
-/** Build a batched DataPool SET command for multiple variables. */
 function batchDataPool(pairs: Array<[string, string]>): string {
   const sets = pairs.map(([v, val]) => `${v}=${val}`).join(";");
   return `0 MAIN_SCENE*FUNCTION*DataPool*Data SET ${sets};`;
@@ -228,7 +304,6 @@ function batchDataPool(pairs: Array<[string, string]>): string {
 
 // ── Scene detection ──
 
-/** Extract scene name from a Viz `MAIN_SCENE*NAME GET` response, e.g. "3 Translation_BB" → "Translation_BB". */
 function parseSceneResponse(resp: string): string | null {
   const trimmed = resp.trim();
   if (!trimmed) return null;
@@ -238,7 +313,6 @@ function parseSceneResponse(resp: string): string | null {
   return value;
 }
 
-/** Last segment of a slash-delimited Viz scene path. */
 function sceneLeaf(path: string): string | null {
   const last = path.split("/").pop();
   return last && last.length > 0 ? last : null;
@@ -258,7 +332,6 @@ function stopScenePolling(): void {
   }
 }
 
-/** Query Viz for the loaded scene name and update local state if changed. */
 async function reconcileLoadedScene(): Promise<void> {
   try {
     const resp = await vizTalk(`${CMD_ID_SCENE_QUERY} MAIN_SCENE*NAME GET`);
@@ -362,13 +435,20 @@ function resetLogic(): void {
   yPos = 0.0;
   currentIdx = 1;
   hasData = false;
-  if (idleTimer) {
-    clearTimeout(idleTimer);
-    idleTimer = null;
-  }
+  sendQueue = [];
+  isSending = false;
+  isEditing = false;
+  lastTextTime = 0;
+  avgTextIntervalMs = 2000;
+  manualSpeedOverride = false;
+  autoDelayMs = 1000;
+  // ── Auto stop disabled — idle timer commented out ──
+  // if (idleTimer) {
+  //   clearTimeout(idleTimer);
+  //   idleTimer = null;
+  // }
   stopScrollLoop();
 
-  // Batch all reset commands into a single TCP write
   const pairs: Array<[string, string]> = [
     ["ScrollY", "0"],
     ["DO_RESET", "1"],
@@ -381,45 +461,42 @@ function resetLogic(): void {
 
 // ── Public API ──
 
-/** Store config and BrowserWindow reference. No auto-connect. */
 export function vizInit(config: AppConfig["viz"], browserWindow: BrowserWindow): void {
   vizConfig = config;
   win = browserWindow;
   scrollSpeed = config.scroll_speed;
   idlePauseMs = secondsToMs(config.auto_pause_on_idle_seconds);
 
-  // Re-check the loaded scene whenever the window regains focus, so swaps
-  // made directly in the Viz Engine UI while the app was backgrounded
-  // surface promptly without waiting for the next poll tick.
   focusHandler = () => {
     if (connection === VizConnection.Connected) {
       reconcileLoadedScene().catch(() => {});
     }
   };
   browserWindow.on("focus", focusHandler);
-
-  // Eagerly open the cmd socket so the connection badge reflects real
-  // engine state from launch instead of staying "Disconnected" until the
-  // user triggers a Viz action. Failures funnel into the existing
-  // reconnect loop, so an unreachable engine is harmless.
   connectCmdSocket().catch(() => {});
 }
 
-/** Update config at runtime (e.g. after settings save). */
 export function vizUpdateConfig(config: AppConfig["viz"]): void {
   vizConfig = config;
-  scrollSpeed = config.scroll_speed;
   idlePauseMs = secondsToMs(config.auto_pause_on_idle_seconds);
 }
 
-/** Clean up all sockets and intervals on app quit. */
+export function vizSetReviewTime(seconds: number): void {
+  reviewTimeMs = seconds * 1000;
+  addLog(`Review time: ${seconds}s`, "info");
+}
+
 export function vizCleanup(): void {
   stopScrollLoop();
   stopScenePolling();
-  if (idleTimer) {
-    clearTimeout(idleTimer);
-    idleTimer = null;
-  }
+  sendQueue = [];
+  isSending = false;
+  isEditing = false;
+  // ── Auto stop disabled — idle timer commented out ──
+  // if (idleTimer) {
+  //   clearTimeout(idleTimer);
+  //   idleTimer = null;
+  // }
   if (cmdReconnectTimer) {
     clearTimeout(cmdReconnectTimer);
     cmdReconnectTimer = null;
@@ -439,12 +516,6 @@ export function vizCleanup(): void {
   connection = VizConnection.Idle;
 }
 
-/**
- * Force an immediate cmd-socket reconnect attempt. Cancels any pending
- * auto-reconnect timer, destroys a stale socket if present, resets the
- * failure counter so the user gets a fresh "connecting" state, and
- * kicks off a connect. No-op while a connect is already in flight.
- */
 export function vizReconnect(): void {
   if (!vizConfig) return;
   if (cmdReconnectTimer) {
@@ -457,19 +528,11 @@ export function vizReconnect(): void {
     cmdSocket = null;
   }
   reconnectFailures = 0;
-  // Surface "Reconnecting…" on the badge immediately so it matches the
-  // button the user just clicked. connectCmdSocket() preserves the
-  // Reconnecting state on its first push because wasConnected is true.
   connection = VizConnection.Reconnecting;
   pushStatus();
   connectCmdSocket().catch(() => {});
 }
 
-/**
- * One-shot TCP probe to the given host/port. Used by Settings to verify
- * the user's input before saving, without disturbing the persistent cmd
- * socket. Times out after VIZ_CONNECT_TIMEOUT_MS.
- */
 export function vizTestConnection(host: string, port: number): Promise<VizTestResult> {
   return new Promise((resolve) => {
     const start = performance.now();
@@ -497,7 +560,6 @@ export function vizTestConnection(host: string, port: number): Promise<VizTestRe
   });
 }
 
-/** Load the configured scene into Viz Engine. */
 export async function vizLoadScene(): Promise<void> {
   if (!vizConfig) return;
   await vizTalk(`-1 RENDERER*MAIN_LAYER SET_OBJECT SCENE*${vizConfig.scene_path}`);
@@ -509,34 +571,124 @@ export async function vizLoadScene(): Promise<void> {
   pushStatus();
 }
 
-/** Toggle Viz Director animation (IN/OUT). */
 export async function vizContinue(): Promise<void> {
   await vizTalk("-1 RENDERER*MAIN_LAYER*STAGE*DIRECTOR*Default CONTINUE");
   addLog("ACTION: Animation Toggle (IN/OUT)", "action");
 }
 
+// ── Auto stop disabled — resetIdleTimer commented out ──
 function resetIdleTimer(): void {
-  if (idleTimer) clearTimeout(idleTimer);
-  if (!isAnimating || !vizConfig?.auto_pause_on_idle) return;
-  idleTimer = setTimeout(() => {
-    if (!isAnimating) return;
-    autoPaused = true;
-    isAnimating = false;
-    stopScrollLoop();
-    vizSend(batchDataPool([["SHOW_WAIT", "1"]]));
-    addLog("SCROLL: Auto-paused (no new text)", "action");
-    pushStatus();
-  }, idlePauseMs);
+  // if (idleTimer) clearTimeout(idleTimer);
+  // if (!isAnimating || !vizConfig?.auto_pause_on_idle || !autoScrollMode) return;
+  // idleTimer = setTimeout(() => {
+  //   if (!isAnimating) return;
+  //   autoPaused = true;
+  //   isAnimating = false;
+  //   stopScrollLoop();
+  //   vizSend(batchDataPool([["SHOW_WAIT", "1"]]));
+  //   addLog("SCROLL: Stopped — last text on screen", "action");
+  //   pushStatus();
+  // }, idlePauseMs);
 }
 
-/** Send a text string to the next available Viz DataPool slot (single TCP write). */
+export function vizSetEditing(editing: boolean): void {
+  isEditing = editing;
+  addLog(editing ? "EDIT MODE: ON — text blocked" : "EDIT MODE: OFF — text sending", "info");
+}
+
+export function vizSetAutoMode(auto: boolean): void {
+  autoScrollMode = auto;
+
+  if (auto) {
+    manualSpeedOverride = false;
+    lastTextTime = 0;
+    avgTextIntervalMs = 2000;
+    autoDelayMs = 1000;
+    addLog("Mode: AUTO — speed + delay + scroll automatic", "action");
+  } else {
+    // ── Auto stop disabled — idle timer commented out ──
+    // if (idleTimer) {
+    //   clearTimeout(idleTimer);
+    //   idleTimer = null;
+    // }
+    addLog("Mode: MANUAL — operator controls everything", "action");
+  }
+
+  pushStatus();
+}
+
+async function processSendQueue(): Promise<void> {
+  if (isSending) return;
+  isSending = true;
+
+  while (sendQueue.length > 0) {
+    const text = sendQueue.shift()!;
+    const clean = text
+      .replace(/\n/g, " ")
+      .replace(/;/g, " ")
+      .replace(/,/g, "\u201A");
+
+    vizSend(
+      batchDataPool([
+        [`TXT${currentIdx}`, clean],
+        [`READY${currentIdx}`, "1"],
+      ]),
+    );
+
+    addLog(`[Box ${currentIdx}] ${clean}`);
+    hasData = true;
+    currentIdx = currentIdx === SLOT_COUNT ? 1 : currentIdx + 1;
+    pushStatus();
+
+    // Queue pressure boost — only when 3+ texts waiting
+    // queue=0-3 → no boost, normal auto speed
+    // queue=4   → 40% faster
+    // queue=5   → 50% faster
+    // queue=10+ → max speed 1.0
+    if (sendQueue.length > 3) {
+      const boost = 1.0 + (sendQueue.length * 0.1);
+      const boostedSpeed = Math.min(1.0, scrollSpeed * boost);
+      if (boostedSpeed > scrollSpeed) {
+        scrollSpeed = boostedSpeed;
+        addLog(`Queue boost x${sendQueue.length}: speed=${scrollSpeed.toFixed(2)}`, "info");
+        pushStatus();
+      }
+    }
+
+    const delayMs = getDelayMs();
+    await new Promise<void>((resolve) => setTimeout(resolve, delayMs));
+  }
+
+  isSending = false;
+
+  // Reset speed back to auto calculated after queue clears
+  // Prevents speed staying boosted after queue empties
+  if (autoScrollMode && !manualSpeedOverride) {
+    const idealUnitsPerSecond =
+      (BOX_SPACING_UNITS / (avgTextIntervalMs / 1000)) * SAFETY_FACTOR;
+    const resetSpeed = Math.min(0.6, Math.max(0.1, idealUnitsPerSecond / FRAMES_PER_SECOND));
+    if (Math.abs(resetSpeed - scrollSpeed) > 0.02) {
+      scrollSpeed = resetSpeed;
+      addLog(`Queue cleared: speed reset=${scrollSpeed.toFixed(2)}`, "info");
+      pushStatus();
+    }
+  }
+  // ── Auto stop disabled — resetIdleTimer commented out ──
+  // resetIdleTimer();
+}
+
 export function vizSendText(text: string): void {
-  // Resume scroll if it was auto-paused
-  if (autoPaused) {
+  if (isEditing) {
+    addLog("EDIT MODE — text not sent", "info");
+    return;
+  }
+
+  autoAdjustSpeed();
+
+  if (autoScrollMode && autoPaused) {
     autoPaused = false;
     isAnimating = true;
     vizSend(batchDataPool([["SHOW_WAIT", "0"]]));
-
     if (!scrollSocket || scrollSocket.destroyed) {
       connectScrollSocket()
         .then(() => startScrollLoop())
@@ -544,26 +696,13 @@ export function vizSendText(text: string): void {
     } else {
       startScrollLoop();
     }
-
     addLog("SCROLL: Resumed (new text)", "action");
   }
 
-  const clean = text.replace(/\n/g, " ").replace(/;/g, " ").replace(/,/g, "\u201A");
-  vizSend(
-    batchDataPool([
-      [`TXT${currentIdx}`, clean],
-      [`READY${currentIdx}`, "1"],
-    ]),
-  );
-  addLog(`[Box ${currentIdx}] ${clean}`);
-
-  hasData = true;
-  currentIdx = currentIdx === SLOT_COUNT ? 1 : currentIdx + 1;
-  resetIdleTimer();
-  pushStatus();
+  sendQueue.push(text);
+  processSendQueue();
 }
 
-/** Start or stop the scroll engine. */
 export async function vizToggleScroll(start: boolean): Promise<void> {
   if (start) {
     if (!hasData) return;
@@ -581,15 +720,17 @@ export async function vizToggleScroll(start: boolean): Promise<void> {
     isAnimating = true;
     vizSend(batchDataPool([["SHOW_WAIT", "0"]]));
     startScrollLoop();
-    resetIdleTimer();
+    // ── Auto stop disabled ──
+    // resetIdleTimer();
     addLog("SCROLL: Started", "action");
   } else {
     autoPaused = false;
     isAnimating = false;
-    if (idleTimer) {
-      clearTimeout(idleTimer);
-      idleTimer = null;
-    }
+    // ── Auto stop disabled — idle timer commented out ──
+    // if (idleTimer) {
+    //   clearTimeout(idleTimer);
+    //   idleTimer = null;
+    // }
     stopScrollLoop();
     vizSend(batchDataPool([["SHOW_WAIT", "1"]]));
     addLog("SCROLL: Stopped", "action");
@@ -598,12 +739,15 @@ export async function vizToggleScroll(start: boolean): Promise<void> {
   pushStatus();
 }
 
-/** Update the scroll speed. */
 export function vizSetSpeed(speed: number): void {
-  scrollSpeed = Math.max(0.1, Math.min(1.0, speed));
+  const normalized = speed / 10;
+  scrollSpeed = Math.max(0.1, Math.min(1.0, normalized));
+  manualSpeedOverride = true;
+  avgTextIntervalMs = 2000;
+  lastTextTime = 0;
+  addLog(`Speed manually set: ${Math.round(speed)}`, "info");
 }
 
-/** Hard reset: stop scroll, clear all slots, reset position. */
 export function vizHardReset(): void {
   resetLogic();
   isLoaded = false;
@@ -612,7 +756,6 @@ export function vizHardReset(): void {
   pushStatus();
 }
 
-/** Return the current Viz Engine state snapshot. */
 export function getVizStatus(): VizStatus {
   return {
     connection,
@@ -624,6 +767,8 @@ export function getVizStatus(): VizStatus {
     currentIdx,
     yPos,
     scrollSpeed,
+    autoScrollMode,
+    autoDelayMs,
     history,
   };
 }

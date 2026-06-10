@@ -45,7 +45,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   restartForUpdate: (): void => {
     ipcRenderer.send("restart-for-update");
   },
+// Add in electronAPI object
 
+vizSetAutoMode: (auto: boolean) =>
+  ipcRenderer.invoke("viz:set-auto-mode", auto),
   // ── Viz Engine ──
   vizLoadScene: (): Promise<void> => ipcRenderer.invoke("viz:load-scene"),
   vizContinue: (): Promise<void> => ipcRenderer.invoke("viz:continue"),
@@ -64,3 +67,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
     return () => ipcRenderer.removeListener("viz:status", handler);
   },
 });
+
+

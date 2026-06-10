@@ -24,7 +24,6 @@ type TestState =
   | { kind: "success"; elapsedMs: number }
   | { kind: "error"; message: string };
 
-/** Props for the {@link SettingsModal} component. */
 interface Props {
   config: AppConfig | null;
   onClose: () => void;
@@ -37,7 +36,6 @@ type Tab = (typeof TABS)[number];
 const INPUT =
   "settings-input bg-surface text-tx border border-border focus:border-border-focus w-full px-3.5 py-2.5 text-sm font-mono rounded-md outline-none transition-all placeholder:text-tx-4";
 
-/** Modal dialog for editing application settings across multiple tabs. */
 export default function SettingsModal(props: Props) {
   const [tab, setTab] = createSignal<Tab>("Soniox");
   const [key, setKey] = createSignal("");
@@ -52,6 +50,7 @@ export default function SettingsModal(props: Props) {
     vizScrollSpeed: String(props.config?.viz.scroll_speed ?? 0.3),
     autoPauseOnIdle: props.config?.viz.auto_pause_on_idle ?? true,
     autoPauseOnIdleSeconds: String(props.config?.viz.auto_pause_on_idle_seconds ?? 10),
+    sendDelayMs: String(props.config?.viz.send_delay_ms ?? 1000),
   });
   const [error, setError] = createSignal("");
   const [saving, setSaving] = createSignal(false);
@@ -72,8 +71,6 @@ export default function SettingsModal(props: Props) {
   onCleanup(() => document.removeEventListener("mousedown", onDocClick));
   const tabRefs: Partial<Record<Tab, HTMLDivElement>> = {};
 
-  // Reset the test result whenever host or port changes so a stale badge
-  // doesn't suggest the latest input is verified.
   createEffect(
     on(
       () => [fields.vizHost, fields.vizPort],
@@ -82,8 +79,6 @@ export default function SettingsModal(props: Props) {
     ),
   );
 
-  // Re-measure the Viz tab when the result badge appears/disappears,
-  // since the explicit height is what drives scroll vs. natural fit.
   createEffect(
     on(testState, () => requestAnimationFrame(() => measureTab(tab())), { defer: true }),
   );
@@ -105,7 +100,6 @@ export default function SettingsModal(props: Props) {
       .then((m) => {
         setModels(m);
         setModelsLoading(false);
-        // Re-measure after model list renders
         requestAnimationFrame(() => measureTab(tab()));
       })
       .catch((err) => {
@@ -152,6 +146,13 @@ export default function SettingsModal(props: Props) {
       return;
     }
 
+    const sendDelayNum = Number(fields.sendDelayMs);
+    if (Number.isNaN(sendDelayNum) || sendDelayNum < 100) {
+      setTab("Viz Engine");
+      setError("Text send delay must be at least 100ms");
+      return;
+    }
+
     setSaving(true);
     setError("");
     try {
@@ -170,6 +171,7 @@ export default function SettingsModal(props: Props) {
         viz_scroll_speed: speedNum,
         viz_auto_pause_on_idle: fields.autoPauseOnIdle,
         viz_auto_pause_on_idle_seconds: idleSecondsNum,
+        viz_send_delay_ms: sendDelayNum,
       });
 
       props.onSaved(result.config);
@@ -534,6 +536,23 @@ export default function SettingsModal(props: Props) {
                   onKeyDown={handleKeyDown}
                 />
                 <p class="text-[10px] text-tx-3 mt-1">Scroll velocity per frame (0.1 – 1.0)</p>
+              </div>
+              <div>
+                <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">
+                  Text Send Delay (ms)
+                </label>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  placeholder="1000"
+                  class={INPUT}
+                  value={fields.sendDelayMs}
+                  onInput={(e) => setFields("sendDelayMs", e.currentTarget.value)}
+                  onKeyDown={handleKeyDown}
+                />
+                <p class="text-[10px] text-tx-3 mt-1">
+                  Delay between each text sent to Vizrt (ms). Increase to fix overlap. Decrease for faster display. (default: 1000)
+                </p>
               </div>
               <div>
                 <label class="text-[11px] font-semibold text-tx-3 tracking-wider uppercase mb-1.5 block">

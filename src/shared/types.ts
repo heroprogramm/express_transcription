@@ -9,6 +9,7 @@ export interface AppConfig {
     scroll_speed: number;
     auto_pause_on_idle: boolean;
     auto_pause_on_idle_seconds: number;
+    send_delay_ms: number; // delay between each text sent to Vizrt — controls overlap
   };
 }
 
@@ -69,4 +70,18 @@ export interface PerfSnapshot {
     external: number;
   };
   eventLoopLagMs: number;
+}
+export interface VizStatus {
+  connection: VizConnection;
+  isAnimating: boolean;
+  isLoaded: boolean;
+  loadedSceneName: string | null;
+  hasData: boolean;
+  autoPaused: boolean;
+  currentIdx: number;
+  yPos: number;
+  scrollSpeed: number;
+  autoScrollMode: boolean; // ← ADD THIS LINE
+  autoDelayMs: number;
+  history: VizLogEntry[];
 }

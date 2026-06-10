@@ -14,15 +14,12 @@ import {
   vizHardReset,
   vizReconnect,
   vizTestConnection,
+  vizSetEditing,
+  vizSetAutoMode,
+  vizSetReviewTime,
   getVizStatus,
 } from "./viz-engine";
 
-/**
- * Registers all IPC handlers for renderer-to-main communication.
- * @param getConfig - Returns the current live config
- * @param setConfig - Updates the in-memory config after save
- * @param configWarnings - Validation warnings from initial config load
- */
 export function registerIpcHandlers(
   getConfig: () => AppConfig,
   setConfig: (config: AppConfig) => void,
@@ -56,6 +53,7 @@ export function registerIpcHandlers(
       .filter((m) => m.transcription_mode === "real_time")
       .map((m) => ({ id: m.id, name: m.name }));
   });
+
   ipcMain.handle("get-config", () => ({
     config: getConfig(),
     warnings: configWarnings,
@@ -76,7 +74,9 @@ export function registerIpcHandlers(
         viz_scroll_speed: number;
         viz_auto_pause_on_idle: boolean;
         viz_auto_pause_on_idle_seconds: number;
+        viz_send_delay_ms: number;
       }> = {};
+
       if (typeof f.model === "string") {
         if (!f.model.trim()) throw new Error("save-config: model cannot be empty");
         updates.model = f.model;
@@ -87,6 +87,8 @@ export function registerIpcHandlers(
         if (f.review_time_seconds < 0)
           throw new Error("save-config: review_time_seconds must be non-negative");
         updates.review_time_seconds = f.review_time_seconds;
+        // ── Sync review time to viz engine for auto adjustment ──
+        vizSetReviewTime(f.review_time_seconds);
       }
       if (typeof f.viz_host === "string") {
         if (!f.viz_host.trim()) throw new Error("save-config: viz_host cannot be empty");
@@ -110,6 +112,12 @@ export function registerIpcHandlers(
           throw new Error("save-config: viz_auto_pause_on_idle_seconds must be at least 1");
         updates.viz_auto_pause_on_idle_seconds = f.viz_auto_pause_on_idle_seconds;
       }
+      if (typeof f.viz_send_delay_ms === "number") {
+        if (f.viz_send_delay_ms < 100)
+          throw new Error("save-config: viz_send_delay_ms must be at least 100");
+        updates.viz_send_delay_ms = f.viz_send_delay_ms;
+      }
+
       const result = saveConfigFields(updates);
       setConfig(result.config);
       return result;
@@ -177,11 +185,7 @@ export function registerIpcHandlers(
     const win = getMainWindow();
     if (win) startMetricsCollection(win);
   });
-
-  ipcMain.handle("perf:stop", () => {
-    stopMetricsCollection();
-  });
-
+  ipcMain.handle("perf:stop", () => stopMetricsCollection());
   ipcMain.handle("perf:ping", () => Date.now());
 
   ipcMain.handle("clipboard:write", (_event, text: unknown) => {
@@ -207,6 +211,18 @@ export function registerIpcHandlers(
   ipcMain.handle("viz:set-speed", (_event, speed: unknown) => {
     if (typeof speed !== "number") throw new Error("viz:set-speed: speed must be a number");
     vizSetSpeed(speed);
+  });
+
+  ipcMain.handle("viz:set-editing", (_event, editing: unknown) => {
+    if (typeof editing !== "boolean")
+      throw new Error("viz:set-editing: editing must be a boolean");
+    vizSetEditing(editing);
+  });
+
+  ipcMain.handle("viz:set-auto-mode", (_event, auto: unknown) => {
+    if (typeof auto !== "boolean")
+      throw new Error("viz:set-auto-mode: must be boolean");
+    vizSetAutoMode(auto);
   });
 
   ipcMain.handle("viz:hard-reset", () => vizHardReset());

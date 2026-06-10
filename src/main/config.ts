@@ -12,7 +12,8 @@ const DEFAULT_CONFIG: AppConfig = {
     scene_path: "EXPRESS_24_7/TRANSLATION_BB/Translation_BB",
     scroll_speed: 0.3,
     auto_pause_on_idle: true,
-    auto_pause_on_idle_seconds: 10,
+    auto_pause_on_idle_seconds: 3,
+    send_delay_ms: 1000, // 1 second between each text sent to Vizrt
   },
 };
 
@@ -61,6 +62,9 @@ function validateConfig(config: AppConfig): string[] {
   if (typeof viz.auto_pause_on_idle_seconds !== "number" || viz.auto_pause_on_idle_seconds < 1) {
     errors.push("viz.auto_pause_on_idle_seconds must be a number >= 1");
   }
+  if (typeof viz.send_delay_ms !== "number" || viz.send_delay_ms < 100) {
+    errors.push("viz.send_delay_ms must be a number >= 100");
+  }
 
   return errors;
 }
@@ -100,6 +104,7 @@ export function saveConfigFields(
     viz_scroll_speed: number;
     viz_auto_pause_on_idle: boolean;
     viz_auto_pause_on_idle_seconds: number;
+    viz_send_delay_ms: number;
   }>,
 ): ConfigResult {
   const { config } = loadConfig();
@@ -133,6 +138,9 @@ export function saveConfigFields(
       ...config.viz,
       auto_pause_on_idle_seconds: fields.viz_auto_pause_on_idle_seconds,
     };
+  }
+  if (fields.viz_send_delay_ms !== undefined) {
+    config.viz = { ...config.viz, send_delay_ms: fields.viz_send_delay_ms };
   }
 
   saveStoredConfig(config);
